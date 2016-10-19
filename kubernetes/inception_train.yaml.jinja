@@ -1,0 +1,89 @@
+{%- set name = "mnist" -%}
+{%- set image = "gcr.io/tensorflow/jhseu/models:v1" -%}
+{%- set worker_replicas = 3 -%}
+{%- set ps_replicas = 2 -%}
+
+{%- set port = 5000 -%}
+{%- macro worker_hosts() -%}
+  {%- for i in range(worker_replicas) -%}
+    {%- if not loop.first -%},{%- endif -%}
+    worker-{{ i }}:{{ port }}
+  {%- endfor -%}
+{%- endmacro -%}
+
+{%- macro ps_hosts() -%}
+  {%- for i in range(ps_replicas) -%}
+    {%- if not loop.first -%},{%- endif -%}
+    ps-{{ i }}:{{ port }}
+  {%- endfor -%}
+{%- endmacro -%}
+
+{%- for i in range(worker_replicas) -%}
+kind: Service
+apiVersion: v1
+metadata:
+  name: worker-{{ i }}
+spec:
+  ports:
+    - name: tensorflow
+      port: {{ port }}
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: worker-{{ i }}
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: {{ name }}
+          image: {{ image }}
+          ports:
+            - name: tensorflow
+              port: {{ port }}
+          args: [
+            "--sync_replica=True",
+            "--train_steps=2000",
+            "--data_dir=gs://tensorflow-benchmark/imagenet",
+            "--train_dir=gs://tensorflow-benchmark/checkpoint"
+            "--task_id={{ i }}",
+            "--job_name=worker",
+            "--worker_hosts={{ worker_hosts() }}",
+            "--ps_hosts={{ ps_hosts() }}",
+          ]
+{%- endfor -%}
+
+{%- for i in range(ps_replicas) -%}
+kind: Service
+apiVersion: v1
+metadata:
+  name: ps-{{ i }}
+spec:
+  ports:
+    - name: tensorflow
+      port: {{ port }}
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: ps-{{ i }}
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: {{ name }}
+          image: {{ image }}
+          ports:
+            - name: tensorflow
+              port: {{ port }}
+          args: [
+            "--task_id={{ i }}",
+            "--job_name=ps",
+            "--worker_hosts={{ worker_hosts() }}",
+            "--ps_hosts={{ ps_hosts() }}",
+          ]
+{%- endfor -%}
