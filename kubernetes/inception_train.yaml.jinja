@@ -1,5 +1,5 @@
 {%- set name = "inception" -%}
-{%- set image = "gcr.io/tensorflow/jhseu/inception:v2" -%}
+{%- set image = "gcr.io/tensorflow/jhseu/inception:v4" -%}
 {%- set worker_replicas = 2 -%}
 {%- set ps_replicas = 1 -%}
 
@@ -43,10 +43,7 @@ spec:
     - name: PYTHONPATH
       value: "/"
     - name: GOOGLE_APPLICATION_CREDENTIALS
-      valueFrom:
-        secretKeyRef:
-          name: credential
-          key: TensorFlow-8a3b94f6b361.json
+      value: "/etc/credential/TensorFlow-8a3b94f6b361.json"
     ports:
     - containerPort: {{ port }}
     command:
@@ -59,6 +56,10 @@ spec:
     - "--job_name={{ job }}"
     - "--worker_hosts={{ worker_hosts() }}"
     - "--ps_hosts={{ ps_hosts() }}"
+    volumeMounts:
+    - name: credential
+      mountPath: /etc/credential
+      readOnly: true
   volumes:
   - name: credential
     secret:
