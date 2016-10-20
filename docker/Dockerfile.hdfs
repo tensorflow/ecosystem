@@ -2,9 +2,7 @@ FROM tensorflow/tensorflow:nightly
 
 # Install java
 RUN add-apt-repository -y ppa:openjdk-r/ppa && \
-    add-apt-repository -y ppa:mc3man/trusty-media && \
-    add-apt-repository -y ppa:george-edison55/cmake-3.x
-RUN apt-get update && \
+    apt-get update && \
     apt-get install -y --no-install-recommends \
     openjdk-8-jdk openjdk-8-jre-headless && \
     apt-get clean && \
