@@ -1,5 +1,5 @@
 {%- set name = "inception" -%}
-{%- set image = "gcr.io/tensorflow/jhseu/inception:v4" -%}
+{%- set image = "gcr.io/tensorflow/jhseu/inception:v7" -%}
 {%- set worker_replicas = 2 -%}
 {%- set ps_replicas = 1 -%}
 
@@ -25,15 +25,23 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ name }}-{{job}}-{{ i }}
+  name: {{ name }}-{{ job }}-{{ i }}
 spec:
+  selector:
+    name: {{ name }}
+    job: {{ job }}
+    task: "{{ i }}"
   ports:
-    - port: {{ port }}
+  - port: {{ port }}
 ---
 kind: Pod
 apiVersion: v1
 metadata:
-  name: {{ name }}-{{job}}-{{ i }}
+  name: {{ name }}-{{ job }}-{{ i }}
+  labels:
+    name: {{ name }}
+    job: {{ job }}
+    task: "{{ i }}"
 spec:
   restartPolicy: Never
   containers:
@@ -46,6 +54,14 @@ spec:
       value: "/etc/credential/TensorFlow-8a3b94f6b361.json"
     ports:
     - containerPort: {{ port }}
+{% if job == "tensorboard" %}
+    command:
+    - "/usr/bin/python"
+    - "-m"
+    - "tensorflow.tensorboard"
+    args:
+    - "--logdir=gs://tensorflow-benchmark/checkpoint"
+{% else %}
     command:
     - "/usr/bin/python"
     - "/inception/imagenet_distributed_train.py"
@@ -56,6 +72,7 @@ spec:
     - "--job_name={{ job }}"
     - "--worker_hosts={{ worker_hosts() }}"
     - "--ps_hosts={{ ps_hosts() }}"
+{% endif %}
     volumeMounts:
     - name: credential
       mountPath: /etc/credential
