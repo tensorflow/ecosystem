@@ -1,0 +1,64 @@
+{%- set name = "mnist" %}
+{%- set image = "" %}
+{%- set worker_replicas = 3 %}
+{%- set ps_replicas = 2 -%}
+{%- set dns_domain = "marathon.mesos" %}
+{%- set port = 2333 %}
+{%- set train_dir = "hdfs://namenode/train_dir" %}
+{%- set tensorboard = true %}
+{%- set cpu = 2 %}
+{%- set mem = 4096 %}
+
+{%- set replicas = {"worker": worker_replicas, "ps": ps_replicas} -%}
+
+{%- macro worker_hosts() -%}
+  {%- for i in range(worker_replicas) -%}
+    {%- if not loop.first -%},{%- endif -%}
+    worker-{{ i }}-{{ name }}.{{ dns_domain }}:{{ port + i }}
+  {%- endfor -%}
+{%- endmacro -%}
+
+{%- macro ps_hosts() -%}
+  {%- for i in range(ps_replicas) -%}
+    {%- if not loop.first -%},{%- endif -%}
+    ps-{{ i }}-{{ name }}.{{ dns_domain }}:{{ port + worker_replicas + i }}
+  {%- endfor -%}
+{%- endmacro -%}
+
+{
+  "id": "{{ name }}",
+  "apps": [
+    {%- for job in ["worker", "ps"] -%}
+    {%- for i in range(replicas[job]) %}
+    {
+      "id": "{{ job }}-{{ i }}",
+      "container": {
+        "docker": {
+          "image": "{{ image }}",
+        },
+        "network": "HOST",
+        "type": "DOCKER"
+      },
+      "args": ["--worker_hosts", "{{ worker_hosts() }}", "--ps_hosts", "{{ ps_hosts() }}", "--job_name", "{{ job }}", "--task_index", "{{ i }}", "--train_dir", "{{ train_dir }}", "--sync_replica", "True", "--train_steps", "2000"],
+      "cpus": {{ cpu }},
+      "mem": {{ mem }},
+      "instances": 1
+    }{%- if not loop.last or tensorboard %},{% endif %}
+    {%- endfor %}
+    {%- endfor %}
+    {
+      "id": "tensorboard",
+      "container": {
+        "docker": {
+          "image": "{{ image }}",
+        },
+        "network": "HOST",
+        "type": "DOCKER"
+      },
+      "cmd": "tensorboard --logdir {{ train_dir }}",
+      "cpus": {{ cpu }},
+      "mem": {{ mem }},
+      "instances": 1
+    }
+  ]
+}
