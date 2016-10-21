@@ -1,7 +1,12 @@
-{%- set name = "inception" -%}
-{%- set image = "gcr.io/tensorflow/jhseu/inception:v7" -%}
+{%- set name = "" -%}
+{%- set image = "" -%}
 {%- set worker_replicas = 2 -%}
 {%- set ps_replicas = 1 -%}
+{%- set script = "" -%}
+{%- set data_dir = "" -%}
+{%- set train_dir = "" -%}
+{%- set credential_secret_name = "" -%}
+{%- set credential_secret_key = "" -%}
 
 {%- set port = 5000 -%}
 {%- set replicas = {"worker": worker_replicas, "ps": ps_replicas} -%}
@@ -34,53 +39,60 @@ spec:
   ports:
   - port: {{ port }}
 ---
-kind: Pod
-apiVersion: v1
+kind: ReplicaSet
+apiVersion: extensions/v1beta1
 metadata:
   name: {{ name }}-{{ job }}-{{ i }}
-  labels:
-    name: {{ name }}
-    job: {{ job }}
-    task: "{{ i }}"
 spec:
-  restartPolicy: Never
-  containers:
-  - name: tensorflow
-    image: {{ image }}
-    env:
-    - name: PYTHONPATH
-      value: "/"
-    - name: GOOGLE_APPLICATION_CREDENTIALS
-      value: "/etc/credential/TensorFlow-8a3b94f6b361.json"
-    ports:
-    - containerPort: {{ port }}
-{% if job == "tensorboard" %}
-    command:
-    - "/usr/bin/python"
-    - "-m"
-    - "tensorflow.tensorboard"
-    args:
-    - "--logdir=gs://tensorflow-benchmark/checkpoint"
-{% else %}
-    command:
-    - "/usr/bin/python"
-    - "/inception/imagenet_distributed_train.py"
-    args:
-    - "--data_dir=gs://tensorflow-benchmark/imagenet"
-    - "--train_dir=gs://tensorflow-benchmark/checkpoint"
-    - "--task_id={{ i }}"
-    - "--job_name={{ job }}"
-    - "--worker_hosts={{ worker_hosts() }}"
-    - "--ps_hosts={{ ps_hosts() }}"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: {{ name }}
+        job: {{ job }}
+        task: "{{ i }}"
+    spec:
+      containers:
+      - name: tensorflow
+        image: {{ image }}
+        env:
+        - name: PYTHONPATH
+          value: "/"
+{% if credential_secret_name != "" %}
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/credential/{{ credential_secret_key }}"
 {% endif %}
-    volumeMounts:
-    - name: credential
-      mountPath: /etc/credential
-      readOnly: true
-  volumes:
-  - name: credential
-    secret:
-      secretName: credential
+        ports:
+        - containerPort: {{ port }}
+{% if job == "tensorboard" %}
+        command:
+        - "/usr/bin/python"
+        - "-m"
+        - "tensorflow.tensorboard"
+        args:
+        - "--logdir={{ train_dir }}"
+{% else %}
+        command:
+        - "/usr/bin/python"
+        - "{{ script }}"
+        args:
+        - "--data_dir={{ data_dir }}"
+        - "--train_dir={{ train_dir }}"
+        - "--task_id={{ i }}"
+        - "--job_name={{ job }}"
+        - "--worker_hosts={{ worker_hosts() }}"
+        - "--ps_hosts={{ ps_hosts() }}"
+{% endif %}
+{% if credential_secret_name != "" %}
+        volumeMounts:
+        - name: credential
+          mountPath: /etc/credential
+          readOnly: true
+      volumes:
+      - name: credential
+        secret:
+          secretName: {{ credential_secret_name }}
+{% endif %}
 ---
 {% endfor %}
 {%- endfor -%}
