@@ -1,10 +1,10 @@
 {%- set name = "mnist" %}
-{%- set image = "yuefengz/mnist_replica_hdfs" %}
+{%- set image = "" %}
 {%- set worker_replicas = 3 %}
 {%- set ps_replicas = 2 -%}
 {%- set dns_domain = "marathon.mesos" %}
 {%- set port = 2333 %}
-{%- set train_dir = "hdfs://10.240.0.11:9001/mnist-logs" %}
+{%- set train_dir = "hdfs://namenode/train_dir" %}
 {%- set tensorboard = true %}
 {%- set cpu = 2 %}
 {%- set mem = 4096 %}
