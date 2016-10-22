@@ -64,9 +64,7 @@ spec:
         - containerPort: {{ port }}
 {% if job == "tensorboard" %}
         command:
-        - "/usr/bin/python"
-        - "-m"
-        - "tensorflow.tensorboard"
+        - "tensorboard"
         args:
         - "--logdir={{ train_dir }}"
 {% else %}
@@ -76,7 +74,7 @@ spec:
         args:
         - "--data_dir={{ data_dir }}"
         - "--train_dir={{ train_dir }}"
-        - "--task_id={{ i }}"
+        - "--task_index={{ i }}"
         - "--job_name={{ job }}"
         - "--worker_hosts={{ worker_hosts() }}"
         - "--ps_hosts={{ ps_hosts() }}"
