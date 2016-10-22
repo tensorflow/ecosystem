@@ -55,10 +55,8 @@ spec:
       containers:
       - name: tensorflow
         image: {{ image }}
-        env:
-        - name: PYTHONPATH
-          value: "/"
 {% if credential_secret_name != "" %}
+        env:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/etc/credential/{{ credential_secret_key }}"
 {% endif %}
