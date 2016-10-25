@@ -25,7 +25,7 @@ cp kubernetes/template.yaml.jinja myjob.template.jinja
 ```
 
 4. Edit the `myjob.template.jinja` file to edit job parameters. At the minimum,
-you'll want to specify `name`, `image`, `worker_replicas, `ps_replicas`,
+you'll want to specify `name`, `image`, `worker_replicas`, `ps_replicas`,
 `script`, `data_dir`, and `train_dir`. You may optionally specify
 `credential_secret_name` and `credential_secret_key` if you need to read and
 write to GCS. See the GCS section below.
