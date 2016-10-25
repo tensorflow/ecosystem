@@ -26,8 +26,8 @@ First, pick an image name for the job. When running on a cluster manager, you
 will want to push your images to a container registry. Note that both the
 [Google Container Registry](https://cloud.google.com/container-registry/)
 and the [Amazon EC2 Container Registry](https://aws.amazon.com/ecr/) require
-special paths. We append `:v1` to version our images as described in the
-previous section.
+special paths. We append `:v1` to version our images. Versioning images is
+strongly recommended for reasons described in the best practices section.
 
 ```sh
 docker build -t <image_name>:v1 -f Dockerfile .
