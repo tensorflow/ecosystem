@@ -24,7 +24,7 @@ replication with asynchronous updates.
 
 ### Common setup for for distributed training
 
-Every distributed training program has a common setup. First, define flags so
+Every distributed training program has some common setup. First, define flags so
 that the worker knows about other workers and knows what role it plays in
 distributed training:
 
@@ -42,7 +42,7 @@ flags.DEFINE_string("job_name", None, "job name: worker or ps")
 ```
 
 Then, start your server. Parameter servers (ps jobs) should stop at this point
-because they only store variables.
+because they only store variables, so they are joined with the server.
 
 ```python
 # Construct the cluster and start the server
@@ -71,8 +71,7 @@ parameter servers.
 
 You must explicitly set the device before graph construction for this mode of
 training. The following code snippet from the
-[Distributed TensorFlow
-tutorial](https://www.tensorflow.org/versions/master/how_tos/distributed/index.html) demonstrates the setup:
+[Distributed TensorFlow tutorial](https://www.tensorflow.org/versions/master/how_tos/distributed/index.html) demonstrates the setup:
 
 ```python
 with tf.device(tf.train.replica_device_setter(
