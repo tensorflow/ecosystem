@@ -57,5 +57,6 @@ credentials.
 kubectl create secret generic credential <json_filename>
 ```
 
-3. Set `credential_secret_name` to "credential" (as specified above) and
-   `credential_secret_key` to the `<json_filename>` in the template.
+3. In your template, set `credential_secret_name` to `"credential"` (as
+   specified above) and `credential_secret_key` to the `<json_filename>` in the
+   template.
