@@ -8,7 +8,7 @@ Kubernetes.
 1. You must be running Kubernetes 1.3 or above. If you are running an earlier
    version, the DNS addon must be enabled. See the
    [Google Container Engine](https://cloud.google.com/container-engine/) if you
-   want to quick setuply a Kubernetes cluster from scratch.
+   want to quickly setup a Kubernetes cluster from scratch.
 
 2. We use [Jinja templates](http://jinja.pocoo.org/) for expansion. You must
    have Jinja installed:
