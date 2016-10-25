@@ -28,7 +28,7 @@ cp kubernetes/template.yaml.jinja myjob.template.jinja
 you'll want to specify `name`, `image`, `worker_replicas`, `ps_replicas`,
 `script`, `data_dir`, and `train_dir`. You may optionally specify
 `credential_secret_name` and `credential_secret_key` if you need to read and
-write to GCS. See the GCS section below.
+write to Google Cloud Storage. See the Google Cloud Storage section below.
 
 5. Run the job:
 
@@ -40,3 +40,22 @@ If you later want to stop the job, then run:
 ```sh
 python render_template.py myjob.template.jinja | kubectl delete -f -
 ```
+
+# Google Cloud Storage
+
+To support reading and writing to Google Cloud Storage, you need to set up
+a [Kubernetes secret](http://kubernetes.io/docs/user-guide/secrets/) with the
+credentials.
+
+1. [Set up a service
+   account](https://cloud.google.com/vision/docs/common/auth#set_up_a_service_account)
+   and download the .json file.
+
+2. Add the JSON file as a Kubernetes secret:
+
+```sh
+kubectl create secret generic credential <json_filename>
+```
+
+3. Set `credential_secret_name` to credential" (as specified above) and
+   `credential_secret_key` to the `<json_filename>` in the template.
