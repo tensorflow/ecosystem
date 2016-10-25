@@ -4,7 +4,8 @@ This repository contains examples for integrating TensorFlow with other
 open-source frameworks. The examples are minimal and intended for use as
 templates. Users can tailor the templates for their own use-cases.
 
-If you have any additions or improvements, please file an issue or pull request.
+If you have any additions or improvements, please create an issue or pull
+request.
 
 ## Contents
 
@@ -71,7 +72,8 @@ parameter servers.
 
 You must explicitly set the device before graph construction for this mode of
 training. The following code snippet from the
-[Distributed TensorFlow tutorial](https://www.tensorflow.org/versions/master/how_tos/distributed/index.html) demonstrates the setup:
+[Distributed TensorFlow tutorial](https://www.tensorflow.org/versions/master/how_tos/distributed/index.html)
+demonstrates the setup:
 
 ```python
 with tf.device(tf.train.replica_device_setter(
