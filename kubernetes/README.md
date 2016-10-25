@@ -49,9 +49,10 @@ credentials.
 
 1. [Set up a service
    account](https://cloud.google.com/vision/docs/common/auth#set_up_a_service_account)
-   and download the .json file.
+   and download the JSON file.
 
-2. Add the JSON file as a Kubernetes secret:
+2. Add the JSON file as a Kubernetes secret. Replace `[json_filename]` with
+   the name of the downloaded file:
 
 ```sh
 kubectl create secret generic credential [json_filename]
