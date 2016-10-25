@@ -1,0 +1,42 @@
+# Running Distributed TensorFlow on Kubernetes
+
+This directory contains a template for running distributed TensorFlow on
+Kubernetes.
+
+## Prerequisite
+
+You must be running Kubernetes 1.3 or above. If you are running an earlier
+version, the DNS addon must be enabled. See the
+[Google Container Engine](https://cloud.google.com/container-engine/) if you
+want to quick setuply a Kubernetes cluster from scratch.
+
+## Steps to running the job
+
+1. Follow the instructions for creating the training program in the parent
+   [README](../README.md).
+
+2. Follow the instructions for building and pushing the Docker image in the
+   [Docker README](../docker/README.md).
+
+3. Copy the template file:
+
+```sh
+cp kubernetes/template.yaml.jinja myjob.template.jinja
+```
+
+4. Edit the `myjob.template.jinja` file to edit job parameters. At the minimum,
+you'll want to specify `name`, `image`, `worker_replicas, `ps_replicas`,
+`script`, `data_dir`, and `train_dir`. You may optionally specify
+`credential_secret_name` and `credential_secret_key` if you need to read and
+write to GCS. See the GCS section below.
+
+5. Run the job:
+
+```sh
+python render_template.py myjob.template.jinja | kubectl create -f -
+```
+
+If you later want to stop the job, then run:
+```sh
+python render_template.py myjob.template.jinja | kubectl delete -f -
+```
