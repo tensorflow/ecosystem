@@ -70,5 +70,3 @@ Let's suppose you would like to add a flag called `data_dir` into the rendered c
    ```
 
 When writing the training, remember to add that flag although it will not crash without reading it.
-
-
