@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:nightly
+FROM tensorflow/tensorflow:0.11.0rc1
 
 # Install java
 RUN add-apt-repository -y ppa:openjdk-r/ppa && \
