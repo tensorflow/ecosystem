@@ -69,6 +69,6 @@ Let's suppose you would like to add a flag called `data_dir` into the rendered c
    "args": ["--data_dir", {{ data_dir}}, --worker_hosts", ...]
    ```
 
-When writing the training, remember to add that flag although it will not crash without reading the flags.
+When writing the training, remember to add that flag although it will not crash without reading it.
 
 
