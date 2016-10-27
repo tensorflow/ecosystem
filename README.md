@@ -42,8 +42,7 @@ flags.DEFINE_string("worker_hosts", None,
 flags.DEFINE_string("job_name", None, "job name: worker or ps")
 ```
 
-Then, start your server. Parameter servers (ps jobs) should stop at this point
-because they only store variables, so they are joined with the server.
+Then, start your server. Since worker and parameter servers (ps jobs) usually share a common program, parameter servers (ps jobs) which only store variables should stop at this point and so they are joined with the server.
 
 ```python
 # Construct the cluster and start the server
@@ -68,7 +67,9 @@ intend on doing. The most common form is between-graph replication.
 
 In this mode, each worker separately constructs the exact same graph. Each
 worker then runs the graph in isolation, only sharing gradients with the
-parameter servers.
+parameter servers. This set up is illustrated by the following diagram. Please note that each dashed box indicates a task.
+![Diagram for Between-graph replication]
+  (images/between-graph_replication.png "Between-graph Replication")
 
 You must explicitly set the device before graph construction for this mode of
 training. The following code snippet from the
@@ -83,3 +84,17 @@ with tf.device(tf.train.replica_device_setter(
 
 # Run the TensorFlow graph.
 ```
+
+### Requirements To Run the Examples
+
+To run our examples, [Jinja templates](http://jinja.pocoo.org/) must be installed:
+
+```sh
+# On Ubuntu
+sudo apt-get install python-jinja2
+
+# On most other platforms
+sudo pip install Jinja2
+```
+
+Jinja is used for template expansion. There are other framework-specific requirements, please refer to the README page of each framework.
