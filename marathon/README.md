@@ -14,7 +14,7 @@ This section covers instructions on how to write your trainer program, and build
 
  3. Build your docker image, push it to a docker repository:
 
-  ```bash
+  ```sh
   cd docker
   docker build -t <image_name> -f Dockerfile.hdfs .
   # Use gcloud docker push instead if on Google Container Registry.
@@ -28,21 +28,21 @@ The Marathon config is generated from a Jinja template where you need to customi
 
  1. Copy over the template file:
 
-  ```
+  ```sh
   cp marathon/template.json.jinja mycluster.json.jinja
   ```
 
  2. Edit the `mycluster.json.jinja` file. You need to specify the `name`, `image_name`, `train_dir` and optionally change number of worker and ps replicas. The `train_dir` must point to the directory on shared storage if you would like to use TensorBoard or sharded checkpoint.
  3. Generate the Marathon json config:
 
-  ```bash
+  ```sh
   python render_template.py mycluster.json.jinja > mycluster.json
   ```
 
 ## Start the Tensorflow cluster
 To start the cluster, simply post the Marathon json config file to the Marathon master target which is `marathon.mesos:8080` by default:
 
-  ```bash
+  ```sh
   curl -i -H 'Content-Type: application/json' -d @mycluster.json http://marathon.mesos:8080/v2/groups
   ```
 
@@ -60,13 +60,11 @@ Let's suppose you would like to add a flag called `data_dir` into the rendered c
 
  1. Add a variable in the header of `mycluster.json.jinja`:
   ```
-  {%- set data_dir = "hdfs://namenode/data_dir" %}
-  ```
+  {%- set data_dir = "hdfs://namenode/data_dir" %}  
+  ```  
 
  2. Add the flag into the `args` section of the template:
    ```
-   # replace "args": ["--worker_hosts", ...] with
-   "args": ["--data_dir", {{ data_dir}}, --worker_hosts", ...]
-   ```
-
-When writing the training, remember to add that flag although it will not crash without reading it.
+   # replace "args": ["--worker_hosts", ...] with  
+   "args": ["--data_dir", {{ data_dir}}, --worker_hosts", ...]  
+   ```  
