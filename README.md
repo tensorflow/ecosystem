@@ -23,7 +23,7 @@ documentation for a description of how it works. The examples in this
 repository focus on the most common form of distributed training: between-graph
 replication with asynchronous updates.
 
-### Common setup for for distributed training
+### Common Setup for distributed training
 
 Every distributed training program has some common setup. First, define flags so
 that the worker knows about other workers and knows what role it plays in
