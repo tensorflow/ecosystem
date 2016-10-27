@@ -10,16 +10,7 @@ Kubernetes.
    [Google Container Engine](https://cloud.google.com/container-engine/) if you
    want to quickly setup a Kubernetes cluster from scratch.
 
-2. We use [Jinja templates](http://jinja.pocoo.org/) for expansion. You must
-   have Jinja installed:
-
-```sh
-# On Ubuntu
-sudo apt-get install python-jinja2
-
-# On most other platforms
-sudo pip install Jinja2
-```
+2. [Jinja templates](http://jinja.pocoo.org/) must be installed.
 
 ## Steps to running the job
 
