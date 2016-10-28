@@ -12,7 +12,7 @@ Kubernetes.
 
 2. [Jinja templates](http://jinja.pocoo.org/) must be installed.
 
-## Steps to running the job
+## Steps to Run the job
 
 1. Follow the instructions for creating the training program in the parent
    [README](../README.md).
@@ -29,7 +29,7 @@ cp kubernetes/template.yaml.jinja myjob.template.jinja
 4. Edit the `myjob.template.jinja` file to edit job parameters. At the minimum,
 you'll want to specify `name`, `image`, `worker_replicas`, `ps_replicas`,
 `script`, `data_dir`, and `train_dir`. You may optionally specify
-`credential_secret_name` and `credential_secret_key` if you need to read and
+`credential_secret_name` and `credential_secret_key`. If you need to read and
 write to Google Cloud Storage. See the Google Cloud Storage section below.
 
 5. Run the job:
@@ -43,7 +43,7 @@ If you later want to stop the job, then run:
 python render_template.py myjob.template.jinja | kubectl delete -f -
 ```
 
-# Google Cloud Storage
+## Google Cloud Storage
 
 To support reading and writing to Google Cloud Storage, you need to set up
 a [Kubernetes secret](http://kubernetes.io/docs/user-guide/secrets/) with the
