@@ -6,7 +6,7 @@ Before you start, you need to set up a Mesos cluster with Marathon installed and
 ## Write your training program
 This section covers instructions on how to write your trainer program, and build your docker image.
 
- 1. Write your own training program. This program must accept `worker_hosts`, `ps_hosts`, `job_name`, `task_index` as command line flags which are then parsed to build `ClusterSpec`. After that, the task either joins with the server or starts building graphs. Please refero to the [main page](../README.md) for code snippets and description of between-graph replication. An example can be found in `docker/mnist_replica.py`.
+ 1. Write your own training program. This program must accept `worker_hosts`, `ps_hosts`, `job_name`, `task_index` as command line flags which are then parsed to build `ClusterSpec`. After that, the task either joins with the server or starts building graphs. Please refero to the [main page](../README.md) for code snippets and description of between-graph replication. An example can be found in `docker/mnist.py`.
 
    In the case of large training input is needed by the training program, we recommend copying your data to shared storage first and then point each worker to the data. You may want to add a flag called `data_dir`. Please refer to the [adding flags](## Add Commandline Flags) section.
 
@@ -46,7 +46,7 @@ To start the cluster, simply post the Marathon json config file to the Marathon 
   curl -i -H 'Content-Type: application/json' -d @mycluster.json http://marathon.mesos:8080/v2/groups
   ```
 
-You may want to make sure your cluster is running the training program correctly. Navigate to the DC/OS web console and look for stdout or stderr of the chief worker. The `mnist_replica.py` example would print losses for each step and final loss when training is done.
+You may want to make sure your cluster is running the training program correctly. Navigate to the DC/OS web console and look for stdout or stderr of the chief worker. The `mnist.py` example would print losses for each step and final loss when training is done.
 
 ![Screenshot of the chief worker]
 (../images/chief_worker_stdout.png "Screenshot of the chief worker")

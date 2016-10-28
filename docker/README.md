@@ -1,4 +1,4 @@
-# TensorFlow Docker images
+# TensorFlow Docker Images
 
 This directory contains example Dockerfiles to run TensorFlow on cluster
 managers.
@@ -7,10 +7,10 @@ managers.
   training program on top of the tensorflow/tensorflow Docker image.
 - [Dockerfile.hdfs](Dockerfile.hdfs) installs Hadoop libraries and sets the
   appropriate environment variables to enable reading from HDFS.
-- [mnist_replica.py](mnist_replica.py) demonstrates the programmatic setup
-  required for distributed TensorFlow training.
+- [mnist.py](mnist.py) demonstrates the programmatic setup for distributed
+  TensorFlow training.
 
-## Best practices
+## Best Practices
 
 - Always pin the TensorFlow version with the Docker image tag. This ensures that
   TensorFlow updates don't adversely impact your training program for future
@@ -20,7 +20,7 @@ managers.
   Docker image if they have them cached. Also, versions ensure that you have
   a single copy of the code running for each job.
 
-## Building the Docker files
+## Building the Docker Files
 
 First, pick an image name for the job. When running on a cluster manager, you
 will want to push your images to a container registry. Note that both the
@@ -37,3 +37,12 @@ docker push <image_name>:v1
 
 If you make any updates to the code, increment the version and rerun the above
 commands with the new version.
+
+## Running the mnist Example
+
+The [mnist.py](mnist.py) example reads the mnist data in the TFRecords format.
+You can run the [convert_to_records.py](https://github.com/tensorflow/tensorflow/blob/r0.11/tensorflow/examples/how_tos/reading_data/convert_to_records.py)
+program to convert mnist data to TFRecords.
+
+When running distributed TensorFlow, you should upload the converted data to
+a common location on distributed storage, such as GCS or HDFS.
