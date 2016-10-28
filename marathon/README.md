@@ -3,12 +3,12 @@
 ## Prerequisite
 Before you start, you need to set up a Mesos cluster with Marathon installed and Docker Containerizer and Mesos-DNS enabled. It is also preferable to set up some shared storage such as HDFS in the cluster. All of these could be easily installed and configured with the help of [DC/OS](https://dcos.io/docs/1.7/administration/installing/custom/gui/). You need to remember the master target, DNS domain and HDFS namenode which are needed to bring up the TensorFlow cluster.
 
-## Write your training program
-This section covers instructions on how to write your trainer program, and build your docker image.
+## Write the Training Program
+This section covers instructions on how to write your training program and build your docker image.
 
  1. Write your own training program. This program must accept `worker_hosts`, `ps_hosts`, `job_name`, `task_index` as command line flags which are then parsed to build `ClusterSpec`. After that, the task either joins with the server or starts building graphs. Please refero to the [main page](../README.md) for code snippets and description of between-graph replication. An example can be found in `docker/mnist.py`.
 
-   In the case of large training input is needed by the training program, we recommend copying your data to shared storage first and then point each worker to the data. You may want to add a flag called `data_dir`. Please refer to the [adding flags](## Add Commandline Flags) section.
+   In the case of large training input is needed by the training program, we recommend copying your data to shared storage first and then point each worker to the data. You may want to add a flag called `data_dir`. Please refer to the [adding flags](#add-commandline-flags) section for adding this flag into the marathon config.
 
  2. Write your own Docker file which simply copies your training program into the image and optionally specify an entrypoint. An example is located in `docker/Dockerfile` or `docker/Dockerfile.hdfs` if you need the HDFS support. TensorBoard can also use the same image, but with a different entry point.
 
@@ -32,14 +32,15 @@ The Marathon config is generated from a Jinja template where you need to customi
   cp marathon/template.json.jinja mycluster.json.jinja
   ```
 
- 2. Edit the `mycluster.json.jinja` file. You need to specify the `name`, `image_name`, `train_dir` and optionally change number of worker and ps replicas. The `train_dir` must point to the directory on shared storage if you would like to use TensorBoard or sharded checkpoint.
+ 2. Edit the `mycluster.json.jinja` file. You need to specify the `name`, `image_name`, `train_dir` and optionally change number of worker and ps replicas. The `train_dir` must point to the directory on shared storage if you would like to use TensorBoard or sharded checkpoint.  
+
  3. Generate the Marathon json config:
 
   ```sh
   python render_template.py mycluster.json.jinja > mycluster.json
   ```
 
-## Start the Tensorflow cluster
+## Start the Tensorflow Cluster
 To start the cluster, simply post the Marathon json config file to the Marathon master target which is `marathon.mesos:8080` by default:
 
   ```sh
