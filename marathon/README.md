@@ -40,7 +40,7 @@ The Marathon config is generated from a Jinja template where you need to customi
   python render_template.py mycluster.json.jinja > mycluster.json
   ```
 
-## Start the Tensorflow cluster
+## Start the Tensorflow Cluster
 To start the cluster, simply post the Marathon json config file to the Marathon master target which is `marathon.mesos:8080` by default:
 
   ```sh
