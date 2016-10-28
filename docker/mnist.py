@@ -94,8 +94,6 @@ def inputs(batch_size):
       in the range [-0.5, 0.5].
     * labels is an int32 tensor with shape [batch_size] with the true label,
       a number in the range [0, mnist.NUM_CLASSES).
-    Note that an tf.train.QueueRunner is added to the graph, which
-    must be run using e.g. tf.train.start_queue_runners().
   """
   filename = os.path.join(FLAGS.data_dir, TRAIN_FILE)
 
