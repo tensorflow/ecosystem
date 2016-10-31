@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:0.11.0rc1
+FROM tensorflow/tensorflow:nightly
 
-COPY mnist_replica.py /
-ENTRYPOINT ["python", "/mnist_replica.py"]
+COPY mnist.py /
+ENTRYPOINT ["python", "/mnist.py"]
