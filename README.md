@@ -15,6 +15,8 @@ request.
   Kubernetes.
 - [marathon](marathon) - Templates for running distributed TensorFlow using
   Marathon, deployed on top of Mesos.
+- [hadoop](hadoop) - TFRecord file InputFormat/OutputFormat for Hadoop MapReduce
+  and Spark.
 
 ## Distributed TensorFlow
 
