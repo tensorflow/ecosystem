@@ -1,25 +1,25 @@
-# Hadoop MapReduce InputFormat/OutputFormat for TFRecord file
+# Hadoop MapReduce InputFormat/OutputFormat for TFRecords
 
-This directory contains [Apache Hadoop](http://hadoop.apache.org/) MapReduce
-InputFormat/OutputFormat implementation for Tensorflow TFRecord feature files.
+This directory contains a [Apache Hadoop](http://hadoop.apache.org/) MapReduce
+InputFormat/OutputFormat implementation for TensorFlow's TFRecords format.
 This can also be used with [Apache Spark](http://spark.apache.org/).
 
 ## Prerequisites
 
-1. [protoc 3.1.0](https://developers.google.com/protocol-buffers/) must be
+1. [protoc 3.1.0](https://developers.google.com/protocol-buffers/)
 installed.
 
-2. [Apache Maven](https://maven.apache.org/) must be installed.
+2. [Apache Maven](https://maven.apache.org/)
 
-3. This is tested with Hadoop 2.6.0, so you'd better have hadoop 2.6.0 or 
-compitable YARN/Spark cluster.
+3. Tested with Hadoop 2.6.0. Patches are welcome if there are incompatibilities
+   with your Hadoop version.
 
 ## Build and install
 
-1. Compile Tensorflow Example protos
+1. Compile TensorFlow Example protos
 
     ```sh
-    # Suppose $TF_SRC_ROOT is the source code root of tensorflow project
+    # Suppose $TF_SRC_ROOT is the source code root of TensorFlow project
     protoc --proto_path=$TF_SRC_ROOT --java_out=src/main/java/ $TF_SRC_ROOT/tensorflow/core/example/{example,feature}.proto
     ```
 
