@@ -22,9 +22,9 @@ Kubernetes.
 
 3. Copy the template file:
 
-```sh
-cp kubernetes/template.yaml.jinja myjob.template.jinja
-```
+  ```sh
+  cp kubernetes/template.yaml.jinja myjob.template.jinja
+  ```
 
 4. Edit the `myjob.template.jinja` file to edit job parameters. At the minimum,
 you'll want to specify `name`, `image`, `worker_replicas`, `ps_replicas`,
