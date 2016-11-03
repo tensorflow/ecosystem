@@ -22,9 +22,9 @@ Kubernetes.
 
 3. Copy the template file:
 
-```sh
-cp kubernetes/template.yaml.jinja myjob.template.jinja
-```
+  ```sh
+  cp kubernetes/template.yaml.jinja myjob.template.jinja
+  ```
 
 4. Edit the `myjob.template.jinja` file to edit job parameters. At the minimum,
 you'll want to specify `name`, `image`, `worker_replicas`, `ps_replicas`,
@@ -56,9 +56,9 @@ credentials.
 2. Add the JSON file as a Kubernetes secret. Replace `[json_filename]` with
    the name of the downloaded file:
 
-```sh
-kubectl create secret generic credential [json_filename]
-```
+  ```sh
+  kubectl create secret generic credential --from-file=[json_filename]
+  ```
 
 3. In your template, set `credential_secret_name` to `"credential"` (as
    specified above) and `credential_secret_key` to the `"[json_filename]"` in
