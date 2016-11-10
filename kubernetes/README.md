@@ -43,6 +43,29 @@ write to Google Cloud Storage. See the Google Cloud Storage section below.
   python render_template.py myjob.template.jinja | kubectl delete -f -
   ```
 
+## Tensorboard
+
+Tensorboard is used to visualize TensorFlow graph. Tensorboard should have its 
+way to access the traindir where the result of training saved. So another template
+is made. Tensorboard and worker-0 pod will be scheduled to the selected host and
+share the `host_train_dir` on the host as `train_dir` in the container. worker-0
+will write the result to the `train_dir` and tensorboard can also read from the 
+`train_dir`.
+
+The steps to run the job is same as above. The difference is that the template
+is different. You should make use of `template_tensorboard.yaml.jinja` as the
+template to run the job.
+ 
+And you should edit more job parameters, such as `tensorboard_host` and 
+`host_train_dir`. `tensorboard_host` is used to specify the host of tensorboard
+and worker-0 pod. You should fill the value of `tensorboard_host` with the kubernets
+hostname of the node selected. `host_train_dir` is used to specify the path on 
+the host which is used to save the train data.
+
+> Kubelet will set the hostname of node as `kubernets hostname` as default.
+You can also specify the `kubernets hostname` with the parameter 
+`--hostname_override=` of kubelet.
+  
 ## Google Cloud Storage
 
 To support reading and writing to Google Cloud Storage, you need to set up
