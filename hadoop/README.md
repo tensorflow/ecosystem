@@ -11,7 +11,7 @@ installed.
 
 2. [Apache Maven](https://maven.apache.org/)
 
-3. Downloads protos from [googleapis](https://github.com/tensorflow/tensorflow)
+3. Download and compile protos from [TensorFlow](https://github.com/tensorflow/tensorflow).
 
 4. Tested with Hadoop 2.6.0. Patches are welcome if there are incompatibilities
    with your Hadoop version.
