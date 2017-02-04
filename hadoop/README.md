@@ -37,7 +37,7 @@ installed.
     mvn install
     ```
 
-    After installed (or deployed), the package can be used with following dependency:
+    After installation (or deployment), the package can be used with the following dependency:
 
     ```xml
     <dependency>
@@ -47,15 +47,37 @@ installed.
     </dependency>
     ```
 
+    Alternatively, use the shaded version of the package in case of incompatibilities with the version
+    of the protobuf library in your application. For example, Apache Spark uses an older version of the
+    protobuf library which can cause conflicts. The shaded package can be used as follows:
+
+    ```xml
+    <dependency>
+      <groupId>org.tensorflow</groupId>
+      <artifactId>tensorflow-hadoop</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <classifier>shaded-protobuf</classifier>
+    </dependency>
+    ```
+
 ## Use with MapReduce
 The Hadoop MapReduce example can be found [here](src/main/java/org/tensorflow/hadoop/example/TFRecordFileMRExample.java).
 
 ## Use with Spark
-Spark support reading/writing files with Hadoop InputFormat/OutputFormat, the
-following code snippet demostrate the usage.
+Spark supports reading/writing files with Hadoop InputFormat/OutputFormat. Use the shaded version of the
+package to avoid conflicts with the protobuf version included in Spark.
+
+The following command demonstrates how to use the package with spark-shell:
+
+```bash
+$spark-shell --master local --jars target/tensorflow-hadoop-1.0-SNAPSHOT-shaded-protobuf.jar
+```
+
+
+The following code snippet demonstrates the usage.
 
 ```scala
-import com.google.protobuf.ByteString
+import org.tensorflow.hadoop.shaded.protobuf.ByteString
 import org.apache.hadoop.io.{NullWritable, BytesWritable}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.tensorflow.example.{BytesList, Int64List, Feature, Features, Example}
