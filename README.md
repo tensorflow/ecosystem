@@ -17,6 +17,7 @@ request.
   Marathon, deployed on top of Mesos.
 - [hadoop](hadoop) - TFRecord file InputFormat/OutputFormat for Hadoop MapReduce
   and Spark.
+- [spark](spark) - Spark Tensorflow Connector
 
 ## Distributed TensorFlow
 
