@@ -1,10 +1,10 @@
 name := "spark-tensorflow-connector"
 
-organization := "org.trustedanalytics"
+organization := "org.tensorflow"
 
 scalaVersion in Global := "2.11.8"
 
-spName := "tapanalyticstoolkit/spark-tensorflow-connector"
+spName := "tensorflow/spark-tensorflow-connector"
 
 sparkVersion := "2.1.0"
 
@@ -62,10 +62,10 @@ publishMavenStyle := true
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
 pomExtra :=
-  <url>https://github.com/tapanalyticstoolkit/spark-tensorflow-connector</url>
+  <url>https://github.com/tensorflow/ecosystem</url>
     <scm>
-      <url>git@github.com:tapanalyticstoolkit/spark-tensorflow-connector.git</url>
-      <connection>scm:git:git@github.com:tapanalyticstoolkit/spark-tensorflow-connector.git</connection>
+      <url>git@github.com:tensorflow/ecosystem.git</url>
+      <connection>scm:git:git@github.com:tensorflow/ecosystem.git</connection>
     </scm>
     <developers>
       <developer>

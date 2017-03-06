@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/tapanalyticstoolkit/spark-tensorflow-connector.svg?branch=sbt)](https://travis-ci.org/tapanalyticstoolkit/spark-tensorflow-connector)
-
 # spark-tensorflow-connector
 
 This repo contains a library for loading and storing TensorFlow records with [Apache Spark](http://spark.apache.org/).
@@ -73,15 +71,15 @@ val rdd = spark.sparkContext.parallelize(testRows)
 
 //Save DataFrame as TFRecords
 val df: DataFrame = spark.createDataFrame(rdd, schema)
-df.write.format("tensorflow").save(path)
+df.write.format("tfrecords").save(path)
 
 //Read TFRecords into DataFrame.
 //The DataFrame schema is inferred from the TFRecords if no custom schema is provided.
-val importedDf1: DataFrame = spark.read.format("tensorflow").load(path)
+val importedDf1: DataFrame = spark.read.format("tfrecords").load(path)
 importedDf1.show()
 
 //Read TFRecords into DataFrame using custom schema
-val importedDf2: DataFrame = spark.read.format("tensorflow").schema(schema).load(path)
+val importedDf2: DataFrame = spark.read.format("tfrecords").schema(schema).load(path)
 importedDf2.show()
 
 ```

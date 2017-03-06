@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016 Intel Corporation 
+ * Copyright 2016 The TensorFlow Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.tensorflow.spark.datasources.tfrecords
 
 import org.apache.spark.rdd.RDD
@@ -49,10 +48,10 @@ class TensorflowSuite extends SharedSparkSessionSuite {
       val rdd = spark.sparkContext.parallelize(testRows)
 
       val df: DataFrame = spark.createDataFrame(rdd, schema)
-      df.write.format("tensorflow").save(path)
+      df.write.format("tfrecords").save(path)
 
       //If schema is not provided. It will automatically infer schema
-      val importedDf: DataFrame = spark.read.format("tensorflow").schema(schema).load(path)
+      val importedDf: DataFrame = spark.read.format("tfrecords").schema(schema).load(path)
       val actualDf = importedDf.select("id", "IntegerTypelabel", "LongTypelabel", "FloatTypelabel", "DoubleTypelabel", "vectorlabel", "name").sort("name")
 
       val expectedRows = df.collect()
