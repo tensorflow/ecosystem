@@ -53,6 +53,7 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
           case FloatType | DoubleType => FloatListFeatureEncoder.encode(value)
           case ArrayType(IntegerType, _) | ArrayType(LongType, _) => Int64ListFeatureEncoder.encode(value)
           case ArrayType(DoubleType, _) => FloatListFeatureEncoder.encode(value)
+
           case _ => BytesListFeatureEncoder.encode(value)
         }
         features.putFeature(structField.name, feature)

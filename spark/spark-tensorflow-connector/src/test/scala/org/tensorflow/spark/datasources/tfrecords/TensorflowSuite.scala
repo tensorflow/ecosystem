@@ -45,6 +45,14 @@ class TensorflowSuite extends SharedSparkSessionSuite {
         StructField("vectorlabel", ArrayType(DoubleType, true)),
         StructField("name", StringType)))
 
+      /*val expectedSchema = StructType(
+      StructField("headers", StructType(
+        StructField("Charset", StringType, true) ::
+          StructField("Host", StringType, true) :: Nil)
+        , true) ::
+        StructField("ip", StringType, true) ::
+        StructField("nullstr", StringType, true):: Nil)*/
+
       val rdd = spark.sparkContext.parallelize(testRows)
 
       val df: DataFrame = spark.createDataFrame(rdd, schema)
