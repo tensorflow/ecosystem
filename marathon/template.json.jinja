@@ -37,7 +37,7 @@
           "image": "{{ image }}",
         },
         "network": "HOST",
-        "type": "DOCKER"
+        "type": "MESOS"
       },
       "args": ["--worker_hosts", "{{ worker_hosts() }}", "--ps_hosts", "{{ ps_hosts() }}", "--job_name", "{{ job }}", "--task_index", "{{ i }}", "--train_dir", "{{ train_dir }}", "--sync_replica", "True", "--train_steps", "2000"],
       "cpus": {{ cpu }},
@@ -53,7 +53,7 @@
           "image": "{{ image }}",
         },
         "network": "HOST",
-        "type": "DOCKER"
+        "type": "MESOS"
       },
       "cmd": "tensorboard --logdir {{ train_dir }}",
       "cpus": {{ cpu }},
