@@ -75,7 +75,7 @@ class TensorflowSuite extends SharedSparkSessionSuite {
       val rowWithSchema = new GenericRowWithSchema(Array[Any](1, 23L, 10.0F, 14.0, doubleArray, "r1"), schemaStructType)
 
       //Encode Sql Row to TensorFlow example
-      val example = DefaultTfRecordRowEncoder.encodeTfRecord(rowWithSchema)
+      val example = DefaultTfRecordRowEncoder.encodeExample(rowWithSchema)
       import org.tensorflow.example.Feature
 
       //Verify each Datatype converted to TensorFlow datatypes
@@ -100,18 +100,21 @@ class TensorflowSuite extends SharedSparkSessionSuite {
 
     }
 
-    "Throw an exception for a vector with null values during Encode" in {
-      intercept[Exception] {
-        val schemaStructType = StructType(Array(
-          StructField("vectorlabel", ArrayType(DoubleType, true))
-        ))
-        val doubleArray = Array(1.1, null, 111.1, null, 11111.1)
+    "Encode arrays with null values as TensorFlow example" in {
+      val schemaStructType = StructType(Array(
+        StructField("vectorlabel", ArrayType(DoubleType, true))
+      ))
+      val doubleArray = Array(1.1, null, 111.1, null, 11111.1)
 
-        val rowWithSchema = new GenericRowWithSchema(Array[Any](doubleArray), schemaStructType)
+      val rowWithSchema = new GenericRowWithSchema(Array[Any](doubleArray), schemaStructType)
 
-        //Throws NullPointerException
-        DefaultTfRecordRowEncoder.encodeTfRecord(rowWithSchema)
-      }
+      //Encode Sql Row to TensorFlow example
+      val example = DefaultTfRecordRowEncoder.encodeExample(rowWithSchema)
+
+      //Verify each Datatype converted to TensorFlow datatypes
+      val featureMap = example.getFeatures.getFeatureMap.asScala
+      assert(featureMap("vectorlabel").getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER)
+      assert(featureMap("vectorlabel").getFloatList.getValueList.toArray === Array(1.1F, 0F, 111.1F, 0F, 11111.1F))
     }
 
     "Decode given TensorFlow Example as Row" in {
@@ -147,7 +150,7 @@ class TensorflowSuite extends SharedSparkSessionSuite {
         .build()
 
       //Decode TensorFlow example to Sql Row
-      val actualRow = DefaultTfRecordRowDecoder.decodeTfRecord(example, schema)
+      val actualRow = DefaultTfRecordRowDecoder.decodeExample(example, schema)
       actualRow should equal(expectedRow)
     }
 

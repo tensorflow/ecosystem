@@ -24,14 +24,24 @@ trait TfRecordRowDecoder {
   /**
    * Decodes each TensorFlow "Example" as DataFrame "Row"
    *
-   * Maps each feature in Example to element in Row with DataType based on custom schema or
-   * default mapping of Int64List, FloatList, BytesList to column data type
+   * Maps each feature in Example to element in Row with DataType based on custom schema 
    *
    * @param example TensorFlow Example to decode
    * @param schema Decode Example using specified schema
    * @return a DataFrame row
    */
-  def decodeTfRecord(example: Example, schema: StructType): Row
+  def decodeExample(example: Example, schema: StructType): Row
+
+  /**
+   * Decodes each TensorFlow "SequenceExample" as DataFrame "Row"
+   *
+   * Maps each feature in SequenceExample to element in Row with DataType based on custom schema 
+   *
+   * @param sequenceExample TensorFlow SequenceExample to decode
+   * @param schema Decode SequenceExample using specified schema
+   * @return a DataFrame row
+   */
+  def decodeSequenceExample(sequenceExample: SequenceExample, schema: StructType): Row
 }
 
 object DefaultTfRecordRowDecoder extends TfRecordRowDecoder {
@@ -45,26 +55,75 @@ object DefaultTfRecordRowDecoder extends TfRecordRowDecoder {
    * @param schema Decode Example using specified schema
    * @return a DataFrame row
    */
-  def decodeTfRecord(example: Example, schema: StructType): Row = {
+  def decodeExample(example: Example, schema: StructType): Row = {
     val row = Array.fill[Any](schema.length)(null)
     example.getFeatures.getFeatureMap.asScala.foreach {
       case (featureName, feature) =>
         val index = schema.fieldIndex(featureName)
-        val colDataType = schema.fields(index).dataType
-        row(index) = colDataType match {
-          case IntegerType => IntFeatureDecoder.decode(feature)
-          case LongType => LongFeatureDecoder.decode(feature)
-          case FloatType => FloatFeatureDecoder.decode(feature)
-          case DoubleType => DoubleFeatureDecoder.decode(feature)
-          case ArrayType(IntegerType, true) => IntListFeatureDecoder.decode(feature)
-          case ArrayType(LongType, _) => LongListFeatureDecoder.decode(feature)
-          case ArrayType(FloatType, _) => FloatListFeatureDecoder.decode(feature)
-          case ArrayType(DoubleType, _) => DoubleListFeatureDecoder.decode(feature)
-          case StringType => StringFeatureDecoder.decode(feature)
-          case _ => throw new RuntimeException(s"Cannot convert feature to unsupported data type ${colDataType}")
-        }
+        row(index) = decodeFeature(feature, schema, index)
     }
     Row.fromSeq(row)
+  }
+
+  /**
+   * Decodes each TensorFlow "SequenceExample" as DataFrame "Row"
+   *
+   * Maps each feature in SequenceExample to element in Row with DataType based on custom schema
+   *
+   * @param sequenceExample TensorFlow SequenceExample to decode
+   * @param schema Decode Example using specified schema
+   * @return a DataFrame row
+   */
+  def decodeSequenceExample(sequenceExample: SequenceExample, schema: StructType): Row = {
+    val row = Array.fill[Any](schema.length)(null)
+
+    //Decode features
+    sequenceExample.getContext.getFeatureMap.asScala.foreach {
+      case (featureName, feature) =>
+        val index = schema.fieldIndex(featureName)
+        row(index) = decodeFeature(feature, schema, index)
+    }
+
+    //Decode feature lists
+    sequenceExample.getFeatureLists.getFeatureListMap.asScala.foreach {
+      case (featureName, featureList) =>
+        val index = schema.fieldIndex(featureName)
+        row(index) = decodeFeatureList(featureList, schema, index)
+    }
+
+    Row.fromSeq(row)
+  }
+
+  // Decode Feature to Scala Type based on field in schema
+  private def decodeFeature(feature: Feature, schema: StructType, fieldIndex: Int): Any = {
+    val colDataType = schema.fields(fieldIndex).dataType
+
+    colDataType match {
+      case IntegerType => IntFeatureDecoder.decode(feature)
+      case LongType => LongFeatureDecoder.decode(feature)
+      case FloatType => FloatFeatureDecoder.decode(feature)
+      case DoubleType => DoubleFeatureDecoder.decode(feature)
+      case ArrayType(IntegerType, _) => IntListFeatureDecoder.decode(feature)
+      case ArrayType(LongType, _) => LongListFeatureDecoder.decode(feature)
+      case ArrayType(FloatType, _) => FloatListFeatureDecoder.decode(feature)
+      case ArrayType(DoubleType, _) => DoubleListFeatureDecoder.decode(feature)
+      case StringType => StringFeatureDecoder.decode(feature)
+      case _ => throw new scala.RuntimeException(s"Cannot convert Feature to unsupported data type ${colDataType}")
+    }
+  }
+
+  // Decode FeatureList to Scala Type based on field in schema
+  private def decodeFeatureList(featureList: FeatureList, schema: StructType, fieldIndex: Int): Any = {
+    val colDataType = schema.fields(fieldIndex).dataType
+
+    colDataType match {
+      case ArrayType(ArrayType(IntegerType, _), _) => IntFeatureListDecoder.decode(featureList)
+      case ArrayType(ArrayType(LongType, _), _) => LongFeatureListDecoder.decode(featureList)
+      case ArrayType(ArrayType(FloatType, _), _) => FloatFeatureListDecoder.decode(featureList)
+      case ArrayType(ArrayType(DoubleType, _), _) => DoubleFeatureListDecoder.decode(featureList)
+      case ArrayType(StringType, _) => StringFeatureListDecoder.decode(featureList)
+      case _ => throw new scala.RuntimeException(s"Cannot convert FeatureList to unsupported data type ${colDataType}")
+    }
   }
 }
 

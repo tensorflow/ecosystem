@@ -37,7 +37,7 @@ case class TensorflowRelation(options: Map[String, String], customSchema: Option
 
     val finalSchema = customSchema.getOrElse(TensorflowInferSchema(exampleRdd))
 
-    (exampleRdd.map(example => DefaultTfRecordRowDecoder.decodeTfRecord(example, finalSchema)), finalSchema)
+    (exampleRdd.map(example => DefaultTfRecordRowDecoder.decodeExample(example, finalSchema)), finalSchema)
   }
 
   override def sqlContext: SQLContext = session.sqlContext

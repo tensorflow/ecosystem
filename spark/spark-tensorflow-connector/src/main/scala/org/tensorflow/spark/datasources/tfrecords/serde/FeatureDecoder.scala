@@ -94,7 +94,7 @@ object LongListFeatureDecoder extends FeatureDecoder[Seq[Long]] {
     }
     catch {
       case ex: Exception =>
-        throw new RuntimeException(s"Cannot convert feature to Array[Long].", ex)
+        throw new RuntimeException(s"Cannot convert feature to Seq[Long].", ex)
     }
   }
 }
@@ -129,7 +129,7 @@ object FloatListFeatureDecoder extends FeatureDecoder[Seq[Float]] {
     }
     catch {
       case ex: Exception =>
-        throw new RuntimeException(s"Cannot convert feature to Array[Float].", ex)
+        throw new RuntimeException(s"Cannot convert feature to Seq[Float].", ex)
     }
   }
 }
@@ -164,7 +164,7 @@ object DoubleListFeatureDecoder extends FeatureDecoder[Seq[Double]] {
     }
     catch {
       case ex: Exception =>
-        throw new RuntimeException(s"Cannot convert feature to Array[Double].", ex)
+        throw new RuntimeException(s"Cannot convert feature to Seq[Double].", ex)
     }
   }
 }

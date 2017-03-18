@@ -46,7 +46,7 @@ class DefaultSource extends DataSourceRegister
 
     //Export DataFrame as TFRecords
     val features = data.rdd.map(row => {
-      val example = DefaultTfRecordRowEncoder.encodeTfRecord(row)
+      val example = DefaultTfRecordRowEncoder.encodeExample(row)
       (new BytesWritable(example.toByteArray), NullWritable.get())
     })
     features.saveAsNewAPIHadoopFile[TFRecordFileOutputFormat](path)
