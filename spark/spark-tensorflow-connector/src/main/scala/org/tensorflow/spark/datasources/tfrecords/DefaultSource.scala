@@ -45,11 +45,23 @@ class DefaultSource extends DataSourceRegister
     val path = parameters("path")
 
     //Export DataFrame as TFRecords
-    val features = data.rdd.map(row => {
-      val example = DefaultTfRecordRowEncoder.encodeExample(row)
-      (new BytesWritable(example.toByteArray), NullWritable.get())
-    })
-    features.saveAsNewAPIHadoopFile[TFRecordFileOutputFormat](path)
+    val recordType = parameters.getOrElse("recordType", "SequenceExample")
+    val serializedRecords = recordType match {
+      case "Example" => {
+        data.rdd.map(row => {
+          val example = DefaultTfRecordRowEncoder.encodeExample(row)
+          (new BytesWritable(example.toByteArray), NullWritable.get())
+        })
+      }
+      case "SequenceExample" => {
+        data.rdd.map(row => {
+          val seqExample = DefaultTfRecordRowEncoder.encodeSequenceExample(row)
+          (new BytesWritable(seqExample.toByteArray), NullWritable.get())
+        })
+      }
+      case _ => throw new RuntimeException(s"Unsupported recordType option: ${recordType}")
+    }
+    serializedRecords.saveAsNewAPIHadoopFile[TFRecordFileOutputFormat](path)
 
     TensorflowRelation(parameters)(sqlContext.sparkSession)
   }

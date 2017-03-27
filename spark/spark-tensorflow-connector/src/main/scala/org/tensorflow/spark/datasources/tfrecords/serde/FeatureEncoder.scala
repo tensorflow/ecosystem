@@ -61,9 +61,13 @@ object FloatListFeatureEncoder extends FeatureEncoder[Seq[Float]] {
 /**
  * Encode input value to ByteList
  */
-object BytesListFeatureEncoder extends FeatureEncoder[String] {
-  override def encode(value: String): Feature = {
-    val byteList = BytesList.newBuilder().addValue(ByteString.copyFrom(value.getBytes)).build()
-    Feature.newBuilder().setBytesList(byteList).build()
+object BytesListFeatureEncoder extends FeatureEncoder[Seq[String]] {
+  override def encode(value: Seq[String]): Feature = {
+    val bytesListBuilder = BytesList.newBuilder()
+    value.foreach {x =>
+      bytesListBuilder.addValue(ByteString.copyFrom(x.getBytes))
+    }
+    val bytesList = bytesListBuilder.build()
+    Feature.newBuilder().setBytesList(bytesList).build()
   }
 }

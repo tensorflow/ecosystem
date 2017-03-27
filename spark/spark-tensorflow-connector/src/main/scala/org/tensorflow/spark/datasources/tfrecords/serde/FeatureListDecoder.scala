@@ -58,17 +58,17 @@ object FloatFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Float]]] {
 /**
  * Decode TensorFlow "FeatureList" to 2-dimensional double array
  */
-object DoubleFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Float]]] {
-  override def decode(featureList: FeatureList): Seq[Seq[Float]] = {
-    featureList.getFeatureList.asScala.map(x => FloatListFeatureDecoder.decode(x)).toSeq
+object DoubleFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Double]]] {
+  override def decode(featureList: FeatureList): Seq[Seq[Double]] = {
+    featureList.getFeatureList.asScala.map(x => DoubleListFeatureDecoder.decode(x)).toSeq
   }
 }
 
 /**
- * Decode TensorFlow "FeatureList" to array of strings
+ * Decode TensorFlow "FeatureList" to 2-dimensional string array
  */
-object StringFeatureListDecoder extends FeatureListDecoder[Seq[String]] {
-  override def decode(featureList: FeatureList): Seq[String] = {
-    featureList.getFeatureList.asScala.map(x => StringFeatureDecoder.decode(x)).toSeq
+object StringFeatureListDecoder extends FeatureListDecoder[Seq[Seq[String]]] {
+  override def decode(featureList: FeatureList): Seq[Seq[String]] = {
+    featureList.getFeatureList.asScala.map(x => StringListFeatureDecoder.decode(x)).toSeq
   }
 }

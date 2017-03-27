@@ -18,8 +18,10 @@ package org.tensorflow.spark.datasources.tfrecords.serde
 import org.scalatest.{Matchers, WordSpec}
 import org.tensorflow.example.{BytesList, Feature, FloatList, Int64List}
 import org.tensorflow.hadoop.shaded.protobuf.ByteString
+import org.tensorflow.spark.datasources.tfrecords.TestingUtils._
 
 class FeatureDecoderTest extends WordSpec with Matchers {
+  val epsilon = 1E-6
 
   "Int Feature decoder" should {
 
@@ -110,7 +112,7 @@ class FeatureDecoderTest extends WordSpec with Matchers {
     "Decode Feature to Float" in {
       val floatList = FloatList.newBuilder().addValue(2.5F).build()
       val floatFeature = Feature.newBuilder().setFloatList(floatList).build()
-      FloatFeatureDecoder.decode(floatFeature) should equal(2.5F)
+      FloatFeatureDecoder.decode(floatFeature) should equal(2.5F +- epsilon.toFloat)
     }
 
     "Throw an exception if length of feature array exceeds 1" in {
@@ -135,7 +137,7 @@ class FeatureDecoderTest extends WordSpec with Matchers {
     "Decode Feature to Float List" in {
       val floatList = FloatList.newBuilder().addValue(2.5F).addValue(4.3F).build()
       val floatFeature = Feature.newBuilder().setFloatList(floatList).build()
-      FloatListFeatureDecoder.decode(floatFeature) should equal(Seq(2.5F, 4.3F))
+      assert(FloatListFeatureDecoder.decode(floatFeature) ~== Seq(2.5F, 4.3F))
     }
 
     "Throw an exception if feature is not a FloatList" in {
@@ -152,7 +154,7 @@ class FeatureDecoderTest extends WordSpec with Matchers {
     "Decode Feature to Double" in {
       val floatList = FloatList.newBuilder().addValue(2.5F).build()
       val floatFeature = Feature.newBuilder().setFloatList(floatList).build()
-      DoubleFeatureDecoder.decode(floatFeature) should equal(2.5d)
+      DoubleFeatureDecoder.decode(floatFeature) should equal(2.5d +- epsilon)
     }
 
     "Throw an exception if length of feature array exceeds 1" in {
@@ -177,7 +179,7 @@ class FeatureDecoderTest extends WordSpec with Matchers {
     "Decode Feature to Double List" in {
       val floatList = FloatList.newBuilder().addValue(2.5F).addValue(4.0F).build()
       val floatFeature = Feature.newBuilder().setFloatList(floatList).build()
-      DoubleListFeatureDecoder.decode(floatFeature) should equal(Seq(2.5d, 4.0d))
+      assert(DoubleListFeatureDecoder.decode(floatFeature) ~== Seq(2.5d, 4.0d))
     }
 
     "Throw an exception if feature is not a DoubleList" in {
@@ -189,12 +191,21 @@ class FeatureDecoderTest extends WordSpec with Matchers {
     }
   }
 
-  "Bytes List Feature decoder" should {
+  "String Feature decoder" should {
 
-    "Decode Feature to Bytes List" in {
+    "Decode Feature to String" in {
       val bytesList = BytesList.newBuilder().addValue(ByteString.copyFrom("str-input".getBytes)).build()
       val bytesFeature = Feature.newBuilder().setBytesList(bytesList).build()
       StringFeatureDecoder.decode(bytesFeature) should equal("str-input")
+    }
+
+    "Throw an exception if length of feature array exceeds 1" in {
+      intercept[Exception] {
+        val bytesList = BytesList.newBuilder().addValue(ByteString.copyFrom("alice".getBytes))
+          .addValue(ByteString.copyFrom("bob".getBytes)).build()
+        val bytesFeature = Feature.newBuilder().setBytesList(bytesList).build()
+        StringFeatureDecoder.decode(bytesFeature)
+      }
     }
 
     "Throw an exception if feature is not a BytesList" in {
@@ -202,6 +213,24 @@ class FeatureDecoderTest extends WordSpec with Matchers {
         val floatList = FloatList.newBuilder().addValue(2.5F).addValue(4.0F).build()
         val floatFeature = Feature.newBuilder().setFloatList(floatList).build()
         StringFeatureDecoder.decode(floatFeature)
+      }
+    }
+  }
+
+  "String List Feature decoder" should {
+
+    "Decode Feature to String List" in {
+      val bytesList = BytesList.newBuilder().addValue(ByteString.copyFrom("alice".getBytes))
+        .addValue(ByteString.copyFrom("bob".getBytes)).build()
+      val bytesFeature = Feature.newBuilder().setBytesList(bytesList).build()
+      StringListFeatureDecoder.decode(bytesFeature) should equal(Seq("alice", "bob"))
+    }
+
+    "Throw an exception if feature is not a BytesList" in {
+      intercept[Exception] {
+        val floatList = FloatList.newBuilder().addValue(2.5F).addValue(4.0F).build()
+        val floatFeature = Feature.newBuilder().setFloatList(floatList).build()
+        StringListFeatureDecoder.decode(floatFeature)
       }
     }
   }

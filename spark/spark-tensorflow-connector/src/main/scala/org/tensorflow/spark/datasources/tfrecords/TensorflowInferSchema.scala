@@ -17,8 +17,7 @@ package org.tensorflow.spark.datasources.tfrecords
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
-import org.tensorflow.example.{Example, Feature}
-
+import org.tensorflow.example.{SequenceExample, Example, Feature}
 import scala.collection.JavaConverters._
 import scala.collection.mutable.Map
 import scala.util.control.Exception._
@@ -77,7 +76,7 @@ object TensorflowInferSchema {
   private def inferField(feature: Feature): DataType = {
     feature.getKindCase.getNumber match {
       case Feature.BYTES_LIST_FIELD_NUMBER => {
-        StringType
+        parseBytesList(feature)
       }
       case Feature.INT64_LIST_FIELD_NUMBER => {
         parseInt64List(feature)
@@ -86,6 +85,20 @@ object TensorflowInferSchema {
         parseFloatList(feature)
       }
       case _ => throw new RuntimeException("unsupported type ...")
+    }
+  }
+
+  private def parseBytesList(feature: Feature): DataType = {
+    val bytesList = feature.getBytesList.getValueList.asScala.toArray
+    val length = bytesList.size
+    if (length == 0) {
+      null
+    }
+    else if (length > 1) {
+      ArrayType(StringType)
+    }
+    else {
+      StringType
     }
   }
 
@@ -148,6 +161,7 @@ object TensorflowInferSchema {
   else {
     throw new RuntimeException("Unable to parse field datatype to float64...")
   }
+
   /**
    * Copied from internal Spark api
    * [[org.apache.spark.sql.catalyst.analysis.HiveTypeCoercion]]
@@ -168,6 +182,7 @@ object TensorflowInferSchema {
       case x if x.equals(ArrayType(LongType)) => 4
       case x if x.equals(ArrayType(DoubleType)) => 5
       case x if x.equals(StringType) => 6
+      case x if x.equals(ArrayType(StringType)) => 7
       case _ => throw new RuntimeException("Unable to get the precedence for given datatype...")
     }
   }
@@ -184,6 +199,8 @@ object TensorflowInferSchema {
     case (t1, t2) if t1.equals(ArrayType(DoubleType)) && t2.equals(ArrayType(LongType)) => Some(ArrayType(DoubleType))
     case (StringType, t2) => Some(StringType)
     case (t1, StringType) => Some(StringType)
+    case (ArrayType(StringType,_), t2) => Some(ArrayType(StringType))
+    case (t1, ArrayType(StringType,_)) => Some(ArrayType(StringType))
 
     // Promote numeric types to the highest of the two and all numeric types to unlimited decimal
     case (t1, t2) =>

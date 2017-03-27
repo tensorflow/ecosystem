@@ -16,7 +16,6 @@
 package org.tensorflow.spark.datasources.tfrecords.serde
 
 import org.tensorflow.example.Feature
-
 import scala.collection.JavaConverters._
 
 trait FeatureDecoder[T] {
@@ -48,7 +47,7 @@ object IntFeatureDecoder extends FeatureDecoder[Int] {
 }
 
 /**
- * Decode TensorFlow "Feature" to Seq[Int]
+ * Decode TensorFlow "Feature" to list of integers
  */
 object IntListFeatureDecoder extends FeatureDecoder[Seq[Int]] {
   override def decode(feature: Feature): Seq[Int] = {
@@ -83,7 +82,7 @@ object LongFeatureDecoder extends FeatureDecoder[Long] {
 }
 
 /**
- * Decode TensorFlow "Feature" to Seq[Long]
+ * Decode TensorFlow "Feature" to list of Longs
  */
 object LongListFeatureDecoder extends FeatureDecoder[Seq[Long]] {
   override def decode(feature: Feature): Seq[Long] = {
@@ -118,7 +117,7 @@ object FloatFeatureDecoder extends FeatureDecoder[Float] {
 }
 
 /**
- * Decode TensorFlow "Feature" to Seq[Float]
+ * Decode TensorFlow "Feature" to list of Floats
  */
 object FloatListFeatureDecoder extends FeatureDecoder[Seq[Float]] {
   override def decode(feature: Feature): Seq[Float] = {
@@ -153,7 +152,7 @@ object DoubleFeatureDecoder extends FeatureDecoder[Double] {
 }
 
 /**
- * Decode TensorFlow "Feature" to Seq[Double]
+ * Decode TensorFlow "Feature" to list of Doubles
  */
 object DoubleListFeatureDecoder extends FeatureDecoder[Seq[Double]] {
   override def decode(feature: Feature): Seq[Double] = {
@@ -176,11 +175,30 @@ object StringFeatureDecoder extends FeatureDecoder[String] {
   override def decode(feature: Feature): String = {
     require(feature.getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER, "Feature must be of type ByteList")
     try {
-      feature.getBytesList.toByteString.toStringUtf8.trim
+      val bytesList = feature.getBytesList.getValueList
+      require(bytesList.size() == 1, "Length of BytesList must equal 1")
+      bytesList.get(0).toStringUtf8.trim
     }
     catch {
       case ex: Exception =>
         throw new RuntimeException(s"Cannot convert feature to String.", ex)
+    }
+  }
+}
+
+/**
+ * Decode TensorFlow "Feature" to list of Strings
+ */
+object StringListFeatureDecoder extends FeatureDecoder[Seq[String]] {
+  override def decode(feature: Feature): Seq[String] = {
+    require(feature.getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER, "Feature must be of type ByteList")
+    try {
+      val array = feature.getBytesList.getValueList.asScala.toArray
+      array.map(_.toStringUtf8.trim)
+    }
+    catch {
+      case ex: Exception =>
+        throw new RuntimeException(s"Cannot convert feature to Seq[String].", ex)
     }
   }
 }

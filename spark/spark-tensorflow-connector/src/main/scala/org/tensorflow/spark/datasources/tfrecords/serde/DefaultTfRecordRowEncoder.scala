@@ -102,13 +102,16 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
       case LongType => Int64ListFeatureEncoder.encode(Seq(row.getLong(index)))
       case FloatType => FloatListFeatureEncoder.encode(Seq(row.getFloat(index)))
       case DoubleType => FloatListFeatureEncoder.encode(Seq(row.getDouble(index).toFloat))
+      case StringType => BytesListFeatureEncoder.encode(Seq(row.getString(index)))
       case ArrayType(IntegerType, _) | ArrayType(LongType, _) =>
         Int64ListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toLongArray())
       case ArrayType(FloatType, _) =>
         FloatListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toFloatArray())
       case ArrayType(DoubleType, _) =>
         FloatListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toDoubleArray().map(_.toFloat))
-      case _ => BytesListFeatureEncoder.encode(row.getString(index))
+      case ArrayType(_, _) =>
+        BytesListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toArray[String](StringType))
+      case _ => BytesListFeatureEncoder.encode(Seq(row.getString(index)))
     }
     feature
   }
@@ -134,8 +137,10 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
         }
         FloatFeatureListEncoder.encode(floatArrays)
 
-      case ArrayType(StringType, _) =>
-        val arrayData = ArrayData.toArrayData(row.get(index)).array.map(_.toString)
+      case ArrayType(ArrayType(StringType, _), _) =>
+        val arrayData = ArrayData.toArrayData(row.get(index)).array.map {arr =>
+          ArrayData.toArrayData(arr).toArray[String](StringType).toSeq
+        }.toSeq
         BytesFeatureListEncoder.encode(arrayData)
 
       case _ => throw new RuntimeException(s"Cannot convert row element ${row.get(index)} to FeatureList.")
