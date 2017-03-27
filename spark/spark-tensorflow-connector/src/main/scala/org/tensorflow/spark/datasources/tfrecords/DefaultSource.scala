@@ -44,23 +44,30 @@ class DefaultSource extends DataSourceRegister
 
     val path = parameters("path")
 
+    val recordType = parameters.getOrElse("recordType", "sequenceExample")
+
     //Export DataFrame as TFRecords
     val features = data.rdd.map(row => {
-      val example = DefaultTfRecordRowEncoder.encodeExample(row)
-      (new BytesWritable(example.toByteArray), NullWritable.get())
+      recordType match {
+        case "example" => val example = DefaultTfRecordRowEncoder.encodeExample(row)
+          (new BytesWritable(example.toByteArray), NullWritable.get())
+        case "sequenceExample" => val sequenceExample = DefaultTfRecordRowEncoder.encodeSequenceExample(row)
+          (new BytesWritable(sequenceExample.toByteArray), NullWritable.get())
+      }
     })
     features.saveAsNewAPIHadoopFile[TFRecordFileOutputFormat](path)
 
     TensorflowRelation(parameters)(sqlContext.sparkSession)
   }
 
+  // Reads TensorFlow Records into DataFrame with Custom Schema
   override def createRelation(sqlContext: SQLContext,
                       parameters: Map[String, String],
                       schema: StructType): BaseRelation = {
     TensorflowRelation(parameters, Some(schema))(sqlContext.sparkSession)
   }
 
-  // Reads TensorFlow Records into DataFrame
+  // Reads TensorFlow Records into DataFrame with schema inferred
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): TensorflowRelation = {
     TensorflowRelation(parameters)(sqlContext.sparkSession)
   }
