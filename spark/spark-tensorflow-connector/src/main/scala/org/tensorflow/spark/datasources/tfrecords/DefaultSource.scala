@@ -44,35 +44,30 @@ class DefaultSource extends DataSourceRegister
 
     val path = parameters("path")
 
+    val recordType = parameters.getOrElse("recordType", "sequenceExample")
+
     //Export DataFrame as TFRecords
-    val recordType = parameters.getOrElse("recordType", "SequenceExample")
-    val serializedRecords = recordType match {
-      case "Example" => {
-        data.rdd.map(row => {
-          val example = DefaultTfRecordRowEncoder.encodeExample(row)
+    val features = data.rdd.map(row => {
+      recordType match {
+        case "example" => val example = DefaultTfRecordRowEncoder.encodeExample(row)
           (new BytesWritable(example.toByteArray), NullWritable.get())
-        })
+        case "sequenceExample" => val sequenceExample = DefaultTfRecordRowEncoder.encodeSequenceExample(row)
+          (new BytesWritable(sequenceExample.toByteArray), NullWritable.get())
       }
-      case "SequenceExample" => {
-        data.rdd.map(row => {
-          val seqExample = DefaultTfRecordRowEncoder.encodeSequenceExample(row)
-          (new BytesWritable(seqExample.toByteArray), NullWritable.get())
-        })
-      }
-      case _ => throw new RuntimeException(s"Unsupported recordType option: ${recordType}")
-    }
-    serializedRecords.saveAsNewAPIHadoopFile[TFRecordFileOutputFormat](path)
+    })
+    features.saveAsNewAPIHadoopFile[TFRecordFileOutputFormat](path)
 
     TensorflowRelation(parameters)(sqlContext.sparkSession)
   }
 
+  // Reads TensorFlow Records into DataFrame with Custom Schema
   override def createRelation(sqlContext: SQLContext,
                       parameters: Map[String, String],
                       schema: StructType): BaseRelation = {
     TensorflowRelation(parameters, Some(schema))(sqlContext.sparkSession)
   }
 
-  // Reads TensorFlow Records into DataFrame
+  // Reads TensorFlow Records into DataFrame with schema inferred
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): TensorflowRelation = {
     TensorflowRelation(parameters)(sqlContext.sparkSession)
   }
