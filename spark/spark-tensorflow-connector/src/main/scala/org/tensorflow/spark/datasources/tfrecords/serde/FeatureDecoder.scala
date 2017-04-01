@@ -33,7 +33,7 @@ trait FeatureDecoder[T] {
  */
 object IntFeatureDecoder extends FeatureDecoder[Int] {
   override def decode(feature: Feature): Int = {
-    require(feature.getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER, "Feature must be of type Int64List")
+    require(feature != null && feature.getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER, "Feature must be of type Int64List")
     try {
       val int64List = feature.getInt64List.getValueList
       require(int64List.size() == 1, "Length of Int64List must equal 1")
@@ -51,9 +51,9 @@ object IntFeatureDecoder extends FeatureDecoder[Int] {
  */
 object IntListFeatureDecoder extends FeatureDecoder[Seq[Int]] {
   override def decode(feature: Feature): Seq[Int] = {
-    require(feature.getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER, "Feature must be of type Int64List")
+    require(feature != null && feature.getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER, "Feature must be of type Int64List")
     try {
-      val array = feature.getInt64List.getValueList.asScala.toArray
+      val array = feature.getInt64List.getValueList.asScala.toSeq
       array.map(_.toInt)
     }
     catch {
@@ -68,7 +68,7 @@ object IntListFeatureDecoder extends FeatureDecoder[Seq[Int]] {
  */
 object LongFeatureDecoder extends FeatureDecoder[Long] {
   override def decode(feature: Feature): Long = {
-    require(feature.getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER, "Feature must be of type Int64List")
+    require(feature != null && feature.getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER, "Feature must be of type Int64List")
     try {
       val int64List = feature.getInt64List.getValueList
       require(int64List.size() == 1, "Length of Int64List must equal 1")
@@ -86,9 +86,9 @@ object LongFeatureDecoder extends FeatureDecoder[Long] {
  */
 object LongListFeatureDecoder extends FeatureDecoder[Seq[Long]] {
   override def decode(feature: Feature): Seq[Long] = {
-    require(feature.getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER, "Feature must be of type Int64List")
+    require(feature != null && feature.getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER, "Feature must be of type Int64List")
     try {
-      val array = feature.getInt64List.getValueList.asScala.toArray
+      val array = feature.getInt64List.getValueList.asScala.toSeq
       array.map(_.toLong)
     }
     catch {
@@ -103,7 +103,7 @@ object LongListFeatureDecoder extends FeatureDecoder[Seq[Long]] {
  */
 object FloatFeatureDecoder extends FeatureDecoder[Float] {
   override def decode(feature: Feature): Float = {
-    require(feature.getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER, "Feature must be of type FloatList")
+    require(feature != null && feature.getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER, "Feature must be of type FloatList")
     try {
       val floatList = feature.getFloatList.getValueList
       require(floatList.size() == 1, "Length of FloatList must equal 1")
@@ -121,9 +121,9 @@ object FloatFeatureDecoder extends FeatureDecoder[Float] {
  */
 object FloatListFeatureDecoder extends FeatureDecoder[Seq[Float]] {
   override def decode(feature: Feature): Seq[Float] = {
-    require(feature.getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER, "Feature must be of type FloatList")
+    require(feature != null && feature.getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER, "Feature must be of type FloatList")
     try {
-      val array = feature.getFloatList.getValueList.asScala.toArray
+      val array = feature.getFloatList.getValueList.asScala.toSeq
       array.map(_.toFloat)
     }
     catch {
@@ -138,7 +138,7 @@ object FloatListFeatureDecoder extends FeatureDecoder[Seq[Float]] {
  */
 object DoubleFeatureDecoder extends FeatureDecoder[Double] {
   override def decode(feature: Feature): Double = {
-    require(feature.getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER, "Feature must be of type FloatList")
+    require(feature != null && feature.getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER, "Feature must be of type FloatList")
     try {
       val floatList = feature.getFloatList.getValueList
       require(floatList.size() == 1, "Length of FloatList must equal 1")
@@ -156,9 +156,9 @@ object DoubleFeatureDecoder extends FeatureDecoder[Double] {
  */
 object DoubleListFeatureDecoder extends FeatureDecoder[Seq[Double]] {
   override def decode(feature: Feature): Seq[Double] = {
-    require(feature.getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER, "Feature must be of type FloatList")
+    require(feature != null && feature.getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER, "Feature must be of type FloatList")
     try {
-      val array = feature.getFloatList.getValueList.asScala.toArray
+      val array = feature.getFloatList.getValueList.asScala.toSeq
       array.map(_.toDouble)
     }
     catch {
@@ -173,11 +173,11 @@ object DoubleListFeatureDecoder extends FeatureDecoder[Seq[Double]] {
  */
 object StringFeatureDecoder extends FeatureDecoder[String] {
   override def decode(feature: Feature): String = {
-    require(feature.getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER, "Feature must be of type ByteList")
+    require(feature != null && feature.getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER, "Feature must be of type ByteList")
     try {
       val bytesList = feature.getBytesList.getValueList
       require(bytesList.size() == 1, "Length of BytesList must equal 1")
-      bytesList.get(0).toStringUtf8.trim
+      bytesList.get(0).toStringUtf8
     }
     catch {
       case ex: Exception =>
@@ -191,10 +191,10 @@ object StringFeatureDecoder extends FeatureDecoder[String] {
  */
 object StringListFeatureDecoder extends FeatureDecoder[Seq[String]] {
   override def decode(feature: Feature): Seq[String] = {
-    require(feature.getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER, "Feature must be of type ByteList")
+    require(feature != null && feature.getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER, "Feature must be of type ByteList")
     try {
-      val array = feature.getBytesList.getValueList.asScala.toArray
-      array.map(_.toStringUtf8.trim)
+      val array = feature.getBytesList.getValueList.asScala.toSeq
+      array.map(_.toStringUtf8)
     }
     catch {
       case ex: Exception =>

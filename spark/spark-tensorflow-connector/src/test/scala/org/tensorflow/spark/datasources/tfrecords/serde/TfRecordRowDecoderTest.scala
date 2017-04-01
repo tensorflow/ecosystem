@@ -20,6 +20,7 @@ import org.apache.spark.sql.types._
 import org.scalatest.{Matchers, WordSpec}
 import org.tensorflow.example._
 import org.tensorflow.hadoop.shaded.protobuf.ByteString
+import org.tensorflow.spark.datasources.tfrecords.TestingUtils._
 
 class TfRecordRowDecoderTest extends WordSpec with Matchers {
 
@@ -71,7 +72,7 @@ class TfRecordRowDecoderTest extends WordSpec with Matchers {
 
     "Decode given TensorFlow SequenceExample as Row" in {
       //Here Vector with null's are not supported
-      val expectedRow = new GenericRow(Array[Any](Seq(-2L,7L), Seq(Seq(4L, 10L)), Seq(Seq(2.25F), Seq(1.9F,3.5F)), Seq(Seq("r1", "r2"), Seq("r3"))))
+      val expectedRow = new GenericRow(Array[Any](Seq(-2L,7L), Seq(Seq(4L, 10L)), Seq(Seq(2.25F), Seq(-1.9F,3.5F)), Seq(Seq("r1", "r2"), Seq("r3"))))
 
       val schema = StructType(List(
         StructField("LongArrayLabel", ArrayType(LongType)),
@@ -116,7 +117,10 @@ class TfRecordRowDecoderTest extends WordSpec with Matchers {
 
       //Decode TensorFlow example to Sql Row
       val actualRow = DefaultTfRecordRowDecoder.decodeSequenceExample(seqExample, schema)
-      actualRow should equal(expectedRow)
+      assert(actualRow(0) === expectedRow(0))
+      assert(actualRow.getAs[Seq[Seq[Long]]](1) === expectedRow.getAs[Seq[Seq[Long]]](1))
+      assert(actualRow.getAs[Seq[Seq[Float]]](2) === expectedRow.getAs[Seq[Seq[Float]]](2))
+      assert(actualRow.getAs[Seq[Seq[String]]](3) === expectedRow.getAs[Seq[Seq[String]]](3))
     }
   }
 

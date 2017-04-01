@@ -17,7 +17,7 @@ package org.tensorflow.spark.datasources.tfrecords
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
-import org.tensorflow.example.{SequenceExample, Example, Feature}
+import org.tensorflow.example.{Example, Feature}
 import scala.collection.JavaConverters._
 import scala.collection.mutable.Map
 import scala.util.control.Exception._

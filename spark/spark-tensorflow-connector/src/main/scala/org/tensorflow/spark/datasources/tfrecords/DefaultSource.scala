@@ -44,15 +44,19 @@ class DefaultSource extends DataSourceRegister
 
     val path = parameters("path")
 
-    val recordType = parameters.getOrElse("recordType", "sequenceExample")
+    val recordType = parameters.getOrElse("recordType", "SequenceExample")
 
     //Export DataFrame as TFRecords
     val features = data.rdd.map(row => {
       recordType match {
-        case "example" => val example = DefaultTfRecordRowEncoder.encodeExample(row)
+        case "Example" =>
+          val example = DefaultTfRecordRowEncoder.encodeExample(row)
           (new BytesWritable(example.toByteArray), NullWritable.get())
-        case "sequenceExample" => val sequenceExample = DefaultTfRecordRowEncoder.encodeSequenceExample(row)
+        case "SequenceExample" =>
+          val sequenceExample = DefaultTfRecordRowEncoder.encodeSequenceExample(row)
           (new BytesWritable(sequenceExample.toByteArray), NullWritable.get())
+        case _ =>
+          throw new IllegalArgumentException(s"Unsupported recordType ${recordType}: recordType can be Example or SequenceExample")
       }
     })
     features.saveAsNewAPIHadoopFile[TFRecordFileOutputFormat](path)
