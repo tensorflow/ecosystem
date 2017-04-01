@@ -1,7 +1,7 @@
 # Running Distributed TensorFlow on Mesos/Marathon
 
 ## Prerequisite
-Before you start, you need to set up a Mesos cluster with Marathon installed and Docker Containerizer and Mesos-DNS enabled. It is also preferable to set up some shared storage such as HDFS in the cluster. All of these could be easily installed and configured with the help of [DC/OS](https://dcos.io/docs/1.7/administration/installing/custom/gui/). You need to remember the master target, DNS domain and HDFS namenode which are needed to bring up the TensorFlow cluster.
+Before you start, you need to set up a Mesos cluster with Marathon installed and Mesos-DNS enabled. It is also preferable to set up some shared storage such as HDFS in the cluster. All of these could be easily installed and configured with the help of [DC/OS](https://dcos.io/docs/1.9/administration/installing/custom/gui/). You need to remember the master target, DNS domain and HDFS namenode which are needed to bring up the TensorFlow cluster.
 
 ## Write the Training Program
 This section covers instructions on how to write your training program and build your docker image.
