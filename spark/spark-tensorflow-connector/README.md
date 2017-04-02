@@ -92,7 +92,7 @@ df.write.format("tfrecords").option("recordType", "Example").save(path)
 
 //Read TFRecords into DataFrame.
 //The DataFrame schema is inferred from the TFRecords if no custom schema is provided.
-val importedDf1: DataFrame = spark.read.format("tfrecords").load(path)
+val importedDf1: DataFrame = spark.read.format("tfrecords").option("recordType", "Example").load(path)
 importedDf1.show()
 
 //Read TFRecords into DataFrame using custom schema
@@ -119,7 +119,7 @@ val videoSchema = StructType(List(StructField("video_id", StringType),
                              StructField("labels", ArrayType(IntegerType, true)),
                              StructField("mean_rgb", ArrayType(FloatType, true)),
                              StructField("mean_audio", ArrayType(FloatType, true))))
-val videoDf: DataFrame = spark.read.format("tfrecords").schema(videoSchema).option("recordType", "SequenceExample").load("file:///tmp/video_level-train-0.tfrecord")
+val videoDf: DataFrame = spark.read.format("tfrecords").schema(videoSchema).option("recordType", "Example").load("file:///tmp/video_level-train-0.tfrecord")
 videoDf.show()
 
 //Import Frame-level SequenceExample dataset into DataFrame
