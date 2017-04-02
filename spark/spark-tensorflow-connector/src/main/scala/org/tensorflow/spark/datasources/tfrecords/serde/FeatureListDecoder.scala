@@ -29,7 +29,7 @@ trait FeatureListDecoder[T] extends Serializable{
 }
 
 /**
- * Decode TensorFlow "FeatureList" to 2-dimensional integer array
+ * Decode TensorFlow "FeatureList" to 2-dimensional Integer array
  */
 object IntFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Int]]] {
   override def decode(featureList: FeatureList): Seq[Seq[Int]] = {
@@ -38,7 +38,7 @@ object IntFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Int]]] {
 }
 
 /**
- * Decode TensorFlow "FeatureList" to 2-dimensional long array
+ * Decode TensorFlow "FeatureList" to 2-dimensional Long array
  */
 object LongFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Long]]] {
   override def decode(featureList: FeatureList): Seq[Seq[Long]] = {
@@ -47,7 +47,7 @@ object LongFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Long]]] {
 }
 
 /**
- * Decode TensorFlow "FeatureList" to 2-dimensional float array
+ * Decode TensorFlow "FeatureList" to 2-dimensional Float array
  */
 object FloatFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Float]]] {
   override def decode(featureList: FeatureList): Seq[Seq[Float]] = {
@@ -56,7 +56,7 @@ object FloatFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Float]]] {
 }
 
 /**
- * Decode TensorFlow "FeatureList" to 2-dimensional double array
+ * Decode TensorFlow "FeatureList" to 2-dimensional Double array
  */
 object DoubleFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Double]]] {
   override def decode(featureList: FeatureList): Seq[Seq[Double]] = {
@@ -65,7 +65,7 @@ object DoubleFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Double]]] {
 }
 
 /**
- * Decode TensorFlow "FeatureList" to 2-dimensional string array
+ * Decode TensorFlow "FeatureList" to 2-dimensional String array
  */
 object StringFeatureListDecoder extends FeatureListDecoder[Seq[Seq[String]]] {
   override def decode(featureList: FeatureList): Seq[Seq[String]] = {

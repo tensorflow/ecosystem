@@ -15,8 +15,11 @@
  */
 package org.tensorflow.spark.datasources.tfrecords
 
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
+import org.apache.spark.sql.catalyst.util.ArrayData
+import org.apache.spark.sql.types._
 import org.scalatest.Matchers
-import org.scalatest.matchers.{MatchResult, Matcher}
 
 object TestingUtils extends Matchers {
 
@@ -68,7 +71,6 @@ object TestingUtils extends Matchers {
     }
   }
 
-
   /**
    * Implicit class for comparing two double values using absolute tolerance.
    */
@@ -80,6 +82,73 @@ object TestingUtils extends Matchers {
     def ~==(right: Seq[Seq[Double]], epsilon : Double = 1E-6): Boolean = {
       if (left.size === right.size) {
         (left zip right) forall { case (a, b) => a ~== (b, epsilon) }
+      }
+      else false
+    }
+  }
+
+  /**
+   * Implicit class for comparing two rows using absolute tolerance.
+   */
+  implicit class RowWithAlmostEquals(val left: Row) {
+
+    /**
+     * When all fields in row with given schema are equal or are within eps, returns true; otherwise, returns false.
+     */
+    def ~==(right: Row, schema: StructType): Boolean = {
+      if (schema != null && schema.fields.size == left.size && schema.fields.size == right.size) {
+        val leftRowWithSchema = new GenericRowWithSchema(left.toSeq.toArray, schema)
+        val rightRowWithSchema = new GenericRowWithSchema(right.toSeq.toArray, schema)
+        leftRowWithSchema ~== rightRowWithSchema
+      }
+      else false
+    }
+
+    /**
+     * When all fields in row are equal or are within eps, returns true; otherwise, returns false.
+     */
+    def ~==(right: Row, epsilon : Float = 1E-6F): Boolean = {
+      if (left.size === right.size) {
+        val leftDataTypes = left.schema.fields.map(_.dataType)
+        val rightDataTypes = right.schema.fields.map(_.dataType)
+
+        (leftDataTypes zip rightDataTypes).zipWithIndex.forall {
+          case ((FloatType, FloatType), i) =>
+            left.getFloat(i) === (right.getFloat(i) +- epsilon)
+
+          case ((DoubleType, DoubleType), i) =>
+            left.getDouble(i) === (right.getDouble(i) +- epsilon)
+
+          case ((ArrayType(FloatType,_), ArrayType(FloatType,_)), i) =>
+            val leftArray = ArrayData.toArrayData(left.get(i)).toFloatArray().toSeq
+            val rightArray = ArrayData.toArrayData(right.get(i)).toFloatArray().toSeq
+            leftArray ~== (rightArray, epsilon)
+
+          case ((ArrayType(DoubleType,_), ArrayType(DoubleType,_)), i) =>
+            val leftArray = ArrayData.toArrayData(left.get(i)).toDoubleArray().toSeq
+            val rightArray = ArrayData.toArrayData(right.get(i)).toDoubleArray().toSeq
+            leftArray ~== (rightArray, epsilon)
+
+          case ((ArrayType(ArrayType(FloatType,_),_), ArrayType(ArrayType(FloatType,_),_)), i) =>
+            val leftArrays = ArrayData.toArrayData(left.get(i)).array.toSeq.map {arr =>
+              ArrayData.toArrayData(arr).toFloatArray().toSeq
+            }
+            val rightArrays = ArrayData.toArrayData(right.get(i)).array.toSeq.map {arr =>
+              ArrayData.toArrayData(arr).toFloatArray().toSeq
+            }
+            leftArrays ~== (rightArrays, epsilon)
+
+          case ((ArrayType(ArrayType(DoubleType,_),_), ArrayType(ArrayType(DoubleType,_),_)), i) =>
+            val leftArrays = ArrayData.toArrayData(left.get(i)).array.toSeq.map {arr =>
+              ArrayData.toArrayData(arr).toDoubleArray().toSeq
+            }
+            val rightArrays = ArrayData.toArrayData(right.get(i)).array.toSeq.map {arr =>
+              ArrayData.toArrayData(arr).toDoubleArray().toSeq
+            }
+            leftArrays ~== (rightArrays, epsilon)
+
+          case((a,b), i) => left.get(i) === right.get(i)
+        }
       }
       else false
     }

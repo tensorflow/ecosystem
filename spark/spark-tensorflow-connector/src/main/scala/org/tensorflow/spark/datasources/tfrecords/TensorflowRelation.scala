@@ -32,7 +32,7 @@ case class TensorflowRelation(options: Map[String, String], customSchema: Option
   lazy val (tfRdd, tfSchema) = {
     val rdd = session.sparkContext.newAPIHadoopFile(options("path"), classOf[TFRecordFileInputFormat], classOf[BytesWritable], classOf[NullWritable])
 
-    val recordType = options.getOrElse("recordType", "SequenceExample")
+    val recordType = options.getOrElse("recordType", "Example")
 
     recordType match {
       case "Example" =>

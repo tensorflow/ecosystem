@@ -41,13 +41,13 @@ object IntFeatureDecoder extends FeatureDecoder[Int] {
     }
     catch {
       case ex: Exception =>
-        throw new RuntimeException(s"Cannot convert feature to Int.", ex)
+        throw new RuntimeException(s"Cannot convert feature to integer.", ex)
     }
   }
 }
 
 /**
- * Decode TensorFlow "Feature" to list of integers
+ * Decode TensorFlow "Feature" to Integer array
  */
 object IntListFeatureDecoder extends FeatureDecoder[Seq[Int]] {
   override def decode(feature: Feature): Seq[Int] = {
@@ -58,7 +58,7 @@ object IntListFeatureDecoder extends FeatureDecoder[Seq[Int]] {
     }
     catch {
       case ex: Exception =>
-        throw new RuntimeException(s"Cannot convert feature to Seq[Int].", ex)
+        throw new RuntimeException(s"Cannot convert feature to Integer array.", ex)
     }
   }
 }
@@ -82,7 +82,7 @@ object LongFeatureDecoder extends FeatureDecoder[Long] {
 }
 
 /**
- * Decode TensorFlow "Feature" to list of Longs
+ * Decode TensorFlow "Feature" to Long array
  */
 object LongListFeatureDecoder extends FeatureDecoder[Seq[Long]] {
   override def decode(feature: Feature): Seq[Long] = {
@@ -93,7 +93,7 @@ object LongListFeatureDecoder extends FeatureDecoder[Seq[Long]] {
     }
     catch {
       case ex: Exception =>
-        throw new RuntimeException(s"Cannot convert feature to Seq[Long].", ex)
+        throw new RuntimeException(s"Cannot convert feature to Long array.", ex)
     }
   }
 }
@@ -117,7 +117,7 @@ object FloatFeatureDecoder extends FeatureDecoder[Float] {
 }
 
 /**
- * Decode TensorFlow "Feature" to list of Floats
+ * Decode TensorFlow "Feature" to Float array
  */
 object FloatListFeatureDecoder extends FeatureDecoder[Seq[Float]] {
   override def decode(feature: Feature): Seq[Float] = {
@@ -128,7 +128,7 @@ object FloatListFeatureDecoder extends FeatureDecoder[Seq[Float]] {
     }
     catch {
       case ex: Exception =>
-        throw new RuntimeException(s"Cannot convert feature to Seq[Float].", ex)
+        throw new RuntimeException(s"Cannot convert feature to Float array.", ex)
     }
   }
 }
@@ -152,7 +152,7 @@ object DoubleFeatureDecoder extends FeatureDecoder[Double] {
 }
 
 /**
- * Decode TensorFlow "Feature" to list of Doubles
+ * Decode TensorFlow "Feature" to Double array
  */
 object DoubleListFeatureDecoder extends FeatureDecoder[Seq[Double]] {
   override def decode(feature: Feature): Seq[Double] = {
@@ -163,7 +163,7 @@ object DoubleListFeatureDecoder extends FeatureDecoder[Seq[Double]] {
     }
     catch {
       case ex: Exception =>
-        throw new RuntimeException(s"Cannot convert feature to Seq[Double].", ex)
+        throw new RuntimeException(s"Cannot convert feature to Double array.", ex)
     }
   }
 }
@@ -187,7 +187,7 @@ object StringFeatureDecoder extends FeatureDecoder[String] {
 }
 
 /**
- * Decode TensorFlow "Feature" to list of Strings
+ * Decode TensorFlow "Feature" to String array
  */
 object StringListFeatureDecoder extends FeatureDecoder[Seq[String]] {
   override def decode(feature: Feature): Seq[String] = {
@@ -198,7 +198,7 @@ object StringListFeatureDecoder extends FeatureDecoder[Seq[String]] {
     }
     catch {
       case ex: Exception =>
-        throw new RuntimeException(s"Cannot convert feature to Seq[String].", ex)
+        throw new RuntimeException(s"Cannot convert feature to String array.", ex)
     }
   }
 }

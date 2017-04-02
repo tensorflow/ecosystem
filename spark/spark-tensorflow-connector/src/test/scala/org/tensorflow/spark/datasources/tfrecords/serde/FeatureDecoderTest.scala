@@ -28,7 +28,7 @@ class FeatureDecoderTest extends WordSpec with Matchers {
     "Decode Feature to Int" in {
       val int64List = Int64List.newBuilder().addValue(4).build()
       val intFeature = Feature.newBuilder().setInt64List(int64List).build()
-      IntFeatureDecoder.decode(intFeature) should equal(4)
+      assert(IntFeatureDecoder.decode(intFeature) === 4)
     }
 
     "Throw an exception if length of feature array exceeds 1" in {
@@ -53,7 +53,7 @@ class FeatureDecoderTest extends WordSpec with Matchers {
     "Decode Feature to Int List" in {
       val int64List = Int64List.newBuilder().addValue(3).addValue(9).build()
       val intFeature = Feature.newBuilder().setInt64List(int64List).build()
-      IntListFeatureDecoder.decode(intFeature) should equal(Seq(3,9))
+      assert(IntListFeatureDecoder.decode(intFeature) === Seq(3,9))
     }
 
     "Throw an exception if feature is not an Int64List" in {
@@ -70,7 +70,7 @@ class FeatureDecoderTest extends WordSpec with Matchers {
     "Decode Feature to Long" in {
       val int64List = Int64List.newBuilder().addValue(5L).build()
       val intFeature = Feature.newBuilder().setInt64List(int64List).build()
-      LongFeatureDecoder.decode(intFeature) should equal(5L)
+      assert(LongFeatureDecoder.decode(intFeature) === 5L)
     }
 
     "Throw an exception if length of feature array exceeds 1" in {
@@ -95,7 +95,7 @@ class FeatureDecoderTest extends WordSpec with Matchers {
     "Decode Feature to Long List" in {
       val int64List = Int64List.newBuilder().addValue(3L).addValue(Int.MaxValue+10L).build()
       val intFeature = Feature.newBuilder().setInt64List(int64List).build()
-      LongListFeatureDecoder.decode(intFeature) should equal(Seq(3L,Int.MaxValue+10L))
+      assert(LongListFeatureDecoder.decode(intFeature) === Seq(3L,Int.MaxValue+10L))
     }
 
     "Throw an exception if feature is not an Int64List" in {
@@ -112,7 +112,7 @@ class FeatureDecoderTest extends WordSpec with Matchers {
     "Decode Feature to Float" in {
       val floatList = FloatList.newBuilder().addValue(2.5F).build()
       val floatFeature = Feature.newBuilder().setFloatList(floatList).build()
-      FloatFeatureDecoder.decode(floatFeature) should equal(2.5F +- epsilon.toFloat)
+      assert(FloatFeatureDecoder.decode(floatFeature) === 2.5F +- epsilon.toFloat)
     }
 
     "Throw an exception if length of feature array exceeds 1" in {
@@ -154,7 +154,7 @@ class FeatureDecoderTest extends WordSpec with Matchers {
     "Decode Feature to Double" in {
       val floatList = FloatList.newBuilder().addValue(2.5F).build()
       val floatFeature = Feature.newBuilder().setFloatList(floatList).build()
-      DoubleFeatureDecoder.decode(floatFeature) should equal(2.5d +- epsilon)
+      assert(DoubleFeatureDecoder.decode(floatFeature) === 2.5d +- epsilon)
     }
 
     "Throw an exception if length of feature array exceeds 1" in {
@@ -196,7 +196,7 @@ class FeatureDecoderTest extends WordSpec with Matchers {
     "Decode Feature to String" in {
       val bytesList = BytesList.newBuilder().addValue(ByteString.copyFrom("str-input".getBytes)).build()
       val bytesFeature = Feature.newBuilder().setBytesList(bytesList).build()
-      StringFeatureDecoder.decode(bytesFeature) should equal("str-input")
+      assert(StringFeatureDecoder.decode(bytesFeature) === "str-input")
     }
 
     "Throw an exception if length of feature array exceeds 1" in {
@@ -223,7 +223,7 @@ class FeatureDecoderTest extends WordSpec with Matchers {
       val bytesList = BytesList.newBuilder().addValue(ByteString.copyFrom("alice".getBytes))
         .addValue(ByteString.copyFrom("bob".getBytes)).build()
       val bytesFeature = Feature.newBuilder().setBytesList(bytesList).build()
-      StringListFeatureDecoder.decode(bytesFeature) should equal(Seq("alice", "bob"))
+      assert(StringListFeatureDecoder.decode(bytesFeature) === Seq("alice", "bob"))
     }
 
     "Throw an exception if feature is not a BytesList" in {
@@ -235,4 +235,3 @@ class FeatureDecoderTest extends WordSpec with Matchers {
     }
   }
 }
-

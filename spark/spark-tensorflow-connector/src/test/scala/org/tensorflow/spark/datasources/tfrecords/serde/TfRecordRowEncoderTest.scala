@@ -15,7 +15,7 @@
  */
 package org.tensorflow.spark.datasources.tfrecords.serde
 
-import org.tensorflow.example.{FeatureList, Feature}
+import org.tensorflow.example.Feature
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.types._
 import org.scalatest.{Matchers, WordSpec}
@@ -61,13 +61,13 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
       assert(featureMap("DoubleTypeLabel").getFloatList.getValue(0) == 14.0F)
 
       assert(featureMap("vectorLabel").getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER)
-      assert(featureMap("vectorLabel").getFloatList.getValueList.toArray === expectedFloatArray)
+      assert(featureMap("vectorLabel").getFloatList.getValueList.asScala.toSeq.map(_.toFloat) ~== expectedFloatArray)
 
       assert(featureMap("strLabel").getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER)
-      assert(featureMap("strLabel").getBytesList.toByteString.toStringUtf8.trim == "r1")
+      assert(featureMap("strLabel").getBytesList.getValue(0).toStringUtf8 == "r1")
 
       assert(featureMap("strListLabel").getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER)
-      assert(featureMap("strListLabel").getBytesList.getValueList.asScala.map(_.toStringUtf8.trim) === Seq("r2", "r3"))
+      assert(featureMap("strListLabel").getBytesList.getValueList.asScala.map(_.toStringUtf8) === Seq("r2", "r3"))
     }
 
     "Encode given Row as TensorFlow SequenceExample" in {
@@ -99,7 +99,7 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
       assert(featureListMap.size == 3)
       assert(featureListMap("LongListOfListsLabel").getFeatureList.asScala.map(_.getInt64List.getValueList.asScala.toSeq) === longListOfLists)
       assert(featureListMap("FloatListOfListsLabel").getFeatureList.asScala.map(_.getFloatList.getValueList.asScala.map(_.toFloat).toSeq) ~== floatListOfLists)
-      assert(featureListMap("StringListOfListsLabel").getFeatureList.asScala.map(_.getBytesList.getValueList.asScala.map(_.toStringUtf8.trim).toSeq) === stringListOfLists)
+      assert(featureListMap("StringListOfListsLabel").getFeatureList.asScala.map(_.getBytesList.getValueList.asScala.map(_.toStringUtf8).toSeq) === stringListOfLists)
     }
   }
 }

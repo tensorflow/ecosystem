@@ -31,7 +31,7 @@ trait FeatureListEncoder[T] extends Serializable{
 
 
 /**
- * Encode input values to TensorFlow "FeatureList" of type Int64List
+ * Encode 2-dimensional Long array to TensorFlow "FeatureList" of type Int64List
  */
 object Int64FeatureListEncoder extends FeatureListEncoder[Seq[Seq[Long]]] {
   def encode(values: Seq[Seq[Long]]) : FeatureList = {
@@ -45,7 +45,7 @@ object Int64FeatureListEncoder extends FeatureListEncoder[Seq[Seq[Long]]] {
 }
 
 /**
- * Encode input values to TensorFlow "FeatureList" of type FloatList
+ * Encode 2-dimensional Float array to TensorFlow "FeatureList" of type FloatList
  */
 object FloatFeatureListEncoder extends FeatureListEncoder[Seq[Seq[Float]]] {
   def encode(value: Seq[Seq[Float]]) : FeatureList = {
@@ -59,7 +59,7 @@ object FloatFeatureListEncoder extends FeatureListEncoder[Seq[Seq[Float]]] {
 }
 
 /**
- * Encode input values to TensorFlow "FeatureList" of type BytesList
+ * Encode 2-dimensional String array to TensorFlow "FeatureList" of type BytesList
  */
 object BytesFeatureListEncoder extends FeatureListEncoder[Seq[Seq[String]]] {
   def encode(value: Seq[Seq[String]]) : FeatureList = {

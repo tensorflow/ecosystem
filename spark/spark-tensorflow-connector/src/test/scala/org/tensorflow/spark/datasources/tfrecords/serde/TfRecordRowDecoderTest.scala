@@ -27,8 +27,6 @@ class TfRecordRowDecoderTest extends WordSpec with Matchers {
   "TensorFlow row decoder" should {
 
     "Decode given TensorFlow Example as Row" in {
-      //Here Vector with null's are not supported
-      val expectedRow = new GenericRow(Array[Any](1, 23L, 10.0F, 14.0, Seq(-2L,7L), Seq(1.0, 2.0), "r1", Seq("r2", "r3")))
 
       val schema = StructType(List(
         StructField("IntegerLabel", IntegerType),
@@ -40,6 +38,10 @@ class TfRecordRowDecoderTest extends WordSpec with Matchers {
         StructField("StrLabel", StringType),
         StructField("StrArrayLabel", ArrayType(StringType))
       ))
+
+      val expectedRow = new GenericRow(
+        Array[Any](1, 23L, 10.0F, 14.0, Seq(-2L,7L), Seq(1.0, 2.0), "r1", Seq("r2", "r3"))
+      )
 
       //Build example
       val intFeature = Int64List.newBuilder().addValue(1)
@@ -67,12 +69,10 @@ class TfRecordRowDecoderTest extends WordSpec with Matchers {
 
       //Decode TensorFlow example to Sql Row
       val actualRow = DefaultTfRecordRowDecoder.decodeExample(example, schema)
-      actualRow should equal(expectedRow)
+      assert(actualRow ~== (expectedRow,schema))
     }
 
     "Decode given TensorFlow SequenceExample as Row" in {
-      //Here Vector with null's are not supported
-      val expectedRow = new GenericRow(Array[Any](Seq(-2L,7L), Seq(Seq(4L, 10L)), Seq(Seq(2.25F), Seq(-1.9F,3.5F)), Seq(Seq("r1", "r2"), Seq("r3"))))
 
       val schema = StructType(List(
         StructField("LongArrayLabel", ArrayType(LongType)),
@@ -80,6 +80,10 @@ class TfRecordRowDecoderTest extends WordSpec with Matchers {
         StructField("FloatArrayOfArrayLabel", ArrayType(ArrayType(FloatType))),
         StructField("StrArrayOfArrayLabel", ArrayType(ArrayType(StringType)))
       ))
+
+      val expectedRow = new GenericRow(Array[Any](
+        Seq(-2L,7L), Seq(Seq(4L, 10L)), Seq(Seq(2.25F), Seq(-1.9F,3.5F)), Seq(Seq("r1", "r2"), Seq("r3")))
+      )
 
       //Build sequence example
       val longArrFeature = Int64List.newBuilder().addValue(-2L).addValue(7L).build()
@@ -117,11 +121,7 @@ class TfRecordRowDecoderTest extends WordSpec with Matchers {
 
       //Decode TensorFlow example to Sql Row
       val actualRow = DefaultTfRecordRowDecoder.decodeSequenceExample(seqExample, schema)
-      assert(actualRow(0) === expectedRow(0))
-      assert(actualRow.getAs[Seq[Seq[Long]]](1) === expectedRow.getAs[Seq[Seq[Long]]](1))
-      assert(actualRow.getAs[Seq[Seq[Float]]](2) === expectedRow.getAs[Seq[Seq[Float]]](2))
-      assert(actualRow.getAs[Seq[Seq[String]]](3) === expectedRow.getAs[Seq[Seq[String]]](3))
+      assert(actualRow ~== (expectedRow, schema))
     }
   }
-
 }

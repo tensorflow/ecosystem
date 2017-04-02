@@ -17,7 +17,6 @@ package org.tensorflow.spark.datasources.tfrecords.serde
 
 import org.tensorflow.hadoop.shaded.protobuf.ByteString
 import org.tensorflow.spark.datasources.tfrecords.TestingUtils._
-
 import org.scalatest.{Matchers, WordSpec}
 import org.tensorflow.example._
 
@@ -32,7 +31,12 @@ class FeatureListDecoderTest extends WordSpec with Matchers{
       val feature2 = Feature.newBuilder().setInt64List(int64List2).build()
       val featureList = FeatureList.newBuilder().addFeature(feature1).addFeature(feature2).build()
 
-      IntFeatureListDecoder.decode(featureList) should equal (Seq(Seq(1,3), Seq(-2,5,10)))
+     assert(IntFeatureListDecoder.decode(featureList) === Seq(Seq(1,3), Seq(-2,5,10)))
+    }
+
+    "Decode empty feature list to empty array" in {
+      val featureList = FeatureList.newBuilder().build()
+      assert(IntFeatureListDecoder.decode(featureList).size === 0)
     }
 
     "Throw an exception if FeatureList is not of type Int64List" in {
@@ -54,7 +58,12 @@ class FeatureListDecoderTest extends WordSpec with Matchers{
       val intFeature2 = Feature.newBuilder().setInt64List(int64List2).build()
       val featureList = FeatureList.newBuilder().addFeature(intFeature1).addFeature(intFeature2).build()
 
-      LongFeatureListDecoder.decode(featureList) should equal (Seq(Seq(1L,Int.MaxValue+10L), Seq(Int.MinValue-20L)))
+      assert(LongFeatureListDecoder.decode(featureList) === Seq(Seq(1L,Int.MaxValue+10L), Seq(Int.MinValue-20L)))
+    }
+
+    "Decode empty feature list to empty array" in {
+      val featureList = FeatureList.newBuilder().build()
+      assert(LongFeatureListDecoder.decode(featureList).size === 0)
     }
 
     "Throw an exception if FeatureList is not of type Int64List" in {
@@ -79,6 +88,11 @@ class FeatureListDecoderTest extends WordSpec with Matchers{
       assert(FloatFeatureListDecoder.decode(featureList) ~== Seq(Seq(1.3F,3.85F), Seq(-2.0F)))
     }
 
+    "Decode empty feature list to empty array" in {
+      val featureList = FeatureList.newBuilder().build()
+      assert(FloatFeatureListDecoder.decode(featureList).size === 0)
+    }
+
     "Throw an exception if FeatureList is not of type FloatList" in {
       intercept[Exception] {
         val intList = Int64List.newBuilder().addValue(4).build()
@@ -99,6 +113,11 @@ class FeatureListDecoderTest extends WordSpec with Matchers{
       val featureList = FeatureList.newBuilder().addFeature(feature1).addFeature(feature2).build()
 
       assert(DoubleFeatureListDecoder.decode(featureList) ~== Seq(Seq(4.3d,13.8d), Seq(-12.0d)))
+    }
+
+    "Decode empty feature list to empty array" in {
+      val featureList = FeatureList.newBuilder().build()
+      assert(DoubleFeatureListDecoder.decode(featureList).size === 0)
     }
 
     "Throw an exception if FeatureList is not of type FloatList" in {
@@ -123,6 +142,11 @@ class FeatureListDecoderTest extends WordSpec with Matchers{
       val featureList = FeatureList.newBuilder().addFeature(feature1).addFeature(feature2).build()
 
       assert(StringFeatureListDecoder.decode(featureList) === Seq(Seq("alice", "bob"), Seq("charles")))
+    }
+
+    "Decode empty feature list to empty array" in {
+      val featureList = FeatureList.newBuilder().build()
+      assert(StringFeatureListDecoder.decode(featureList).size === 0)
     }
 
     "Throw an exception if FeatureList is not of type BytesList" in {

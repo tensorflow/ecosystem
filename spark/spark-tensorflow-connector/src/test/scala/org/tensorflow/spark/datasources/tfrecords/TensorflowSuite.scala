@@ -16,22 +16,19 @@
 package org.tensorflow.spark.datasources.tfrecords
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.catalyst.expressions.{GenericRow, GenericRowWithSchema}
+import org.apache.spark.sql.catalyst.expressions.GenericRow
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.tensorflow.example._
 import org.tensorflow.hadoop.shaded.protobuf.ByteString
-import org.tensorflow.spark.datasources.tfrecords.serde.{DefaultTfRecordRowDecoder, DefaultTfRecordRowEncoder}
-
-import scala.collection.JavaConverters._
 
 class TensorflowSuite extends SharedSparkSessionSuite {
 
   "Spark TensorFlow module" should {
 
-    "Test Import/Export" in {
+    "Test Import/Export of Example records" in {
 
-      val path = s"$TF_SANDBOX_DIR/output25.tfr"
+      val path = s"$TF_SANDBOX_DIR/example.tfrecord"
       val testRows: Array[Row] = Array(
         new GenericRow(Array[Any](11, 1, 23L, 10.0F, 14.0, List(1.0, 2.0), "r1")),
         new GenericRow(Array[Any](21, 2, 24L, 12.0F, 15.0, List(2.0, 2.0), "r2")))
@@ -48,11 +45,38 @@ class TensorflowSuite extends SharedSparkSessionSuite {
       val rdd = spark.sparkContext.parallelize(testRows)
 
       val df: DataFrame = spark.createDataFrame(rdd, schema)
-      df.write.format("tfrecords").save(path)
+      df.write.format("tfrecords").option("recordType", "Example").save(path)
 
       //If schema is not provided. It will automatically infer schema
-      val importedDf: DataFrame = spark.read.format("tfrecords").schema(schema).load(path)
+      val importedDf: DataFrame = spark.read.format("tfrecords").option("recordType", "Example").schema(schema).load(path)
       val actualDf = importedDf.select("id", "IntegerTypelabel", "LongTypelabel", "FloatTypelabel", "DoubleTypelabel", "vectorlabel", "name").sort("name")
+
+      val expectedRows = df.collect()
+      val actualRows = actualDf.collect()
+
+      expectedRows should equal(actualRows)
+    }
+
+    "Test Import/Export of SequenceExample records" in {
+
+      val path = s"$TF_SANDBOX_DIR/sequenceExample.tfrecord"
+      val testRows: Array[Row] = Array(
+        new GenericRow(Array[Any](23L, Seq(Seq(2.0F, 4.5F)), Seq(Seq("r1", "r2")))),
+        new GenericRow(Array[Any](24L, Seq(Seq(-1.0F, 0F)), Seq(Seq("r3")))))
+
+      val schema = StructType(List(
+        StructField("id",LongType),
+        StructField("FloatArrayOfArrayLabel", ArrayType(ArrayType(FloatType))),
+        StructField("StrArrayOfArrayLabel", ArrayType(ArrayType(StringType)))
+      ))
+
+      val rdd = spark.sparkContext.parallelize(testRows)
+
+      val df: DataFrame = spark.createDataFrame(rdd, schema)
+      df.write.format("tfrecords").option("recordType", "SequenceExample").save(path)
+
+      val importedDf: DataFrame = spark.read.format("tfrecords").option("recordType", "SequenceExample").schema(schema).load(path)
+      val actualDf = importedDf.select("id", "FloatArrayOfArrayLabel", "StrArrayOfArrayLabel").sort("id")
 
       val expectedRows = df.collect()
       val actualRows = actualDf.collect()

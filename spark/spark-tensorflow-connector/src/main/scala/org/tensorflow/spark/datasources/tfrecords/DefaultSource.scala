@@ -44,7 +44,7 @@ class DefaultSource extends DataSourceRegister
 
     val path = parameters("path")
 
-    val recordType = parameters.getOrElse("recordType", "SequenceExample")
+    val recordType = parameters.getOrElse("recordType", "Example")
 
     //Export DataFrame as TFRecords
     val features = data.rdd.map(row => {
