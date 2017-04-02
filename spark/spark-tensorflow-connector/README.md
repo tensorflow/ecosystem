@@ -114,7 +114,7 @@ import org.apache.spark.sql.{ DataFrame, Row }
 import org.apache.spark.sql.catalyst.expressions.GenericRow
 import org.apache.spark.sql.types._
 
-//Import Video-level features dataset into DataFrame
+//Import Video-level Example dataset into DataFrame
 val videoSchema = StructType(List(StructField("video_id", StringType),
                              StructField("labels", ArrayType(IntegerType, true)),
                              StructField("mean_rgb", ArrayType(FloatType, true)),
@@ -122,7 +122,7 @@ val videoSchema = StructType(List(StructField("video_id", StringType),
 val videoDf: DataFrame = spark.read.format("tfrecords").schema(videoSchema).option("recordType", "SequenceExample").load("file:///tmp/video_level-train-0.tfrecord")
 videoDf.show()
 
-//Import Frame-level features dataset into DataFrame
+//Import Frame-level SequenceExample dataset into DataFrame
 val frameSchema = StructType(List(StructField("video_id", StringType),
                              StructField("labels", ArrayType(IntegerType, true)),
                              StructField("rgb", ArrayType(ArrayType(StringType, true),true)),
