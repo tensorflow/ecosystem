@@ -21,7 +21,7 @@ request.
 
 ## Distributed TensorFlow
 
-See the [Distributed TensorFlow](https://www.tensorflow.org/versions/master/how_tos/distributed/index.html)
+See the [Distributed TensorFlow](https://www.tensorflow.org/deploy/distributed)
 documentation for a description of how it works. The examples in this
 repository focus on the most common form of distributed training: between-graph
 replication with asynchronous updates.
