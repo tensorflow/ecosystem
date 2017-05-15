@@ -74,8 +74,7 @@ In this mode, each worker separately constructs the exact same graph. Each
 worker then runs the graph in isolation, only sharing gradients with the
 parameter servers. This set up is illustrated by the following diagram. Please
 note that each dashed box indicates a task.
-![Diagram for Between-graph replication]
-  (images/between-graph_replication.png "Between-graph Replication")
+![Diagram for Between-graph replication](images/between-graph_replication.png "Between-graph Replication")
 
 You must explicitly set the device before graph construction for this mode of
 training. The following code snippet from the
