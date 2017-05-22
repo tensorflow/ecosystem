@@ -1,8 +1,7 @@
 # spark-tensorflow-connector
 
 This repo contains a library for loading and storing TensorFlow records with [Apache Spark](http://spark.apache.org/).
-The library implements data import from the standard TensorFlow record format ([TFRecords]
-(https://www.tensorflow.org/how_tos/reading_data/)) into Spark SQL DataFrames, and data export from DataFrames to TensorFlow records.
+The library implements data import from the standard TensorFlow record format ([TFRecords](https://www.tensorflow.org/how_tos/reading_data/)) into Spark SQL DataFrames, and data export from DataFrames to TensorFlow records.
 
 ## What's new
 
