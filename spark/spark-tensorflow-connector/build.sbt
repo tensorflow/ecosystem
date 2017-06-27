@@ -30,7 +30,7 @@ val `org.apache.spark_spark-mllib_2.11` = "org.apache.spark" % "spark-mllib_2.11
 
 val `org.scalatest_scalatest_2.11` = "org.scalatest" % "scalatest_2.11" % "2.2.6"
 
-val `org.tensorflow_tensorflow-hadoop` = "org.tensorflow" % "tensorflow-hadoop" % "1.0-01232017-SNAPSHOT"
+val `org.tensorflow_tensorflow-hadoop` = "org.tensorflow" % "tensorflow-hadoop" % "1.0-06262017-SNAPSHOT"
 
 libraryDependencies in Global ++= Seq(`org.tensorflow_tensorflow-hadoop` classifier "shaded-protobuf",
    `org.scalatest_scalatest_2.11` % "test" ,
@@ -43,7 +43,7 @@ libraryDependencies in Global ++= Seq(`org.tensorflow_tensorflow-hadoop` classif
 assemblyExcludedJars in assembly := {
   val cp = (fullClasspath in assembly).value
   cp filterNot {x => List("spark-tensorflow-connector-1.0-SNAPSHOT.jar",
-    "tensorflow-hadoop-1.0-01232017-SNAPSHOT-shaded-protobuf.jar").contains(x.data.getName)}
+    "tensorflow-hadoop-1.0-06262017-SNAPSHOT-shaded-protobuf.jar").contains(x.data.getName)}
 }
 
 /********************

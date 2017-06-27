@@ -6,7 +6,7 @@ This can also be used with [Apache Spark](http://spark.apache.org/).
 
 ## Prerequisites
 
-1. [protoc 3.1.0](https://developers.google.com/protocol-buffers/)
+1. [protoc 3.3.0](https://developers.google.com/protocol-buffers/)
 installed.
 
 2. [Apache Maven](https://maven.apache.org/)
