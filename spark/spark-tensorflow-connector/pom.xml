@@ -3,11 +3,27 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>org.tensorflow</groupId>
     <artifactId>spark-tensorflow-connector</artifactId>
     <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
+    <name>spark-tensorflow-connector</name>
+    <url>https://www.tensorflow.org</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <scala.maven.version>3.2.2</scala.maven.version>
+        <scala.binary.version>2.11</scala.binary.version>
+        <scalatest.maven.version>1.0</scalatest.maven.version>
+        <scala.test.version>2.2.6</scala.test.version>
+        <maven.compiler.version>3.0</maven.compiler.version>
+        <java.version>1.8</java.version>
+        <spark.version>2.1.0</spark.version>
+        <tensorflow.hadoop.version>1.0-06262017-SNAPSHOT</tensorflow.hadoop.version>
+        <yarn.api.version>2.7.3</yarn.api.version>
+        <protobuf.version>3.3.1</protobuf.version>
+        <junit.version>4.11</junit.version>
+    </properties>
 
     <repositories>
         <repository>
@@ -60,7 +76,7 @@
                             <inherited>true</inherited>
                             <groupId>net.alchim31.maven</groupId>
                             <artifactId>scala-maven-plugin</artifactId>
-                            <version>3.1.6</version>
+                            <version>${scala.maven.version}</version>
                             <executions>
                                 <execution>
                                     <id>compile</id>
@@ -95,7 +111,7 @@
                             <configuration>
                                 <recompileMode>incremental</recompileMode>
                                 <useZincServer>true</useZincServer>
-                                <scalaVersion>2.11</scalaVersion>
+                                <scalaVersion>${scala.binary.version}</scalaVersion>
                                 <checkMultipleScalaVersions>false</checkMultipleScalaVersions>
                             </configuration>
                         </plugin>
@@ -162,7 +178,7 @@
                             <inherited>true</inherited>
                             <groupId>net.alchim31.maven</groupId>
                             <artifactId>scala-maven-plugin</artifactId>
-                            <version>3.2.2</version>
+                            <version>${scala.maven.version}</version>
                             <executions>
                                 <execution>
                                     <id>compile</id>
@@ -173,7 +189,7 @@
                             <inherited>true</inherited>
                             <groupId>org.scalatest</groupId>
                             <artifactId>scalatest-maven-plugin</artifactId>
-                            <version>1.0</version>
+                            <version>${scalatest.maven.version}</version>
                             <configuration>
                                 <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                                 <junitxml>.</junitxml>
@@ -206,8 +222,8 @@
                 <dependencies>
                     <dependency>
                         <groupId>org.scalatest</groupId>
-                        <artifactId>scalatest_2.11</artifactId>
-                        <version>2.2.6</version>
+                        <artifactId>scalatest_${scala.binary.version}</artifactId>
+                        <version>${scala.test.version}</version>
                         <scope>test</scope>
                     </dependency>
                 </dependencies>
@@ -216,7 +232,7 @@
             <dependencies>
                 <dependency>
                     <groupId>org.scalatest</groupId>
-                    <artifactId>scalatest_2.11</artifactId>
+                    <artifactId>scalatest_${scala.binary.version}</artifactId>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -241,10 +257,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.0</version>
+                <version>${maven.compiler.version}</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                 </configuration>
             </plugin>
         </plugins>
@@ -266,39 +282,39 @@
         <dependency>
             <groupId>org.tensorflow</groupId>
             <artifactId>tensorflow-hadoop</artifactId>
-            <version>1.0-01232017-SNAPSHOT</version>
+            <version>${tensorflow.hadoop.version}</version>
             <classifier>shaded-protobuf</classifier>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.11</artifactId>
-            <version>2.1.0</version>
+            <artifactId>spark-core_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.11</artifactId>
-            <version>2.1.0</version>
+            <artifactId>spark-sql_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-yarn-api</artifactId>
-            <version>2.7.3</version>
+            <version>${yarn.api.version}</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-mllib_2.11</artifactId>
-            <version>2.1.0</version>
+            <artifactId>spark-mllib_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

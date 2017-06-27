@@ -17,14 +17,21 @@ None.
 
 2. [Apache Maven](https://maven.apache.org/)
 
+3. [TensorFlow Hadoop](../../hadoop) - Provided as Maven dependency. You can also build the latest version as described [here.](../../hadoop)
+
 ## Building the library
-You can build library using both Maven and SBT build tools
+You can build the library using both Maven and SBT build tools
 
 #### Maven
 Build the library using Maven(3.3) as shown below
 
 ```sh
 mvn clean install
+```
+
+To use a different version of TensorFlow Hadoop, use:
+```sh
+mvn clean install -Dtensorflow.hadoop.version=1.0-SNAPSHOT
 ```
 
 #### SBT 
@@ -38,7 +45,7 @@ Run this library in Spark using the `--jars` command line option in `spark-shell
 
 Maven Jars
 ```sh
-$SPARK_HOME/bin/spark-shell --jars target/spark-tensorflow-connector-1.0-SNAPSHOT.jar,target/lib/tensorflow-hadoop-1.0-01232017-SNAPSHOT-shaded-protobuf.jar
+$SPARK_HOME/bin/spark-shell --jars target/spark-tensorflow-connector-1.0-SNAPSHOT.jar,target/lib/tensorflow-hadoop-1.0-06262017-SNAPSHOT-shaded-protobuf.jar
 ```
 
 SBT Jars
