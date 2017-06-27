@@ -31,6 +31,12 @@ installed.
     mvn clean package
     ```
 
+    Alternatively, if you have an earlier version of protoc installed, e.g., protoc 3.1.0, you can compile the code using:
+
+    ```sh
+    mvn clean package -Dprotobuf.version=3.1.0
+    ```
+
 3. Optionally install (or deploy) the jars
 
     ```sh
