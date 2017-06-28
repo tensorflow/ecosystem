@@ -6,7 +6,7 @@ This can also be used with [Apache Spark](http://spark.apache.org/).
 
 ## Prerequisites
 
-1. [protoc 3.1.0](https://developers.google.com/protocol-buffers/)
+1. [protoc 3.3.0](https://developers.google.com/protocol-buffers/)
 installed.
 
 2. [Apache Maven](https://maven.apache.org/)
@@ -29,6 +29,12 @@ installed.
 
     ```sh
     mvn clean package
+    ```
+
+    Alternatively, if you have an earlier version of protoc installed, e.g., protoc 3.1.0, you can compile the code using:
+
+    ```sh
+    mvn clean package -Dprotobuf.version=3.1.0
     ```
 
 3. Optionally install (or deploy) the jars

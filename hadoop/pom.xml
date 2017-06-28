@@ -13,8 +13,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
+        <maven.shade.version>2.2</maven.shade.version>
         <hadoop.version>2.6.0</hadoop.version>
-        <protobuf.version>3.1.0</protobuf.version>
+        <protobuf.version>3.3.1</protobuf.version>
         <junit.version>4.11</junit.version>
         <!-- Package to use when relocating shaded classes. -->
         <tensorflow.shade.packageName>org.tensorflow.hadoop.shaded</tensorflow.shade.packageName>
@@ -32,7 +33,7 @@
             <!-- Shade protobuf dependency. -->
             <plugin>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>2.2</version>
+                <version>${maven.shade.version}</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
