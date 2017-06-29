@@ -58,6 +58,7 @@ This library allows reading TensorFlow records in local or distributed filesyste
 When reading TensorFlow records into Spark DataFrame, the API accepts several options:
 * `load`: input path to TensorFlow records. Similar to Spark can accept standard Hadoop globbing expressions.
 * `schema`: schema of TensorFlow records. Optional schema defined using Spark StructType. If not provided, the schema is inferred from TensorFlow records.
+Schema inference requires an extra pass through the data.
 * `recordType`: input format of TensorFlow records. By default it is Example. Possible values are:
   * `Example`: TensorFlow [Example](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/example/example.proto) records
   * `SequenceExample`: TensorFlow [SequenceExample](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/example/example.proto) records
@@ -127,6 +128,9 @@ val videoSchema = StructType(List(StructField("video_id", StringType),
                              StructField("mean_audio", ArrayType(FloatType, true))))
 val videoDf: DataFrame = spark.read.format("tfrecords").schema(videoSchema).option("recordType", "Example").load("file:///tmp/video_level-train-0.tfrecord")
 videoDf.show()
+videoDf.write.format("tfrecords").option("recordType", "Example").save("youtube-8m-video.tfrecords")
+val importedDf1: DataFrame = spark.read.format("tfrecords").option("recordType", "Example").schema(videoSchema).load("youtube-8m-video.tfrecords")
+importedDf1.show()
 
 //Import Frame-level SequenceExample dataset into DataFrame
 val frameSchema = StructType(List(StructField("video_id", StringType),
@@ -135,4 +139,7 @@ val frameSchema = StructType(List(StructField("video_id", StringType),
                              StructField("audio", ArrayType(ArrayType(StringType, true),true))))
 val frameDf: DataFrame = spark.read.format("tfrecords").schema(frameSchema).option("recordType", "SequenceExample").load("file:///tmp/frame_level-train-0.tfrecord")
 frameDf.show()
+frameDf.write.format("tfrecords").option("recordType", "SequenceExample").save("youtube-8m-frame.tfrecords")
+val importedDf2: DataFrame = spark.read.format("tfrecords").option("recordType", "SequenceExample").schema(frameSchema).load("youtube-8m-frame.tfrecords")
+importedDf2.show()
 ```

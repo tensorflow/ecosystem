@@ -103,7 +103,9 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
       case FloatType => FloatListFeatureEncoder.encode(Seq(row.getFloat(index)))
       case DoubleType => FloatListFeatureEncoder.encode(Seq(row.getDouble(index).toFloat))
       case StringType => BytesListFeatureEncoder.encode(Seq(row.getString(index)))
-      case ArrayType(IntegerType, _) | ArrayType(LongType, _) =>
+      case ArrayType(IntegerType, _)  =>
+        Int64ListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toIntArray().map(_.toLong))
+      case ArrayType(LongType, _) =>
         Int64ListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toLongArray())
       case ArrayType(FloatType, _) =>
         FloatListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toFloatArray())
@@ -119,7 +121,13 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
   //Encode field in row to TensorFlow FeatureList
   def encodeFeatureList(row: Row, structField: StructField, index: Int): FeatureList = {
     val featureList = structField.dataType match {
-      case ArrayType(ArrayType(IntegerType, _), _) | ArrayType(ArrayType(LongType, _), _) =>
+      case ArrayType(ArrayType(IntegerType, _), _) =>
+        val longArrays = ArrayData.toArrayData(row.get(index)).array.map {arr =>
+          ArrayData.toArrayData(arr).toIntArray().map(_.toLong).toSeq
+        }
+        Int64FeatureListEncoder.encode(longArrays)
+
+      case ArrayType(ArrayType(LongType, _), _) =>
         val longArrays = ArrayData.toArrayData(row.get(index)).array.map {arr =>
           ArrayData.toArrayData(arr).toLongArray().toSeq
         }
