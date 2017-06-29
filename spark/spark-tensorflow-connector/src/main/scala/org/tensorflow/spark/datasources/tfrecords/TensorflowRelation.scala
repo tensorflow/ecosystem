@@ -39,14 +39,14 @@ case class TensorflowRelation(options: Map[String, String], customSchema: Option
         val exampleRdd = rdd.map{case (bytesWritable, nullWritable) =>
           Example.parseFrom(bytesWritable.getBytes)
         }
-        val finalSchema = customSchema.getOrElse(TensorflowInferSchema(exampleRdd))
+        val finalSchema = customSchema.getOrElse(TensorFlowInferSchema(exampleRdd))
         val rowRdd = exampleRdd.map(example => DefaultTfRecordRowDecoder.decodeExample(example, finalSchema))
         (rowRdd, finalSchema)
       case "SequenceExample" =>
         val sequenceExampleRdd = rdd.map{case (bytesWritable, nullWritable) =>
           SequenceExample.parseFrom(bytesWritable.getBytes)
         }
-        val finalSchema = customSchema.getOrElse(throw new UnsupportedOperationException("Infer schema not implemented for SequenceExample"))
+        val finalSchema = customSchema.getOrElse(TensorFlowInferSchema(sequenceExampleRdd))
         val rowRdd = sequenceExampleRdd.map(example => DefaultTfRecordRowDecoder.decodeSequenceExample(example, finalSchema))
         (rowRdd, finalSchema)
       case _ =>

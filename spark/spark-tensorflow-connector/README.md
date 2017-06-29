@@ -58,7 +58,6 @@ This library allows reading TensorFlow records in local or distributed filesyste
 When reading TensorFlow records into Spark DataFrame, the API accepts several options:
 * `load`: input path to TensorFlow records. Similar to Spark can accept standard Hadoop globbing expressions.
 * `schema`: schema of TensorFlow records. Optional schema defined using Spark StructType. If not provided, the schema is inferred from TensorFlow records.
-Schema inference requires an extra pass through the data.
 * `recordType`: input format of TensorFlow records. By default it is Example. Possible values are:
   * `Example`: TensorFlow [Example](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/example/example.proto) records
   * `SequenceExample`: TensorFlow [SequenceExample](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/example/example.proto) records
@@ -68,6 +67,21 @@ When writing Spark DataFrame to TensorFlow records, the API accepts several opti
 * `recordType`: output format of TensorFlow records. By default it is Example. Possible values are:
   * `Example`: TensorFlow [Example](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/example/example.proto) records
   * `SequenceExample`: TensorFlow [SequenceExample](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/example/example.proto) records
+
+## Schema inference
+This library supports automatic schema inference when reading TensorFlow records into Spark DataFrames.
+Schema inference is expensive since it requires an extra pass through the data.
+
+The schema inference rules are described in the table below:
+
+| TFRecordType             | Feature Type  | Inferred Spark Data Type  |
+| ------------------------ |:--------------|:--------------------------|
+| Example, SequenceExample | Int64List     | LongType if all lists have length=1, else ArrayType(LongType) |
+| Example, SequenceExample | FloatList     | FloatType if all lists have length=1, else ArrayType(FloatType) |
+| Example, SequenceExample | BytesList     | StringType if all lists have length=1, else ArrayType(StringType) |
+| SequenceExample          | FeatureList of Int64List | ArrayType(ArrayType(LongType)) |
+| SequenceExample          | FeatureList of FloatList | ArrayType(ArrayType(FloatType)) |
+| SequenceExample          | FeatureList of BytesList | ArrayType(ArrayType(StringType)) |
 
 ## Usage Examples
 
@@ -84,11 +98,11 @@ val testRows: Array[Row] = Array(
 new GenericRow(Array[Any](11, 1, 23L, 10.0F, 14.0, List(1.0, 2.0), "r1")),
 new GenericRow(Array[Any](21, 2, 24L, 12.0F, 15.0, List(2.0, 2.0), "r2")))
 val schema = StructType(List(StructField("id", IntegerType), 
-                             StructField("IntegerTypelabel", IntegerType), 
-                             StructField("LongTypelabel", LongType), 
-                             StructField("FloatTypelabel", FloatType), 
-                             StructField("DoubleTypelabel", DoubleType), 
-                             StructField("vectorlabel", ArrayType(DoubleType, true)), 
+                             StructField("IntegerTypeLabel", IntegerType),
+                             StructField("LongTypeLabel", LongType),
+                             StructField("FloatTypeLabel", FloatType),
+                             StructField("DoubleTypeLabel", DoubleType),
+                             StructField("VectorLabel", ArrayType(DoubleType, true)),
                              StructField("name", StringType)))
                              
 val rdd = spark.sparkContext.parallelize(testRows)
@@ -128,7 +142,7 @@ val videoSchema = StructType(List(StructField("video_id", StringType),
                              StructField("mean_audio", ArrayType(FloatType, true))))
 val videoDf: DataFrame = spark.read.format("tfrecords").schema(videoSchema).option("recordType", "Example").load("file:///tmp/video_level-train-0.tfrecord")
 videoDf.show()
-videoDf.write.format("tfrecords").option("recordType", "Example").save("youtube-8m-video.tfrecords")
+videoDf.write.format("tfrecords").option("recordType", "Example").save("youtube-8m-video.tfrecord")
 val importedDf1: DataFrame = spark.read.format("tfrecords").option("recordType", "Example").schema(videoSchema).load("youtube-8m-video.tfrecords")
 importedDf1.show()
 
@@ -139,7 +153,7 @@ val frameSchema = StructType(List(StructField("video_id", StringType),
                              StructField("audio", ArrayType(ArrayType(StringType, true),true))))
 val frameDf: DataFrame = spark.read.format("tfrecords").schema(frameSchema).option("recordType", "SequenceExample").load("file:///tmp/frame_level-train-0.tfrecord")
 frameDf.show()
-frameDf.write.format("tfrecords").option("recordType", "SequenceExample").save("youtube-8m-frame.tfrecords")
+frameDf.write.format("tfrecords").option("recordType", "SequenceExample").save("youtube-8m-frame.tfrecord")
 val importedDf2: DataFrame = spark.read.format("tfrecords").option("recordType", "SequenceExample").schema(frameSchema).load("youtube-8m-frame.tfrecords")
 importedDf2.show()
 ```

@@ -28,13 +28,13 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
 
     "Encode given Row as TensorFlow Example" in {
       val schemaStructType = StructType(Array(
-        StructField("IntegerTypeLabel", IntegerType),
-        StructField("LongTypeLabel", LongType),
-        StructField("FloatTypeLabel", FloatType),
-        StructField("DoubleTypeLabel", DoubleType),
-        StructField("vectorLabel", ArrayType(DoubleType)),
-        StructField("strLabel", StringType),
-        StructField("strListLabel", ArrayType(StringType))
+        StructField("IntegerLabel", IntegerType),
+        StructField("LongLabel", LongType),
+        StructField("FloatLabel", FloatType),
+        StructField("DoubleLabel", DoubleType),
+        StructField("DoubleArrayLabel", ArrayType(DoubleType)),
+        StructField("StrLabel", StringType),
+        StructField("StrArrayLabel", ArrayType(StringType))
       ))
       val doubleArray = Array(1.1, 111.1, 11111.1)
       val expectedFloatArray = Array(1.1F, 111.1F, 11111.1F)
@@ -48,35 +48,35 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
       val featureMap = example.getFeatures.getFeatureMap.asScala
       assert(featureMap.size == 7)
 
-      assert(featureMap("IntegerTypeLabel").getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER)
-      assert(featureMap("IntegerTypeLabel").getInt64List.getValue(0).toInt == 1)
+      assert(featureMap("IntegerLabel").getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER)
+      assert(featureMap("IntegerLabel").getInt64List.getValue(0).toInt == 1)
 
-      assert(featureMap("LongTypeLabel").getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER)
-      assert(featureMap("LongTypeLabel").getInt64List.getValue(0).toInt == 23)
+      assert(featureMap("LongLabel").getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER)
+      assert(featureMap("LongLabel").getInt64List.getValue(0).toInt == 23)
 
-      assert(featureMap("FloatTypeLabel").getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER)
-      assert(featureMap("FloatTypeLabel").getFloatList.getValue(0) == 10.0F)
+      assert(featureMap("FloatLabel").getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER)
+      assert(featureMap("FloatLabel").getFloatList.getValue(0) == 10.0F)
 
-      assert(featureMap("DoubleTypeLabel").getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER)
-      assert(featureMap("DoubleTypeLabel").getFloatList.getValue(0) == 14.0F)
+      assert(featureMap("DoubleLabel").getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER)
+      assert(featureMap("DoubleLabel").getFloatList.getValue(0) == 14.0F)
 
-      assert(featureMap("vectorLabel").getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER)
-      assert(featureMap("vectorLabel").getFloatList.getValueList.asScala.toSeq.map(_.toFloat) ~== expectedFloatArray)
+      assert(featureMap("DoubleArrayLabel").getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER)
+      assert(featureMap("DoubleArrayLabel").getFloatList.getValueList.asScala.toSeq.map(_.toFloat) ~== expectedFloatArray)
 
-      assert(featureMap("strLabel").getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER)
-      assert(featureMap("strLabel").getBytesList.getValue(0).toStringUtf8 == "r1")
+      assert(featureMap("StrLabel").getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER)
+      assert(featureMap("StrLabel").getBytesList.getValue(0).toStringUtf8 == "r1")
 
-      assert(featureMap("strListLabel").getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER)
-      assert(featureMap("strListLabel").getBytesList.getValueList.asScala.map(_.toStringUtf8) === Seq("r2", "r3"))
+      assert(featureMap("StrArrayLabel").getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER)
+      assert(featureMap("StrArrayLabel").getBytesList.getValueList.asScala.map(_.toStringUtf8) === Seq("r2", "r3"))
     }
 
     "Encode given Row as TensorFlow SequenceExample" in {
 
       val schemaStructType = StructType(Array(
-        StructField("IntegerTypeLabel", IntegerType),
-        StructField("LongListOfListsLabel", ArrayType(ArrayType(LongType))),
-        StructField("FloatListOfListsLabel", ArrayType(ArrayType(FloatType))),
-        StructField("StringListOfListsLabel", ArrayType(ArrayType(StringType)))
+        StructField("IntegerLabel", IntegerType),
+        StructField("LongArrayOfArrayLabel", ArrayType(ArrayType(LongType))),
+        StructField("FloatArrayOfArrayLabel", ArrayType(ArrayType(FloatType))),
+        StructField("StringArrayOfArrayLabel", ArrayType(ArrayType(StringType)))
       ))
 
       val longListOfLists = Seq(Seq(3L, 5L), Seq(-8L, 0L))
@@ -93,13 +93,13 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
       val featureListMap = seqExample.getFeatureLists.getFeatureListMap.asScala
 
       assert(featureMap.size == 1)
-      assert(featureMap("IntegerTypeLabel").getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER)
-      assert(featureMap("IntegerTypeLabel").getInt64List.getValue(0).toInt == 10)
+      assert(featureMap("IntegerLabel").getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER)
+      assert(featureMap("IntegerLabel").getInt64List.getValue(0).toInt == 10)
 
       assert(featureListMap.size == 3)
-      assert(featureListMap("LongListOfListsLabel").getFeatureList.asScala.map(_.getInt64List.getValueList.asScala.toSeq) === longListOfLists)
-      assert(featureListMap("FloatListOfListsLabel").getFeatureList.asScala.map(_.getFloatList.getValueList.asScala.map(_.toFloat).toSeq) ~== floatListOfLists)
-      assert(featureListMap("StringListOfListsLabel").getFeatureList.asScala.map(_.getBytesList.getValueList.asScala.map(_.toStringUtf8).toSeq) === stringListOfLists)
+      assert(featureListMap("LongArrayOfArrayLabel").getFeatureList.asScala.map(_.getInt64List.getValueList.asScala.toSeq) === longListOfLists)
+      assert(featureListMap("FloatArrayOfArrayLabel").getFeatureList.asScala.map(_.getFloatList.getValueList.asScala.map(_.toFloat).toSeq) ~== floatListOfLists)
+      assert(featureListMap("StringArrayOfArrayLabel").getFeatureList.asScala.map(_.getBytesList.getValueList.asScala.map(_.toStringUtf8).toSeq) === stringListOfLists)
     }
   }
 }
