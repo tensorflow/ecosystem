@@ -15,11 +15,10 @@
  */
 package org.tensorflow.spark.datasources.tfrecords.serde
 
-import org.tensorflow.example.{BytesList, Feature, FloatList, Int64List}
+import org.tensorflow.example._
 import org.tensorflow.hadoop.shaded.protobuf.ByteString
-import org.tensorflow.spark.datasources.tfrecords.DataTypesConvertor
 
-trait FeatureEncoder {
+trait FeatureEncoder[T] {
   /**
    * Encodes input value as TensorFlow "Feature"
    *
@@ -28,91 +27,47 @@ trait FeatureEncoder {
    * @param value Input value
    * @return TensorFlow Feature
    */
-  def encode(value: Any): Feature
+  def encode(value: T): Feature
 }
 
 /**
  * Encode input value to Int64List
  */
-object Int64ListFeatureEncoder extends FeatureEncoder {
-  override def encode(value: Any): Feature = {
-    try {
-      val int64List = value match {
-        case i: Int => Int64List.newBuilder().addValue(i.toLong).build()
-        case l: Long => Int64List.newBuilder().addValue(l).build()
-        case arr: scala.collection.mutable.WrappedArray[_] => toInt64List(arr.toArray[Any])
-        case arr: Array[_] => toInt64List(arr)
-        case seq: Seq[_] => toInt64List(seq.toArray[Any])
-        case _ => throw new RuntimeException(s"Cannot convert object $value to Int64List")
-      }
-      Feature.newBuilder().setInt64List(int64List).build()
-    }
-    catch {
-      case ex: Exception =>
-        throw new RuntimeException(s"Cannot convert object $value of type ${value.getClass} to Int64List feature.", ex)
-    }
-  }
-
-  private def toInt64List[T](arr: Array[T]): Int64List = {
+object Int64ListFeatureEncoder extends FeatureEncoder[Seq[Long]] {
+  override def encode(value: Seq[Long]): Feature = {
     val intListBuilder = Int64List.newBuilder()
-    arr.foreach(x => {
-      require(x != null, "Int64List with null values is not supported")
-      val longValue = DataTypesConvertor.toLong(x)
-      intListBuilder.addValue(longValue)
-    })
-    intListBuilder.build()
+    value.foreach {x =>
+      intListBuilder.addValue(x)
+    }
+    val int64List = intListBuilder.build()
+    Feature.newBuilder().setInt64List(int64List).build()
   }
 }
 
 /**
  * Encode input value to FloatList
  */
-object FloatListFeatureEncoder extends FeatureEncoder {
-  override def encode(value: Any): Feature = {
-    try {
-      val floatList = value match {
-        case i: Int => FloatList.newBuilder().addValue(i.toFloat).build()
-        case l: Long => FloatList.newBuilder().addValue(l.toFloat).build()
-        case f: Float => FloatList.newBuilder().addValue(f).build()
-        case d: Double => FloatList.newBuilder().addValue(d.toFloat).build()
-        case arr: scala.collection.mutable.WrappedArray[_] => toFloatList(arr.toArray[Any])
-        case arr: Array[_] => toFloatList(arr)
-        case seq: Seq[_] => toFloatList(seq.toArray[Any])
-        case _ => throw new RuntimeException(s"Cannot convert object $value to FloatList")
-      }
-      Feature.newBuilder().setFloatList(floatList).build()
-    }
-    catch {
-      case ex: Exception =>
-        throw new RuntimeException(s"Cannot convert object $value of type ${value.getClass} to FloatList feature.", ex)
-    }
-  }
-
-  private def toFloatList[T](arr: Array[T]): FloatList = {
+object FloatListFeatureEncoder extends FeatureEncoder[Seq[Float]] {
+  override def encode(value: Seq[Float]): Feature = {
     val floatListBuilder = FloatList.newBuilder()
-    arr.foreach(x => {
-      require(x != null, "FloatList with null values is not supported")
-      val longValue = DataTypesConvertor.toFloat(x)
-      floatListBuilder.addValue(longValue)
-    })
-    floatListBuilder.build()
+    value.foreach {x =>
+      floatListBuilder.addValue(x)
+    }
+    val floatList = floatListBuilder.build()
+    Feature.newBuilder().setFloatList(floatList).build()
   }
 }
 
 /**
  * Encode input value to ByteList
  */
-object BytesListFeatureEncoder extends FeatureEncoder {
-  override def encode(value: Any): Feature = {
-    try {
-      val byteList = BytesList.newBuilder().addValue(ByteString.copyFrom(value.toString.getBytes)).build()
-      Feature.newBuilder().setBytesList(byteList).build()
+object BytesListFeatureEncoder extends FeatureEncoder[Seq[String]] {
+  override def encode(value: Seq[String]): Feature = {
+    val bytesListBuilder = BytesList.newBuilder()
+    value.foreach {x =>
+      bytesListBuilder.addValue(ByteString.copyFrom(x.getBytes))
     }
-    catch {
-      case ex: Exception =>
-        throw new RuntimeException(s"Cannot convert object $value of type ${value.getClass} to ByteList feature.", ex)
-    }
+    val bytesList = bytesListBuilder.build()
+    Feature.newBuilder().setBytesList(bytesList).build()
   }
 }
-
-

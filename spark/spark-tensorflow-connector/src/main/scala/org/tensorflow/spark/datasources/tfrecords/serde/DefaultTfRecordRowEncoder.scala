@@ -16,6 +16,7 @@
 package org.tensorflow.spark.datasources.tfrecords.serde
 
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.util.ArrayData
 import org.apache.spark.sql.types._
 import org.tensorflow.example._
 
@@ -28,7 +29,17 @@ trait TfRecordRowEncoder {
    * @param row a DataFrame row
    * @return TensorFlow Example
    */
-  def encodeTfRecord(row: Row): Example
+  def encodeExample(row: Row): Example
+
+  /**
+   * Encodes each Row as TensorFlow "SequenceExample"
+   *
+   * Maps each column in Row to one of Int64List, FloatList, BytesList or FeatureList based on the column data type
+   *
+   * @param row a DataFrame row
+   * @return TensorFlow SequenceExample
+   */
+  def encodeSequenceExample(row: Row): SequenceExample
 }
 
 object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
@@ -41,26 +52,107 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
    * @param row a DataFrame row
    * @return TensorFlow Example
    */
-  def encodeTfRecord(row: Row): Example = {
+  def encodeExample(row: Row): Example = {
     val features = Features.newBuilder()
     val example = Example.newBuilder()
 
-    row.schema.zipWithIndex.map {
+    row.schema.zipWithIndex.foreach {
       case (structField, index) =>
-        val value = row.get(index)
-        val feature = structField.dataType match {
-          case IntegerType | LongType => Int64ListFeatureEncoder.encode(value)
-          case FloatType | DoubleType => FloatListFeatureEncoder.encode(value)
-          case ArrayType(IntegerType, _) | ArrayType(LongType, _) => Int64ListFeatureEncoder.encode(value)
-          case ArrayType(DoubleType, _) => FloatListFeatureEncoder.encode(value)
-          case _ => BytesListFeatureEncoder.encode(value)
-        }
+        val feature = encodeFeature(row, structField, index)
         features.putFeature(structField.name, feature)
     }
 
-    features.build()
-    example.setFeatures(features)
+    example.setFeatures(features.build())
     example.build()
   }
-}
 
+  /**
+   * Encodes each Row as TensorFlow "SequenceExample"
+   *
+   * Maps each column in Row to one of Int64List, FloatList, BytesList or FeatureList based on the column data type
+   *
+   * @param row a DataFrame row
+   * @return TensorFlow SequenceExample
+   */
+  def encodeSequenceExample(row: Row): SequenceExample = {
+    val features = Features.newBuilder()
+    val featureLists = FeatureLists.newBuilder()
+    val sequenceExample = SequenceExample.newBuilder()
+
+    row.schema.zipWithIndex.foreach {
+      case (structField, index) => structField.dataType match {
+        case ArrayType(ArrayType(_, _), _) | ArrayType(StringType, _) =>
+          val featureList = encodeFeatureList(row, structField, index)
+          featureLists.putFeatureList(structField.name, featureList)
+        case _ =>
+          val feature = encodeFeature(row, structField, index)
+          features.putFeature(structField.name, feature)
+      }
+    }
+
+    sequenceExample.setContext(features.build())
+    sequenceExample.setFeatureLists(featureLists.build())
+    sequenceExample.build()
+  }
+
+  //Encode field in row to TensorFlow Feature
+  private def encodeFeature(row: Row, structField: StructField, index: Int): Feature = {
+    val feature = structField.dataType match {
+      case IntegerType => Int64ListFeatureEncoder.encode(Seq(row.getInt(index).toLong))
+      case LongType => Int64ListFeatureEncoder.encode(Seq(row.getLong(index)))
+      case FloatType => FloatListFeatureEncoder.encode(Seq(row.getFloat(index)))
+      case DoubleType => FloatListFeatureEncoder.encode(Seq(row.getDouble(index).toFloat))
+      case StringType => BytesListFeatureEncoder.encode(Seq(row.getString(index)))
+      case ArrayType(IntegerType, _)  =>
+        Int64ListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toIntArray().map(_.toLong))
+      case ArrayType(LongType, _) =>
+        Int64ListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toLongArray())
+      case ArrayType(FloatType, _) =>
+        FloatListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toFloatArray())
+      case ArrayType(DoubleType, _) =>
+        FloatListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toDoubleArray().map(_.toFloat))
+      case ArrayType(_, _) =>
+        BytesListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toArray[String](StringType))
+      case _ => BytesListFeatureEncoder.encode(Seq(row.getString(index)))
+    }
+    feature
+  }
+
+  //Encode field in row to TensorFlow FeatureList
+  def encodeFeatureList(row: Row, structField: StructField, index: Int): FeatureList = {
+    val featureList = structField.dataType match {
+      case ArrayType(ArrayType(IntegerType, _), _) =>
+        val longArrays = ArrayData.toArrayData(row.get(index)).array.map {arr =>
+          ArrayData.toArrayData(arr).toIntArray().map(_.toLong).toSeq
+        }
+        Int64FeatureListEncoder.encode(longArrays)
+
+      case ArrayType(ArrayType(LongType, _), _) =>
+        val longArrays = ArrayData.toArrayData(row.get(index)).array.map {arr =>
+          ArrayData.toArrayData(arr).toLongArray().toSeq
+        }
+        Int64FeatureListEncoder.encode(longArrays)
+
+      case ArrayType(ArrayType(FloatType, _), _) =>
+        val floatArrays = ArrayData.toArrayData(row.get(index)).array.map {arr =>
+          ArrayData.toArrayData(arr).toFloatArray().toSeq
+        }
+        FloatFeatureListEncoder.encode(floatArrays)
+
+      case ArrayType(ArrayType(DoubleType, _), _) =>
+        val floatArrays = ArrayData.toArrayData(row.get(index)).array.map {arr =>
+          ArrayData.toArrayData(arr).toDoubleArray().map(_.toFloat).toSeq
+        }
+        FloatFeatureListEncoder.encode(floatArrays)
+
+      case ArrayType(ArrayType(StringType, _), _) =>
+        val arrayData = ArrayData.toArrayData(row.get(index)).array.map {arr =>
+          ArrayData.toArrayData(arr).toArray[String](StringType).toSeq
+        }.toSeq
+        BytesFeatureListEncoder.encode(arrayData)
+
+      case _ => throw new RuntimeException(s"Cannot convert row element ${row.get(index)} to FeatureList.")
+    }
+    featureList
+  }
+}

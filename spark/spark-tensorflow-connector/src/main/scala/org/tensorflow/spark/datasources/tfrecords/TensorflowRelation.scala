@@ -20,30 +20,44 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.sources.{BaseRelation, TableScan}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Row, SQLContext, SparkSession}
-import org.tensorflow.example.Example
+import org.tensorflow.example.{SequenceExample, Example}
 import org.tensorflow.hadoop.io.TFRecordFileInputFormat
 import org.tensorflow.spark.datasources.tfrecords.serde.DefaultTfRecordRowDecoder
 
 
-case class TensorflowRelation(options: Map[String, String], customSchema: Option[StructType]=None)(@transient val session: SparkSession) extends BaseRelation with TableScan {
+case class TensorflowRelation(options: Map[String, String], customSchema: Option[StructType]=None)
+                             (@transient val session: SparkSession) extends BaseRelation with TableScan {
 
   //Import TFRecords as DataFrame happens here
-  lazy val (tf_rdd, tf_schema) = {
+  lazy val (tfRdd, tfSchema) = {
     val rdd = session.sparkContext.newAPIHadoopFile(options("path"), classOf[TFRecordFileInputFormat], classOf[BytesWritable], classOf[NullWritable])
 
-    val exampleRdd = rdd.map {
-      case (bytesWritable, nullWritable) => Example.parseFrom(bytesWritable.getBytes)
+    val recordType = options.getOrElse("recordType", "Example")
+
+    recordType match {
+      case "Example" =>
+        val exampleRdd = rdd.map{case (bytesWritable, nullWritable) =>
+          Example.parseFrom(bytesWritable.getBytes)
+        }
+        val finalSchema = customSchema.getOrElse(TensorFlowInferSchema(exampleRdd))
+        val rowRdd = exampleRdd.map(example => DefaultTfRecordRowDecoder.decodeExample(example, finalSchema))
+        (rowRdd, finalSchema)
+      case "SequenceExample" =>
+        val sequenceExampleRdd = rdd.map{case (bytesWritable, nullWritable) =>
+          SequenceExample.parseFrom(bytesWritable.getBytes)
+        }
+        val finalSchema = customSchema.getOrElse(TensorFlowInferSchema(sequenceExampleRdd))
+        val rowRdd = sequenceExampleRdd.map(example => DefaultTfRecordRowDecoder.decodeSequenceExample(example, finalSchema))
+        (rowRdd, finalSchema)
+      case _ =>
+        throw new IllegalArgumentException(s"Unsupported recordType ${recordType}: recordType can be Example or SequenceExample")
     }
-
-    val finalSchema = customSchema.getOrElse(TensorflowInferSchema(exampleRdd))
-
-    (exampleRdd.map(example => DefaultTfRecordRowDecoder.decodeTfRecord(example, finalSchema)), finalSchema)
   }
 
   override def sqlContext: SQLContext = session.sqlContext
 
-  override def schema: StructType = tf_schema
+  override def schema: StructType = tfSchema
 
-  override def buildScan(): RDD[Row] = tf_rdd
+  override def buildScan(): RDD[Row] = tfRdd
 }
 
