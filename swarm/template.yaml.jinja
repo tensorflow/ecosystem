@@ -1,0 +1,52 @@
+{%- set name = "mnist" -%}
+{%- set image = "" -%}
+{%- set worker_replicas = 2 -%}
+{%- set ps_replicas = 1 -%}
+{%- set script = "mnist.py" -%}
+{%- set data_dir = "hdfs://namenode/data_dir" -%}
+{%- set train_dir = "hdfs://namenode/train_dir" -%}
+{%- set tensorboard = true %}
+
+{%- set port = 5000 -%}
+{%- set replicas = {"worker": worker_replicas, "ps": ps_replicas} -%}
+
+{%- macro worker_hosts() -%}
+  {%- for i in range(worker_replicas) -%}
+    {%- if not loop.first -%},{%- endif -%}
+    {{ name }}-worker-{{ i }}:{{ port }}
+  {%- endfor -%}
+{%- endmacro -%}
+
+{%- macro ps_hosts() -%}
+  {%- for i in range(ps_replicas) -%}
+    {%- if not loop.first -%},{%- endif -%}
+    {{ name }}-ps-{{ i }}:{{ port }}
+  {%- endfor -%}
+{%- endmacro -%}
+
+version: '2'
+services:
+
+{%- for job in ["worker", "ps"] -%}
+{%- for i in range(replicas[job]) %}
+  {{ job }}-{{ i }}:
+      image: {{ image }}
+      container_name: {{ name }}-{{ job }}-{{ i }}
+      command:
+         - python
+         - {{ script }}
+         - "--data_dir={{ data_dir }}"
+         - "--train_dir={{ train_dir }}"
+         - "--task_index={{ i }}"
+         - "--job_name={{ job }}"
+         - "--worker_hosts={{ worker_hosts() }}"
+         - "--ps_hosts={{ ps_hosts() }}"
+{% endfor %}
+{%- endfor -%}
+{%- if tensorboard %}
+  tensorboard:
+      image: {{ image }}
+      command:
+         - tensorboard
+         - --logdir={{ train_dir }}
+{% endif %}
