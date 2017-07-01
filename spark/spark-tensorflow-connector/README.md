@@ -93,7 +93,7 @@ The schema inference rules are described in the table below:
 
 The supported Spark data types are listed in the table below:
 
-| Data Type        | Spark DataTypes                          |
+| Type            | Spark DataTypes                          |
 | --------------- |:------------------------------------------|
 | Scalar          | IntegerType, LongType, FloatType, DoubleType, DecimalType |
 | Array           | VectorType, ArrayType(IntegerType), ArrayType(LongType), ArrayType(FloatType), ArrayType(DoubleType), ArrayType(DecimalType) |

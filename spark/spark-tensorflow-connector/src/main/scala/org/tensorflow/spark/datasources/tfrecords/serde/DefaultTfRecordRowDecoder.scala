@@ -65,7 +65,7 @@ object DefaultTfRecordRowDecoder extends TfRecordRowDecoder {
         val feature = featureMap.get(field.name)
         feature match {
           case Some(f) => row(index) = decodeFeature(f, schema, index)
-          case None => if (!field.nullable) throw new NullPointerException(s"Field ${field.name} cannot be null")
+          case None => if (!field.nullable) throw new NullPointerException(s"Field ${field.name} does not allow null values")
         }
     }
     Row.fromSeq(row)
@@ -96,7 +96,7 @@ object DefaultTfRecordRowDecoder extends TfRecordRowDecoder {
           case None => {
             featureListMap.get(field.name) match {
               case Some(list) => row(index) = decodeFeatureList(list, schema, index)
-              case None => if (!field.nullable) throw new NullPointerException(s"Field ${field.name} cannot be null")
+              case None => if (!field.nullable) throw new NullPointerException(s"Field ${field.name}  does not allow null values")
             }
           }
         }

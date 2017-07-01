@@ -65,7 +65,7 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
           features.putFeature(structField.name, feature)
         }
         else if (!structField.nullable) {
-          throw new NullPointerException(s"${structField.name} cannot not be null")
+          throw new NullPointerException(s"${structField.name} does not allow null values")
         }
     }
 
@@ -89,7 +89,7 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
     row.schema.zipWithIndex.foreach {
       case (structField, index) if row.get(index) == null => {
         if (!structField.nullable) {
-          throw new NullPointerException(s"${structField.name} cannot not be null")
+          throw new NullPointerException(s"${structField.name}  does not allow null values")
         }
       }
       case (structField, index) => structField.dataType match {

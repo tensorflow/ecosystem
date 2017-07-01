@@ -26,7 +26,6 @@ import org.tensorflow.hadoop.shaded.protobuf.ByteString
 import org.tensorflow.spark.datasources.tfrecords.TestingUtils._
 
 class TfRecordRowDecoderTest extends WordSpec with Matchers {
-val x = Row()
   val intFeature = Feature.newBuilder().setInt64List(Int64List.newBuilder().addValue(1)).build()
   val longFeature = Feature.newBuilder().setInt64List(Int64List.newBuilder().addValue(23L)).build()
   val floatFeature = Feature.newBuilder().setFloatList(FloatList.newBuilder().addValue(10.0F)).build()
