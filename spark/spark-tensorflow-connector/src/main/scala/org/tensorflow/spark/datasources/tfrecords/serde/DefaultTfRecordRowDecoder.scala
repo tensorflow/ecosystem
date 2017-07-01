@@ -17,6 +17,8 @@ package org.tensorflow.spark.datasources.tfrecords.serde
 
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.Row
+import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
+import org.apache.spark.ml.linalg.Vectors
 import org.tensorflow.example._
 import scala.collection.JavaConverters._
 
@@ -24,7 +26,7 @@ trait TfRecordRowDecoder {
   /**
    * Decodes each TensorFlow "Example" as DataFrame "Row"
    *
-   * Maps each feature in Example to element in Row with DataType based on custom schema 
+   * Maps each feature in Example to element in Row with DataType based on custom schema
    *
    * @param example TensorFlow Example to decode
    * @param schema Decode Example using specified schema
@@ -35,7 +37,7 @@ trait TfRecordRowDecoder {
   /**
    * Decodes each TensorFlow "SequenceExample" as DataFrame "Row"
    *
-   * Maps each feature in SequenceExample to element in Row with DataType based on custom schema 
+   * Maps each feature in SequenceExample to element in Row with DataType based on custom schema
    *
    * @param sequenceExample TensorFlow SequenceExample to decode
    * @param schema Decode SequenceExample using specified schema
@@ -57,10 +59,14 @@ object DefaultTfRecordRowDecoder extends TfRecordRowDecoder {
    */
   def decodeExample(example: Example, schema: StructType): Row = {
     val row = Array.fill[Any](schema.length)(null)
-    example.getFeatures.getFeatureMap.asScala.foreach {
-      case (featureName, feature) =>
-        val index = schema.fieldIndex(featureName)
-        row(index) = decodeFeature(feature, schema, index)
+    val featureMap = example.getFeatures.getFeatureMap.asScala
+    schema.fields.zipWithIndex.foreach {
+      case (field, index) =>
+        val feature = featureMap.get(field.name)
+        feature match {
+          case Some(f) => row(index) = decodeFeature(f, schema, index)
+          case None => if (!field.nullable) throw new NullPointerException(s"Field ${field.name} cannot be null")
+        }
     }
     Row.fromSeq(row)
   }
@@ -78,17 +84,22 @@ object DefaultTfRecordRowDecoder extends TfRecordRowDecoder {
     val row = Array.fill[Any](schema.length)(null)
 
     //Decode features
-    sequenceExample.getContext.getFeatureMap.asScala.foreach {
-      case (featureName, feature) =>
-        val index = schema.fieldIndex(featureName)
-        row(index) = decodeFeature(feature, schema, index)
-    }
+    val featureMap = sequenceExample.getContext.getFeatureMap.asScala
+    val featureListMap = sequenceExample.getFeatureLists.getFeatureListMap.asScala
 
-    //Decode feature lists
-    sequenceExample.getFeatureLists.getFeatureListMap.asScala.foreach {
-      case (featureName, featureList) =>
-        val index = schema.fieldIndex(featureName)
-        row(index) = decodeFeatureList(featureList, schema, index)
+    schema.fields.zipWithIndex.foreach {
+      case (field, index) =>
+        val feature = featureMap.get(field.name)
+
+        feature match {
+          case Some(f) => row(index) = decodeFeature(f, schema, index)
+          case None => {
+            featureListMap.get(field.name) match {
+              case Some(list) => row(index) = decodeFeatureList(list, schema, index)
+              case None => if (!field.nullable) throw new NullPointerException(s"Field ${field.name} cannot be null")
+            }
+          }
+        }
     }
 
     Row.fromSeq(row)
@@ -103,12 +114,15 @@ object DefaultTfRecordRowDecoder extends TfRecordRowDecoder {
       case LongType => LongFeatureDecoder.decode(feature)
       case FloatType => FloatFeatureDecoder.decode(feature)
       case DoubleType => DoubleFeatureDecoder.decode(feature)
+      case DecimalType() => DecimalFeatureDecoder.decode(feature)
       case StringType => StringFeatureDecoder.decode(feature)
       case ArrayType(IntegerType, _) => IntListFeatureDecoder.decode(feature)
       case ArrayType(LongType, _) => LongListFeatureDecoder.decode(feature)
       case ArrayType(FloatType, _) => FloatListFeatureDecoder.decode(feature)
       case ArrayType(DoubleType, _) => DoubleListFeatureDecoder.decode(feature)
+      case ArrayType(DecimalType(), _) => DecimalListFeatureDecoder.decode(feature)
       case ArrayType(StringType, _) => StringListFeatureDecoder.decode(feature)
+      case VectorType =>  Vectors.dense(DoubleListFeatureDecoder.decode(feature).toArray)
       case _ => throw new scala.RuntimeException(s"Cannot convert Feature to unsupported data type ${colDataType}")
     }
   }
@@ -116,15 +130,14 @@ object DefaultTfRecordRowDecoder extends TfRecordRowDecoder {
   // Decode FeatureList to Scala Type based on field in schema
   private def decodeFeatureList(featureList: FeatureList, schema: StructType, fieldIndex: Int): Any = {
     val colDataType = schema.fields(fieldIndex).dataType
-
     colDataType match {
       case ArrayType(ArrayType(IntegerType, _), _) => IntFeatureListDecoder.decode(featureList)
       case ArrayType(ArrayType(LongType, _), _) => LongFeatureListDecoder.decode(featureList)
       case ArrayType(ArrayType(FloatType, _), _) => FloatFeatureListDecoder.decode(featureList)
       case ArrayType(ArrayType(DoubleType, _), _) => DoubleFeatureListDecoder.decode(featureList)
+      case ArrayType(ArrayType(DecimalType(), _), _) => DecimalFeatureListDecoder.decode(featureList)
       case ArrayType(ArrayType(StringType, _), _) => StringFeatureListDecoder.decode(featureList)
       case _ => throw new scala.RuntimeException(s"Cannot convert FeatureList to unsupported data type ${colDataType}")
     }
   }
 }
-

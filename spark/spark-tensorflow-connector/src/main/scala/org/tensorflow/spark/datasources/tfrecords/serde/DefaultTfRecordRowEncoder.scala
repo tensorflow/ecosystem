@@ -18,6 +18,8 @@ package org.tensorflow.spark.datasources.tfrecords.serde
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.util.ArrayData
 import org.apache.spark.sql.types._
+import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
+import org.apache.spark.ml.linalg.{DenseVector, SparseVector}
 import org.tensorflow.example._
 
 trait TfRecordRowEncoder {
@@ -58,8 +60,13 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
 
     row.schema.zipWithIndex.foreach {
       case (structField, index) =>
-        val feature = encodeFeature(row, structField, index)
-        features.putFeature(structField.name, feature)
+        if (row.get(index) != null) {
+          val feature = encodeFeature(row, structField, index)
+          features.putFeature(structField.name, feature)
+        }
+        else if (!structField.nullable) {
+          throw new NullPointerException(s"${structField.name} cannot not be null")
+        }
     }
 
     example.setFeatures(features.build())
@@ -80,6 +87,11 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
     val sequenceExample = SequenceExample.newBuilder()
 
     row.schema.zipWithIndex.foreach {
+      case (structField, index) if row.get(index) == null => {
+        if (!structField.nullable) {
+          throw new NullPointerException(s"${structField.name} cannot not be null")
+        }
+      }
       case (structField, index) => structField.dataType match {
         case ArrayType(ArrayType(_, _), _) | ArrayType(StringType, _) =>
           val featureList = encodeFeatureList(row, structField, index)
@@ -102,6 +114,7 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
       case LongType => Int64ListFeatureEncoder.encode(Seq(row.getLong(index)))
       case FloatType => FloatListFeatureEncoder.encode(Seq(row.getFloat(index)))
       case DoubleType => FloatListFeatureEncoder.encode(Seq(row.getDouble(index).toFloat))
+      case DecimalType() => FloatListFeatureEncoder.encode(Seq(row.getAs[Decimal](index).toFloat))
       case StringType => BytesListFeatureEncoder.encode(Seq(row.getString(index)))
       case ArrayType(IntegerType, _)  =>
         Int64ListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toIntArray().map(_.toLong))
@@ -111,9 +124,20 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
         FloatListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toFloatArray())
       case ArrayType(DoubleType, _) =>
         FloatListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toDoubleArray().map(_.toFloat))
+      case ArrayType(DecimalType(), _) =>
+        val decimalArray = ArrayData.toArrayData(row.get(index)).toArray[Decimal](DataTypes.createDecimalType())
+        FloatListFeatureEncoder.encode(decimalArray.map(_.toFloat))
       case ArrayType(_, _) =>
         BytesListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toArray[String](StringType))
-      case _ => BytesListFeatureEncoder.encode(Seq(row.getString(index)))
+      case VectorType => {
+        val field = row.get(index)
+        field match {
+          case v: SparseVector => FloatListFeatureEncoder.encode(v.toDense.toArray.map(_.toFloat))
+          case v: DenseVector => FloatListFeatureEncoder.encode(v.toArray.map(_.toFloat))
+          case _ => throw new RuntimeException(s"Cannot convert $field to vector")
+        }
+      }
+      case _ => throw new RuntimeException(s"Cannot convert field to unsupported data type ${structField.dataType}")
     }
     feature
   }
@@ -142,6 +166,12 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
       case ArrayType(ArrayType(DoubleType, _), _) =>
         val floatArrays = ArrayData.toArrayData(row.get(index)).array.map {arr =>
           ArrayData.toArrayData(arr).toDoubleArray().map(_.toFloat).toSeq
+        }
+        FloatFeatureListEncoder.encode(floatArrays)
+
+      case ArrayType(ArrayType(DecimalType(), _), _) =>
+        val floatArrays = ArrayData.toArrayData(row.get(index)).array.map {arr =>
+          ArrayData.toArrayData(arr).toArray[Decimal](DataTypes.createDecimalType()).map(_.toFloat).toSeq
         }
         FloatFeatureListEncoder.encode(floatArrays)
 

@@ -7,9 +7,15 @@ The library implements data import from the standard TensorFlow record format ([
 
 This is the initial release of the `spark-tensorflow-connector` repo.
 
-## Known issues
+## Table of contents
+1. [Prerequisites](#prerequisites)
+2. [Building the library](#building-the-library)
+3. [Using Spark Shell](#using-spark-shell)
+4. [Features](#features)
+5. [Schema inference](#schema-inference)
+6. [Supported data types](#supported-data-types)
+7. [Usage Examples](#usage-examples)
 
-None.
 
 ## Prerequisites
 
@@ -83,6 +89,16 @@ The schema inference rules are described in the table below:
 | SequenceExample          | FeatureList of FloatList | ArrayType(ArrayType(FloatType)) |
 | SequenceExample          | FeatureList of BytesList | ArrayType(ArrayType(StringType)) |
 
+## Supported data types
+
+The supported Spark data types are listed in the table below:
+
+| Data Type        | Spark DataTypes                          |
+| --------------- |:------------------------------------------|
+| Scalar          | IntegerType, LongType, FloatType, DoubleType, DecimalType |
+| Array           | VectorType, ArrayType(IntegerType), ArrayType(LongType), ArrayType(FloatType), ArrayType(DoubleType), ArrayType(DecimalType) |
+| Array of Arrays | ArrayType(ArrayType(IntegerType)), ArrayType(ArrayType(LongType)), ArrayType(ArrayType(FloatType)), ArrayType(ArrayType(DoubleType)), ArrayType(ArrayType(DecimalType)) |
+
 ## Usage Examples
 
 The following code snippet demonstrates usage on test data.
@@ -143,7 +159,7 @@ val videoSchema = StructType(List(StructField("video_id", StringType),
 val videoDf: DataFrame = spark.read.format("tfrecords").schema(videoSchema).option("recordType", "Example").load("file:///tmp/video_level-train-0.tfrecord")
 videoDf.show()
 videoDf.write.format("tfrecords").option("recordType", "Example").save("youtube-8m-video.tfrecord")
-val importedDf1: DataFrame = spark.read.format("tfrecords").option("recordType", "Example").schema(videoSchema).load("youtube-8m-video.tfrecords")
+val importedDf1: DataFrame = spark.read.format("tfrecords").option("recordType", "Example").schema(videoSchema).load("youtube-8m-video.tfrecord")
 importedDf1.show()
 
 //Import Frame-level SequenceExample dataset into DataFrame
@@ -154,6 +170,6 @@ val frameSchema = StructType(List(StructField("video_id", StringType),
 val frameDf: DataFrame = spark.read.format("tfrecords").schema(frameSchema).option("recordType", "SequenceExample").load("file:///tmp/frame_level-train-0.tfrecord")
 frameDf.show()
 frameDf.write.format("tfrecords").option("recordType", "SequenceExample").save("youtube-8m-frame.tfrecord")
-val importedDf2: DataFrame = spark.read.format("tfrecords").option("recordType", "SequenceExample").schema(frameSchema).load("youtube-8m-frame.tfrecords")
+val importedDf2: DataFrame = spark.read.format("tfrecords").option("recordType", "SequenceExample").schema(frameSchema).load("youtube-8m-frame.tfrecord")
 importedDf2.show()
 ```
