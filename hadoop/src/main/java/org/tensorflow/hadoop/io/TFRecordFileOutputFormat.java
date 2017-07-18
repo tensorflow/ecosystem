@@ -41,7 +41,7 @@ public class TFRecordFileOutputFormat extends FileOutputFormat<BytesWritable, Nu
     return new RecordWriter<BytesWritable, NullWritable>() {
       @Override public void write(BytesWritable key, NullWritable value)
           throws IOException, InterruptedException {
-        writer.write(key.getBytes());
+        writer.write(key.getBytes(), 0, key.getLength());
       }
 
       @Override public void close(TaskAttemptContext context)
