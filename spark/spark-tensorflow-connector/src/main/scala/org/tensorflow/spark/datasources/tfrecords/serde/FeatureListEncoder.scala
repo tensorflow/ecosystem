@@ -61,8 +61,8 @@ object FloatFeatureListEncoder extends FeatureListEncoder[Seq[Seq[Float]]] {
 /**
  * Encode 2-dimensional String array to TensorFlow "FeatureList" of type BytesList
  */
-object BytesFeatureListEncoder extends FeatureListEncoder[Seq[Seq[String]]] {
-  def encode(value: Seq[Seq[String]]) : FeatureList = {
+object BytesFeatureListEncoder extends FeatureListEncoder[Seq[Seq[Array[Byte]]]] {
+  def encode(value: Seq[Seq[Array[Byte]]]) : FeatureList = {
     val builder =  FeatureList.newBuilder()
     value.foreach { x =>
       val bytesList = BytesListFeatureEncoder.encode(x)

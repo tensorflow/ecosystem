@@ -52,18 +52,18 @@ class FeatureListEncoderTest extends WordSpec with Matchers {
     }
   }
 
-  "String feature list encoder" should {
+  "Bytes feature list encoder" should {
 
-    "Encode inputs to feature list of string" in {
-      val stringListOfLists = Seq(Seq("alice", "bob"), Seq("charles"))
-      val stringFeatureList = BytesFeatureListEncoder.encode(stringListOfLists)
+    "Encode inputs to feature list of bytes" in {
+      val bytesListOfLists = Seq(Seq("alice".getBytes, "bob".getBytes), Seq("charles".getBytes))
+      val bytesFeatureList = BytesFeatureListEncoder.encode(bytesListOfLists)
 
-      assert(stringFeatureList.getFeatureList.asScala.map(_.getBytesList.getValueList.asScala.map(_.toStringUtf8).toSeq) === stringListOfLists)
+      assert(bytesFeatureList.getFeatureList.asScala.map(_.getBytesList.getValueList.asScala.toSeq.map(_.toByteArray.deep)) === bytesListOfLists.map(_.map(_.deep)))
     }
 
     "Encode empty array to empty feature list" in {
-      val stringFeatureList = BytesFeatureListEncoder.encode(Seq.empty[Seq[String]])
-      assert(stringFeatureList.getFeatureList.size() === 0)
+      val bytesFeatureList = BytesFeatureListEncoder.encode(Seq.empty[Seq[Array[Byte]]])
+      assert(bytesFeatureList.getFeatureList.size() === 0)
     }
   }
 }

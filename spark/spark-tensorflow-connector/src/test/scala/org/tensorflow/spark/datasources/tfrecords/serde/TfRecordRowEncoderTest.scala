@@ -40,15 +40,17 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
         StructField("StrLabel", StringType),
         StructField("StrArrayLabel", ArrayType(StringType)),
         StructField("DenseVectorLabel", VectorType),
-        StructField("SparseVectorLabel", VectorType)
+        StructField("SparseVectorLabel", VectorType),
+        StructField("BinaryLabel", BinaryType)
       ))
       val doubleArray = Array(1.1, 111.1, 11111.1)
       val decimalArray = Array(Decimal(4.0), Decimal(8.0))
       val sparseVector = Vectors.sparse(3, Seq((1, 2.0), (2, 1.5)))
       val denseVector = Vectors.dense(Array(5.6, 7.0))
+      val byteArray = Array[Byte](0xde.toByte, 0xad.toByte, 0xbe.toByte, 0xef.toByte)
 
       val row = Array[Any](1, 23L, 10.0F, 14.0, Decimal(6.5), doubleArray, decimalArray,
-        "r1", Seq("r2", "r3"), denseVector, sparseVector)
+        "r1", Seq("r2", "r3"), denseVector, sparseVector, byteArray)
       val rowWithSchema = new GenericRowWithSchema(row, schemaStructType)
 
       //Encode Sql Row to TensorFlow example
@@ -56,7 +58,7 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
 
       //Verify each Datatype converted to TensorFlow datatypes
       val featureMap = example.getFeatures.getFeatureMap.asScala
-      assert(featureMap.size == 11)
+      assert(featureMap.size == 12)
 
       assert(featureMap("IntegerLabel").getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER)
       assert(featureMap("IntegerLabel").getInt64List.getValue(0).toInt == 1)
@@ -90,6 +92,9 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
 
       assert(featureMap("SparseVectorLabel").getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER)
       assert(featureMap("SparseVectorLabel").getFloatList.getValueList.asScala.toSeq.map(_.toFloat) ~== sparseVector.toDense.toArray.map(_.toFloat))
+
+      assert(featureMap("BinaryLabel").getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER)
+      assert(featureMap("BinaryLabel").getBytesList.getValue(0).toByteArray.deep == byteArray.deep)
     }
 
     "Encode given Row as TensorFlow SequenceExample" in {

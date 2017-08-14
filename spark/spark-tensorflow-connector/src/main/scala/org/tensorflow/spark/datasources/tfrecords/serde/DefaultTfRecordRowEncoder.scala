@@ -115,7 +115,8 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
       case FloatType => FloatListFeatureEncoder.encode(Seq(row.getFloat(index)))
       case DoubleType => FloatListFeatureEncoder.encode(Seq(row.getDouble(index).toFloat))
       case DecimalType() => FloatListFeatureEncoder.encode(Seq(row.getAs[Decimal](index).toFloat))
-      case StringType => BytesListFeatureEncoder.encode(Seq(row.getString(index)))
+      case StringType => BytesListFeatureEncoder.encode(Seq(row.getString(index).getBytes))
+      case BinaryType => BytesListFeatureEncoder.encode(Seq(row.getAs[Array[Byte]](index)))
       case ArrayType(IntegerType, _)  =>
         Int64ListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toIntArray().map(_.toLong))
       case ArrayType(LongType, _) =>
@@ -127,8 +128,8 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
       case ArrayType(DecimalType(), _) =>
         val decimalArray = ArrayData.toArrayData(row.get(index)).toArray[Decimal](DataTypes.createDecimalType())
         FloatListFeatureEncoder.encode(decimalArray.map(_.toFloat))
-      case ArrayType(_, _) =>
-        BytesListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toArray[String](StringType))
+      case ArrayType(StringType, _) =>
+        BytesListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toArray[String](StringType).map(_.getBytes))
       case VectorType => {
         val field = row.get(index)
         field match {
@@ -177,7 +178,7 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
 
       case ArrayType(ArrayType(StringType, _), _) =>
         val arrayData = ArrayData.toArrayData(row.get(index)).array.map {arr =>
-          ArrayData.toArrayData(arr).toArray[String](StringType).toSeq
+          ArrayData.toArrayData(arr).toArray[String](StringType).toSeq.map(_.getBytes)
         }.toSeq
         BytesFeatureListEncoder.encode(arrayData)
 
