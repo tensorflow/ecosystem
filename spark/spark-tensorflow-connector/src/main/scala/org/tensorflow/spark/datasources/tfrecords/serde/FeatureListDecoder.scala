@@ -15,6 +15,7 @@
  */
 package org.tensorflow.spark.datasources.tfrecords.serde
 
+import org.apache.spark.sql.types.Decimal
 import org.tensorflow.example.FeatureList
 import scala.collection.JavaConverters._
 
@@ -61,6 +62,15 @@ object FloatFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Float]]] {
 object DoubleFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Double]]] {
   override def decode(featureList: FeatureList): Seq[Seq[Double]] = {
     featureList.getFeatureList.asScala.map(x => DoubleListFeatureDecoder.decode(x)).toSeq
+  }
+}
+
+/**
+ * Decode TensorFlow "FeatureList" to 2-dimensional Decimal array
+ */
+object DecimalFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Decimal]]] {
+  override def decode(featureList: FeatureList): Seq[Seq[Decimal]] = {
+    featureList.getFeatureList.asScala.map(x => DecimalListFeatureDecoder.decode(x)).toSeq
   }
 }
 
