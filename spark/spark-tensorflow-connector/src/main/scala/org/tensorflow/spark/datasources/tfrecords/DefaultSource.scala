@@ -15,7 +15,9 @@
  */
 package org.tensorflow.spark.datasources.tfrecords
 
+import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.{BytesWritable, NullWritable}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
@@ -59,9 +61,41 @@ class DefaultSource extends DataSourceRegister
           throw new IllegalArgumentException(s"Unsupported recordType ${recordType}: recordType can be Example or SequenceExample")
       }
     })
-    features.saveAsNewAPIHadoopFile[TFRecordFileOutputFormat](path)
+
+    val hadoopConf = sqlContext.sparkContext.hadoopConfiguration
+    val outputPath = new Path(path)
+    val fs = outputPath.getFileSystem(hadoopConf)
+    val qualifiedOutputPath = outputPath.makeQualified(fs.getUri, fs.getWorkingDirectory)
+
+    val pathExists = fs.exists(qualifiedOutputPath)
+
+    mode match {
+        case SaveMode.Overwrite =>
+            fs.delete(qualifiedOutputPath, true)
+            save(features, path)
+
+        case SaveMode.Append =>
+            throw new IllegalArgumentException("Append mode is not supported")
+
+        case SaveMode.ErrorIfExists =>
+            if (pathExists)
+                throw new IllegalStateException(
+                    s"Path $path already exists. SaveMode: ErrorIfExists.")
+            save(features, path)
+
+        case SaveMode.Ignore =>
+        // With `SaveMode.Ignore` mode, if data already exists, the save operation is expected
+        // to not save the contents of the DataFrame and to not change the existing data.
+        // Therefore, it is okay to do nothing here and then just return the relation below.
+            if (pathExists == false)
+                save(features, path)
+    }
 
     TensorflowRelation(parameters)(sqlContext.sparkSession)
+  }
+
+  private def save(features: RDD[(BytesWritable, NullWritable)], path: String) = {
+      features.saveAsNewAPIHadoopFile[TFRecordFileOutputFormat](path)
   }
 
   // Reads TensorFlow Records into DataFrame with Custom Schema

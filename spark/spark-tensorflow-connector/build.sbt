@@ -35,6 +35,7 @@ val `org.tensorflow_tensorflow-hadoop` = "org.tensorflow" % "tensorflow-hadoop" 
 libraryDependencies in Global ++= Seq(`org.tensorflow_tensorflow-hadoop` classifier "shaded-protobuf",
    `org.scalatest_scalatest_2.11` % "test" ,
    `org.apache.spark_spark-sql_2.11` % "provided" ,
+   `org.apache.spark_spark-mllib_2.11` % "provided",
    `org.apache.spark_spark-mllib_2.11` % "test" classifier "tests",
    `org.apache.spark_spark-core_2.11` % "provided" ,
    `org.apache.hadoop_hadoop-yarn-api` % "provided" ,
