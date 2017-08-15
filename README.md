@@ -78,7 +78,7 @@ note that each dashed box indicates a task.
 
 You must explicitly set the device before graph construction for this mode of
 training. The following code snippet from the
-[Distributed TensorFlow tutorial](https://www.tensorflow.org/versions/master/how_tos/distributed/index.html)
+[Distributed TensorFlow tutorial](https://www.tensorflow.org/deploy/distributed)
 demonstrates the setup:
 
 ```python
