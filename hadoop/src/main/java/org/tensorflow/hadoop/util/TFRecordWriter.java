@@ -26,7 +26,7 @@ public class TFRecordWriter {
     this.output = output;
   }
 
-  public void write(byte[] record) throws IOException {
+  public void write(byte[] record, int offset, int length) throws IOException {
     /**
      * TFRecord format:
      * uint64 length
@@ -34,11 +34,15 @@ public class TFRecordWriter {
      * byte   data[length]
      * uint32 masked_crc32_of_data
      */
-    byte[] len = toInt64LE(record.length);
+    byte[] len = toInt64LE(length);
     output.write(len);
     output.write(toInt32LE(Crc32C.maskedCrc32c(len)));
-    output.write(record);
-    output.write(toInt32LE(Crc32C.maskedCrc32c(record)));
+    output.write(record, offset, length);
+    output.write(toInt32LE(Crc32C.maskedCrc32c(record, offset, length)));
+  }
+
+  public void write(byte[] record) throws IOException {
+    write(record, 0, record.length);
   }
 
   private byte[] toInt64LE(long data) {
