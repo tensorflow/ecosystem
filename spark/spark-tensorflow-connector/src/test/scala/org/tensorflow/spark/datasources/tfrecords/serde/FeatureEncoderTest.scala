@@ -53,16 +53,16 @@ class FeatureEncoderTest extends WordSpec with Matchers {
 
   "ByteList feature encoder" should {
     "Encode inputs to ByteList" in {
-      val strFeature = BytesListFeatureEncoder.encode(Seq("str-input"))
-      val strListFeature = BytesListFeatureEncoder.encode(Seq("alice", "bob"))
+      val binFeature = BytesListFeatureEncoder.encode(Seq(Array(0xff.toByte, 0xd8.toByte)))
+      val binListFeature = BytesListFeatureEncoder.encode(Seq(Array(0xff.toByte, 0xd8.toByte), Array(0xff.toByte, 0xd9.toByte)))
 
-      assert(strFeature.getBytesList.getValueList.asScala.map(_.toStringUtf8) === Seq("str-input"))
-      assert(strListFeature.getBytesList.getValueList.asScala.map(_.toStringUtf8) === Seq("alice", "bob"))
+      assert(binFeature.getBytesList.getValueList.asScala.toSeq.map(_.toByteArray.deep) === Seq(Array(0xff.toByte, 0xd8.toByte).deep))
+      assert(binListFeature.getBytesList.getValueList.asScala.map(_.toByteArray.deep) === Seq(Array(0xff.toByte, 0xd8.toByte).deep, Array(0xff.toByte, 0xd9.toByte).deep))
     }
 
     "Encode empty list to empty feature" in {
-      val strListFeature = BytesListFeatureEncoder.encode(Seq.empty[String])
-      assert(strListFeature.getBytesList.getValueList.size() === 0)
+      val binListFeature = BytesListFeatureEncoder.encode(Seq.empty[Array[Byte]])
+      assert(binListFeature.getBytesList.getValueList.size() === 0)
     }
   }
 }
