@@ -16,12 +16,13 @@
 package org.tensorflow.spark.datasources.tfrecords
 
 import java.nio.file.Files
+import java.nio.file.Paths
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.expressions.GenericRow
 import org.apache.spark.sql.types._
 
-class PropagateSuite extends SharedSparkSessionSuite {
+class LocalWriteSuite extends SharedSparkSessionSuite {
 
   val testRows: Array[Row] = Array(
     new GenericRow(Array[Any](11, 1, 23L, 10.0F, 14.0, List(1.0, 3.0), "r1")),
@@ -48,7 +49,12 @@ class PropagateSuite extends SharedSparkSessionSuite {
       // In a distributed setting though, two different machines would each hold a single
       // partition.
       val localPath = Files.createTempDirectory("spark-connector-propagate").toAbsolutePath.toString
-      Propagate.writePartitionsLocal(df, localPath)
+      // Delete the directory, the default mode is ErrorIfExists
+      Files.delete(Paths.get(localPath))
+      df.write.format("tfrecords")
+        .option("recordType", "Example")
+        .option("writeLocality", "local")
+        .save(localPath)
 
       // Read again this directory, this time using the Hadoop file readers, it should
       // return the same data.
