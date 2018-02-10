@@ -63,6 +63,30 @@ When writing Spark DataFrame to TensorFlow records, the API accepts several opti
 * `recordType`: output format of TensorFlow records. By default it is Example. Possible values are:
   * `Example`: TensorFlow [Example](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/example/example.proto) records
   * `SequenceExample`: TensorFlow [SequenceExample](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/example/example.proto) records
+* `writeLocality`: determines whether the TensorFlow records are written locally on the workers
+or on a distributed file system. Possible values are:
+  * `distributed` (default): the dataframe is written using Spark's default file system.
+  * `local`: writes the content on the disks of each the Spark workers, in a partitioned manner
+  (see details in the paragraph below).
+
+_Local mode write_ each of the workers stores on the local disk a subset of the data.
+Which subset that it stored on each worker is determined by the partitioning of the Dataframe.
+Each of the partitions is coalesced into a single TFRecord file and written on the node where
+the partition lives.
+This is useful in the context of distributed training, in which each of the workers gets a
+subset of the data to work on.
+When this mode is activated, the path provided to the writer is interpreted as a base path that is
+created on each of the worker nodes, and that will be populated with data from the dataframe. For
+ example, the following code:
+
+```scala
+myDataFrame.write.format("tfrecords").option("writeLocality", "local").save("/path")
+```
+
+will lead to each worker nodes to have the following files:
+  - worker1: /path/part-0001.tfrecord, /path/part-0002.tfrecord, ...
+  - worker2: /path/part-0042.tfrecord, ...
+
 
 ## Schema inference
 This library supports automatic schema inference when reading TensorFlow records into Spark DataFrames.
