@@ -70,7 +70,7 @@ or on a distributed file system. Possible values are:
   (see details in the paragraph below).
 
 _Local mode write_ each of the workers stores on the local disk a subset of the data.
-Which subset that it stored on each worker is determined by the partitioning of the Dataframe.
+The subset that is stored on each worker is determined by the partitioning of the Dataframe.
 Each of the partitions is coalesced into a single TFRecord file and written on the node where
 the partition lives.
 This is useful in the context of distributed training, in which each of the workers gets a
