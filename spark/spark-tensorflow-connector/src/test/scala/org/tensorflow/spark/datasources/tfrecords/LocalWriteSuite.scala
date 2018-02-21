@@ -25,15 +25,16 @@ import org.apache.spark.sql.types._
 class LocalWriteSuite extends SharedSparkSessionSuite {
 
   val testRows: Array[Row] = Array(
-    new GenericRow(Array[Any](11, 1, 23L, 10.0F, 14.0, List(1.0, 3.0), "r1")),
-    new GenericRow(Array[Any](21, 2, 24L, 12.0F, 15.0, List(2.0, 3.0), "r2")),
-    new GenericRow(Array[Any](31, 3, 25L, 14.0F, 16.0, List(3.0, 3.0), "r3")))
+    new GenericRow(Array[Any](11, 1, 23L, 10.0F, 14.0, List(1.0, 3.0), Array(1, 2, 3), "r1")),
+    new GenericRow(Array[Any](21, 2, 24L, 12.0F, 15.0, List(2.0, 3.0), Array(4, 5, 6), "r2")),
+    new GenericRow(Array[Any](31, 3, 25L, 14.0F, 16.0, List(3.0, 3.0), Array(7, 8, 9), "r3")))
   val schema = StructType(List(StructField("id", IntegerType),
     StructField("IntegerTypeLabel", IntegerType),
     StructField("LongTypeLabel", LongType),
     StructField("FloatTypeLabel", FloatType),
     StructField("DoubleTypeLabel", DoubleType),
     StructField("VectorLabel", ArrayType(DoubleType, true)),
+    StructField("BinaryTypeLabel", BinaryType),
     StructField("name", StringType)))
 
 
