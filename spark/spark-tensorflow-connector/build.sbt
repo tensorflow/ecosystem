@@ -92,3 +92,5 @@ credentials += Credentials(Path.userHome / ".ivy2" / ".sbtcredentials") // A fil
 test in assembly := {}
 
 spShade := true
+
+parallelExecution in test := false

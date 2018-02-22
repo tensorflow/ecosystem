@@ -59,6 +59,21 @@ class TensorFlowSuite extends SharedSparkSessionSuite {
 
   "Spark TensorFlow module" should {
 
+    "Test import of MNIST records" in {
+      val path = "/Users/sid/code/spark-deep-learning/python/tests/resources/mnist-data/"
+      val schema = StructType(Seq(
+        StructField("image_raw", BinaryType),
+        StructField("width", IntegerType),
+        StructField("height", IntegerType),
+        StructField("depth", IntegerType),
+        StructField("label", IntegerType)
+      ))
+      val df = spark.read.format("tfrecords").schema(schema).load(path)
+      val rows = df.select("image_raw").take(100)
+      df.printSchema
+      val byteArrayLengths = rows.map((r: Row) => r.getAs[Array[Byte]](0).length)
+    }
+
     "Test Import/Export of Example records" in {
 
       val path = s"$TF_SANDBOX_DIR/example.tfrecord"

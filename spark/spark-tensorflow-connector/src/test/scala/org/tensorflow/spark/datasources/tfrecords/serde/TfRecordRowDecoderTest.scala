@@ -37,6 +37,8 @@ class TfRecordRowDecoderTest extends WordSpec with Matchers {
   val strFeature = Feature.newBuilder().setBytesList(BytesList.newBuilder().addValue(ByteString.copyFrom("r1".getBytes)).build()).build()
   val strListFeature =Feature.newBuilder().setBytesList(BytesList.newBuilder().addValue(ByteString.copyFrom("r2".getBytes))
     .addValue(ByteString.copyFrom("r3".getBytes)).build()).build()
+  val bytes = Seq[Byte](5, 4, 120)
+  val byteArrFeature =Feature.newBuilder().setBytesList(BytesList.newBuilder().addValue(ByteString.copyFrom(bytes.toArray))).build()
   val vectorFeature = Feature.newBuilder().setFloatList(FloatList.newBuilder().addValue(1F).addValue(2F).build()).build()
 
   "TensorFlow row decoder" should {
@@ -53,12 +55,13 @@ class TfRecordRowDecoderTest extends WordSpec with Matchers {
         StructField("DecimalArrayLabel", ArrayType(DataTypes.createDecimalType())),
         StructField("StrLabel", StringType),
         StructField("StrArrayLabel", ArrayType(StringType)),
+        StructField("ByteArrayLabel", BinaryType),
         StructField("VectorLabel", VectorType)
       ))
 
       val expectedRow = new GenericRow(
         Array[Any](1, 23L, 10.0F, 14.0, Decimal(2.5d), Seq(-2L,7L), Seq(1.0, 2.0),
-          Seq(Decimal(3.0), Decimal(5.0)), "r1", Seq("r2", "r3"), Vectors.dense(Array(1.0, 2.0)))
+          Seq(Decimal(3.0), Decimal(5.0)), "r1", Seq("r2", "r3"), bytes, Vectors.dense(Array(1.0, 2.0)))
       )
 
       //Build example
@@ -73,6 +76,7 @@ class TfRecordRowDecoderTest extends WordSpec with Matchers {
         .putFeature("DecimalArrayLabel", decimalArrFeature)
         .putFeature("StrLabel", strFeature)
         .putFeature("StrArrayLabel", strListFeature)
+        .putFeature("ByteArrayLabel", byteArrFeature)
         .putFeature("VectorLabel", vectorFeature)
         .build()
       val example = Example.newBuilder()
