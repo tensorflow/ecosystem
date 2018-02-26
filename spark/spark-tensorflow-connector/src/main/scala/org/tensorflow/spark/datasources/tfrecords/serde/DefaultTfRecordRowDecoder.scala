@@ -141,7 +141,7 @@ object DefaultTfRecordRowDecoder extends TfRecordRowDecoder {
       case ArrayType(ArrayType(DecimalType(), _), _) => DecimalFeatureListDecoder.decode(featureList)
       case ArrayType(ArrayType(StringType, _), _) => StringFeatureListDecoder.decode(featureList)
       // TODO(Sid): unit test this
-      case ArrayType(ArrayType(BinaryType, _), _) => BinaryListFeatureDecoder.decode(featureList)
+      case ArrayType(ArrayType(BinaryType, _), _) => BinaryFeatureListDecoder.decode(featureList)
       case _ => throw new scala.RuntimeException(s"Cannot convert FeatureList to unsupported data type ${colDataType}")
     }
   }

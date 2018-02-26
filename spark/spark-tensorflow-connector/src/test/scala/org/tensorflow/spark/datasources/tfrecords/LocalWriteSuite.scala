@@ -25,16 +25,15 @@ import org.apache.spark.sql.types._
 class LocalWriteSuite extends SharedSparkSessionSuite {
 
   val testRows: Array[Row] = Array(
-    new GenericRow(Array[Any](11, 1, 23L, 10.0F, 14.0, List(1.0, 3.0), "asdf".getBytes, "r1")),
-    new GenericRow(Array[Any](21, 2, 24L, 12.0F, 15.0, List(2.0, 3.0), "qwerty".getBytes, "r2")),
-    new GenericRow(Array[Any](31, 3, 25L, 14.0F, 16.0, List(3.0, 3.0), "sid".getBytes, "r3")))
+    new GenericRow(Array[Any](11, 1, 23L, 10.0F, 14.0, List(1.0, 3.0), "r1")),
+    new GenericRow(Array[Any](21, 2, 24L, 12.0F, 15.0, List(2.0, 3.0), "r2")),
+    new GenericRow(Array[Any](31, 3, 25L, 14.0F, 16.0, List(3.0, 3.0), "r3")))
   val schema = StructType(List(StructField("id", IntegerType),
     StructField("IntegerTypeLabel", IntegerType),
     StructField("LongTypeLabel", LongType),
     StructField("FloatTypeLabel", FloatType),
     StructField("DoubleTypeLabel", DoubleType),
     StructField("VectorLabel", ArrayType(DoubleType, true)),
-    StructField("BinaryTypeLabel", BinaryType),
     StructField("name", StringType)))
 
 
@@ -61,13 +60,11 @@ class LocalWriteSuite extends SharedSparkSessionSuite {
       // return the same data.
       // This only works in this test and does not hold in general, because the partitions
       // will be written on the workers. Everything runs locally for tests.
-      // Correct column order.
       val df2 = spark.read.format("tfrecords").option("recordType", "Example")
         .load(localPath).sort("id").select("id", "IntegerTypeLabel", "LongTypeLabel",
-        "FloatTypeLabel", "DoubleTypeLabel", "VectorLabel", "BinaryTypeLabel", "name")
+        "FloatTypeLabel", "DoubleTypeLabel", "VectorLabel", "name") // Correct column order.
 
-      val bytesIndex = 6
-      assert(df2.collect().toSeq.map(_.apply(bytesIndex)) === testRows.toSeq.map(_.apply(bytesIndex)))
+      assert(df2.collect().toSeq === testRows.toSeq)
     }
   }
 }

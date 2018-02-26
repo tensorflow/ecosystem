@@ -82,3 +82,12 @@ object StringFeatureListDecoder extends FeatureListDecoder[Seq[Seq[String]]] {
     featureList.getFeatureList.asScala.map(x => StringListFeatureDecoder.decode(x)).toSeq
   }
 }
+
+/**
+ * Decode TensorFlow "FeatureList" to 2-dimensional array of Array[Byte] (a 3-dimensional array)
+ */
+object BinaryFeatureListDecoder extends FeatureListDecoder[Seq[Seq[Array[Byte]]]] {
+  override def decode(featureList: FeatureList): Seq[Seq[Array[Byte]]] = {
+    featureList.getFeatureList.asScala.map(x => BinaryListFeatureDecoder.decode(x)).toSeq
+  }
+}
