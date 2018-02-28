@@ -90,7 +90,6 @@ class TfRecordRowDecoderTest extends WordSpec with Matchers {
 
       //Decode TensorFlow example to Sql Row
       val actualRow = DefaultTfRecordRowDecoder.decodeExample(example, schema)
-      println(s"Actual row ${actualRow.toString}, expected row: ${expectedRow.toString}")
       assert(actualRow ~== (expectedRow,schema))
     }
 
@@ -106,11 +105,7 @@ class TfRecordRowDecoderTest extends WordSpec with Matchers {
       ))
 
       val expectedRow = new GenericRow(Array[Any](
-        10.0F,
-        Seq(Seq(-2L, 7L)),
-        Seq(Seq(10.0F), Seq(1.0F, 2.0F)),
-        Seq(Seq(Decimal(3.0), Decimal(5.0))),
-        Seq(Seq("r2", "r3"), Seq("r1")),
+        10.0F, Seq(Seq(-2L, 7L)), Seq(Seq(10.0F), Seq(1.0F, 2.0F)), Seq(Seq(Decimal(3.0), Decimal(5.0))), Seq(Seq("r2", "r3"), Seq("r1")),
         Seq(Seq("r5", "r6"), Seq("r4")).map(stringSeq => stringSeq.map(_.getBytes)))
       )
 

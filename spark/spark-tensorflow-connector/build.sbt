@@ -6,7 +6,7 @@ scalaVersion in Global := "2.11.8"
 
 spName := "tensorflow/spark-tensorflow-connector"
 
-sparkVersion := "2.1.1"
+sparkVersion := "2.1.0"
 
 sparkComponents ++= Seq("sql", "mllib")
 
@@ -22,11 +22,11 @@ val `junit_junit` = "junit" % "junit" % "4.12"
 
 val `org.apache.hadoop_hadoop-yarn-api` = "org.apache.hadoop" % "hadoop-yarn-api" % "2.7.3"
 
-val `org.apache.spark_spark-core_2.11` = "org.apache.spark" % "spark-core_2.11" % "2.1.1"
+val `org.apache.spark_spark-core_2.11` = "org.apache.spark" % "spark-core_2.11" % "2.1.0"
 
-val `org.apache.spark_spark-sql_2.11` = "org.apache.spark" % "spark-sql_2.11" % "2.1.1"
+val `org.apache.spark_spark-sql_2.11` = "org.apache.spark" % "spark-sql_2.11" % "2.1.0"
 
-val `org.apache.spark_spark-mllib_2.11` = "org.apache.spark" % "spark-mllib_2.11" % "2.1.1"
+val `org.apache.spark_spark-mllib_2.11` = "org.apache.spark" % "spark-mllib_2.11" % "2.1.0"
 
 val `org.scalatest_scalatest_2.11` = "org.scalatest" % "scalatest_2.11" % "2.2.6"
 
@@ -92,5 +92,3 @@ credentials += Credentials(Path.userHome / ".ivy2" / ".sbtcredentials") // A fil
 test in assembly := {}
 
 spShade := true
-
-parallelExecution in test := false
