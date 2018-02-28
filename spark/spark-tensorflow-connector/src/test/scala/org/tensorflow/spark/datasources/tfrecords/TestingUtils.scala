@@ -128,6 +128,7 @@ object TestingUtils extends Matchers {
      * When all fields in row with given schema are equal or are within eps, returns true; otherwise, returns false.
      */
     def ~==(right: Row, schema: StructType): Boolean = {
+      // TODO(Sid) fix comparison
       if (schema != null && schema.fields.size == left.size && schema.fields.size == right.size) {
         val leftRowWithSchema = new GenericRowWithSchema(left.toSeq.toArray, schema)
         val rightRowWithSchema = new GenericRowWithSchema(right.toSeq.toArray, schema)
@@ -154,6 +155,11 @@ object TestingUtils extends Matchers {
           case ((DoubleType, DoubleType), i) =>
             left.getDouble(i) === (right.getDouble(i) +- epsilon)
 
+          case ((BinaryType, BinaryType), i) =>
+            val res = left.getAs[Array[Byte]](i).toSeq === right.getAs[Array[Byte]](i).toSeq
+            println(s"Compared binary types, got result ${res}")
+            res
+
           case ((ArrayType(FloatType,_), ArrayType(FloatType,_)), i) =>
             val leftArray = ArrayData.toArrayData(left.get(i)).toFloatArray().toSeq
             val rightArray = ArrayData.toArrayData(right.get(i)).toFloatArray().toSeq
@@ -163,6 +169,11 @@ object TestingUtils extends Matchers {
             val leftArray = ArrayData.toArrayData(left.get(i)).toDoubleArray().toSeq
             val rightArray = ArrayData.toArrayData(right.get(i)).toDoubleArray().toSeq
             leftArray ~== (rightArray, epsilon)
+
+          case ((ArrayType(BinaryType,_), ArrayType(BinaryType,_)), i) =>
+            val leftArray = ArrayData.toArrayData(left.get(i)).toArray[Array[Byte]](BinaryType).map(_.toSeq).toSeq
+            val rightArray = ArrayData.toArrayData(right.get(i)).toArray[Array[Byte]](BinaryType).map(_.toSeq).toSeq
+            leftArray === rightArray
 
           case ((ArrayType(ArrayType(FloatType,_),_), ArrayType(ArrayType(FloatType,_),_)), i) =>
             val leftArrays = ArrayData.toArrayData(left.get(i)).array.toSeq.map {arr =>
@@ -181,6 +192,16 @@ object TestingUtils extends Matchers {
               ArrayData.toArrayData(arr).toDoubleArray().toSeq
             }
             leftArrays ~== (rightArrays, epsilon)
+
+          case ((ArrayType(ArrayType(BinaryType,_),_), ArrayType(ArrayType(BinaryType,_),_)), i) =>
+            val leftArrays = ArrayData.toArrayData(left.get(i)).array.toSeq.map {arr =>
+              ArrayData.toArrayData(arr).toArray[Array[Byte]](BinaryType).map(_.toSeq).toSeq
+            }
+            val rightArrays = ArrayData.toArrayData(right.get(i)).array.toSeq.map {arr =>
+              ArrayData.toArrayData(arr).toArray[Array[Byte]](BinaryType).map(_.toSeq).toSeq
+            }
+            print(s"Compared array of array of binarytype, equal: ${leftArrays === rightArrays}")
+            leftArrays === rightArrays
 
           case((a,b), i) => left.get(i) === right.get(i)
         }
