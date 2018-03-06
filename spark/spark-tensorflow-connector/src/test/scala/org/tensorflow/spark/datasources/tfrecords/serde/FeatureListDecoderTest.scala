@@ -15,7 +15,7 @@
  */
 package org.tensorflow.spark.datasources.tfrecords.serde
 
-import org.tensorflow.hadoop.shaded.protobuf.ByteString
+import com.google.protobuf.ByteString
 import org.tensorflow.spark.datasources.tfrecords.TestingUtils._
 import org.scalatest.{Matchers, WordSpec}
 import org.tensorflow.example._

@@ -17,7 +17,7 @@ package org.tensorflow.spark.datasources.tfrecords.serde
 
 import org.scalatest.{Matchers, WordSpec}
 import org.tensorflow.example.{BytesList, Feature, FloatList, Int64List}
-import org.tensorflow.hadoop.shaded.protobuf.ByteString
+import com.google.protobuf.ByteString
 import org.tensorflow.spark.datasources.tfrecords.TestingUtils._
 
 class FeatureDecoderTest extends WordSpec with Matchers {

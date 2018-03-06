@@ -16,37 +16,37 @@ This is the initial release of the `spark-tensorflow-connector` repo.
 3. [TensorFlow Hadoop](../../hadoop) - Provided as Maven dependency. You can also build the latest version as described [here.](../../hadoop)
 
 ## Building the library
-You can build the library using both Maven and SBT build tools
-
-#### Maven
-Build the library using Maven(3.3) as shown below
+Build the library using Maven 3.3.9 or newer as shown below:
 
 ```sh
+# Build TensorFlow Hadoop
+cd ../../hadoop
+mvn clean install
+
+# Build Spark TensorFlow connector
+cd ../spark/spark-tensorflow-connector
 mvn clean install
 ```
 
-To use a different version of TensorFlow Hadoop, use:
+To build the library for a different version of TensorFlow, e.g., 1.5.0, use:
 ```sh
-mvn clean install -Dtensorflow.hadoop.version=1.0-SNAPSHOT
+# Build TensorFlow Hadoop
+cd ../../hadoop
+mvn versions:set -DnewVersion=1.5.0
+mvn clean install
+
+# Build Spark TensorFlow connector
+cd ../spark/spark-tensorflow-connector
+mvn versions:set -DnewVersion=1.5.0
+mvn clean install
 ```
 
-#### SBT 
-Build the library using SBT(0.13.13) as show below
-```sh
-sbt clean assembly
-```
 
 ## Using Spark Shell
 Run this library in Spark using the `--jars` command line option in `spark-shell` or `spark-submit`. For example:
 
-Maven Jars
 ```sh
-$SPARK_HOME/bin/spark-shell --jars target/spark-tensorflow-connector-1.0-SNAPSHOT.jar,target/lib/tensorflow-hadoop-1.0-06262017-SNAPSHOT-shaded-protobuf.jar
-```
-
-SBT Jars
-```sh
-$SPARK_HOME/bin/spark-shell --jars target/scala-2.11/spark-tensorflow-connector-assembly-1.0.0.jar
+$SPARK_HOME/bin/spark-shell --jars target/spark-tensorflow-connector_2.11-1.6.0.jar
 ```
 
 ## Features

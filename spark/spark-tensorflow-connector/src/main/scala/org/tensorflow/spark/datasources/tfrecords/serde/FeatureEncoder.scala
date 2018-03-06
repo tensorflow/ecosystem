@@ -16,7 +16,7 @@
 package org.tensorflow.spark.datasources.tfrecords.serde
 
 import org.tensorflow.example._
-import org.tensorflow.hadoop.shaded.protobuf.ByteString
+import com.google.protobuf.ByteString
 
 trait FeatureEncoder[T] {
   /**

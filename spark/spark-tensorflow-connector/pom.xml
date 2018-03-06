@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.tensorflow</groupId>
-    <artifactId>spark-tensorflow-connector</artifactId>
+    <artifactId>spark-tensorflow-connector_2.11</artifactId>
     <packaging>jar</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.6.0</version>
     <name>spark-tensorflow-connector</name>
     <url>https://www.tensorflow.org</url>
 
@@ -18,10 +18,8 @@
         <scala.test.version>2.2.6</scala.test.version>
         <maven.compiler.version>3.0</maven.compiler.version>
         <java.version>1.8</java.version>
-        <spark.version>2.1.0</spark.version>
-        <tensorflow.hadoop.version>1.0-06262017-SNAPSHOT</tensorflow.hadoop.version>
+        <spark.version>2.2.1</spark.version>
         <yarn.api.version>2.7.3</yarn.api.version>
-        <protobuf.version>3.3.1</protobuf.version>
         <junit.version>4.11</junit.version>
     </properties>
 
@@ -35,27 +33,6 @@
         <snapshots>
             <enabled>false</enabled>
         </snapshots>
-        </repository>
-
-        <repository>
-            <id>tap</id>
-            <url>https://tap.jfrog.io/tap/public</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
-        <repository>
-            <id>tap-snapshots</id>
-            <url>https://tap.jfrog.io/tap/public-snapshots</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
         </repository>
     </repositories>
 
@@ -71,7 +48,6 @@
             <build>
                 <pluginManagement>
                     <plugins>
-                        <!--START DO NOT TOUCH-->
                         <plugin>
                             <inherited>true</inherited>
                             <groupId>net.alchim31.maven</groupId>
@@ -115,38 +91,39 @@
                                 <checkMultipleScalaVersions>false</checkMultipleScalaVersions>
                             </configuration>
                         </plugin>
+                        <!-- Shade protobuf dependency. -->
                         <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-dependency-plugin</artifactId>
+                            <artifactId>maven-shade-plugin</artifactId>
                             <executions>
                                 <execution>
-                                    <id>copy-dependencies</id>
-                                    <phase>process-resources</phase>
+                                    <phase>package</phase>
                                     <goals>
-                                        <goal>copy-dependencies</goal>
+                                        <goal>shade</goal>
                                     </goals>
                                     <configuration>
-                                        <excludeScope>provided</excludeScope>
-                                        <excludeTransitive>true</excludeTransitive>
-                                        <excludeGroupIds>org.apache.spark,junit,org.scalatest</excludeGroupIds>
-                                        <outputDirectory>${project.build.directory}/lib</outputDirectory>
-                                    </configuration>
-                                </execution>
-                            </executions>
-                        </plugin>
-                        <!--END DO NOT TOUCH-->
-                        <plugin>
-                            <groupId>org.codehaus.mojo</groupId>
-                            <artifactId>properties-maven-plugin</artifactId>
-                            <version>1.0.0</version>
-                            <executions>
-                                <execution>
-                                    <phase>generate-resources</phase>
-                                    <goals>
-                                        <goal>write-project-properties</goal>
-                                    </goals>
-                                    <configuration>
-                                        <outputFile>${project.build.outputDirectory}/maven.properties</outputFile>
+                                        <minimizeJar>true</minimizeJar>
+                                        <artifactSet>
+                                            <includes>
+                                                <include>com.google.protobuf:protobuf-java</include>
+                                                <include>org.tensorflow:tensorflow-hadoop</include>
+                                                <include>org.tensorflow:proto</include>
+                                            </includes>
+                                        </artifactSet>
+                                        <filters>
+                                            <filter>
+                                                <!-- Remove the source to keep the result smaller. -->
+                                                <artifact>com.google.protobuf:protobuf-java</artifact>
+                                                <excludes>
+                                                    <exclude>**/*.java</exclude>
+                                                </excludes>
+                                            </filter>
+                                        </filters>
+                                        <relocations>
+                                            <relocation>
+                                                <pattern>com.google.protobuf</pattern>
+                                                <shadedPattern>org.tensorflow.spark.shaded.com.google.protobuf</shadedPattern>
+                                            </relocation>
+                                        </relocations>
                                     </configuration>
                                 </execution>
                             </executions>
@@ -173,7 +150,6 @@
             <build>
                 <pluginManagement>
                     <plugins>
-                        <!--START DO NOT TOUCH-->
                         <plugin>
                             <inherited>true</inherited>
                             <groupId>net.alchim31.maven</groupId>
@@ -190,14 +166,6 @@
                             <groupId>org.scalatest</groupId>
                             <artifactId>scalatest-maven-plugin</artifactId>
                             <version>${scalatest.maven.version}</version>
-                            <configuration>
-                                <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
-                                <junitxml>.</junitxml>
-                                <filereports>WDF TestSuite.txt</filereports>
-                                <parallel>false</parallel>
-                                <stdout>FTD</stdout>
-                                <argLine>-Xmx1024m -XX:PermSize=256m -XX:MaxDirectMemorySize=1000m</argLine>
-                            </configuration>
                             <executions>
                                 <execution>
                                     <id>scalaTest</id>
@@ -208,7 +176,6 @@
                                 </execution>
                             </executions>
                         </plugin>
-                        <!--END DO NOT TOUCH-->
                     </plugins>
                 </pluginManagement>
                 <plugins>
@@ -248,7 +215,7 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
+                <artifactId>maven-shade-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.scalatest</groupId>
@@ -264,26 +231,13 @@
                 </configuration>
             </plugin>
         </plugins>
-
-        <testResources>
-            <testResource>
-                <directory>core/src/main/resources</directory>
-                <includes>
-                    <include>reference.conf</include>
-                </includes>
-            </testResource>
-            <testResource>
-                <directory>core/src/test/resources</directory>
-            </testResource>
-        </testResources>
     </build>
 
     <dependencies>
         <dependency>
             <groupId>org.tensorflow</groupId>
             <artifactId>tensorflow-hadoop</artifactId>
-            <version>${tensorflow.hadoop.version}</version>
-            <classifier>shaded-protobuf</classifier>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -309,7 +263,6 @@
             <version>${yarn.api.version}</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.binary.version}</artifactId>
@@ -324,5 +277,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
 </project>

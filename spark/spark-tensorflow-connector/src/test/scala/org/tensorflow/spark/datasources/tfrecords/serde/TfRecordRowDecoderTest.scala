@@ -15,6 +15,7 @@
  */
 package org.tensorflow.spark.datasources.tfrecords.serde
 
+import com.google.protobuf.ByteString
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.expressions.GenericRow
@@ -22,7 +23,6 @@ import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.sql.types._
 import org.scalatest.{Matchers, WordSpec}
 import org.tensorflow.example._
-import org.tensorflow.hadoop.shaded.protobuf.ByteString
 import org.tensorflow.spark.datasources.tfrecords.TestingUtils._
 
 class TfRecordRowDecoderTest extends WordSpec with Matchers {
