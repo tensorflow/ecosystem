@@ -18,7 +18,7 @@ package org.tensorflow.spark.datasources.tfrecords
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
 import org.tensorflow.example._
-import org.tensorflow.hadoop.shaded.protobuf.ByteString
+import com.google.protobuf.ByteString
 
 class InferSchemaSuite extends SharedSparkSessionSuite {
 
