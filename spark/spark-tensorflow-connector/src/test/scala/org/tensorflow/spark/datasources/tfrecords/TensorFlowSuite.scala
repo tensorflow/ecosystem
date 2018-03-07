@@ -20,6 +20,8 @@ import org.apache.spark.sql.catalyst.expressions.GenericRow
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 
+import org.tensorflow.spark.datasources.tfrecords.TestingUtils._
+
 class TensorFlowSuite extends SharedSparkSessionSuite {
 
   val exampleSchema = StructType(List(
@@ -29,11 +31,14 @@ class TensorFlowSuite extends SharedSparkSessionSuite {
     StructField("FloatLabel", FloatType),
     StructField("DoubleLabel", DoubleType),
     StructField("DoubleArrayLabel", ArrayType(DoubleType, true)),
-    StructField("StrLabel", StringType)))
+    StructField("StrLabel", StringType),
+    StructField("BinaryLabel", BinaryType)))
 
   val exampleTestRows: Array[Row] = Array(
-    new GenericRow(Array[Any](11, 1, 23L, 10.0F, 14.0, List(1.0, 2.0), "r1")),
-    new GenericRow(Array[Any](21, 2, 24L, 12.0F, 15.0, List(2.0, 2.0), "r2")))
+    new GenericRow(Array[Any](11, 1, 23L, 10.0F, 14.0, List(1.0, 2.0), "r1",
+      Array[Byte](0xff.toByte, 0xf0.toByte))),
+    new GenericRow(Array[Any](21, 2, 24L, 12.0F, 15.0, List(2.0, 2.0), "r2",
+      Array[Byte](0xff.toByte, 0xf1.toByte))))
 
 
   val sequenceExampleTestRows: Array[Row] = Array(
@@ -60,7 +65,6 @@ class TensorFlowSuite extends SharedSparkSessionSuite {
   "Spark TensorFlow module" should {
 
     "Test Import/Export of Example records" in {
-
       val path = s"$TF_SANDBOX_DIR/example.tfrecord"
 
       val df: DataFrame = createDataFrameForExampleTFRecord()
@@ -68,12 +72,15 @@ class TensorFlowSuite extends SharedSparkSessionSuite {
 
       //If schema is not provided. It will automatically infer schema
       val importedDf: DataFrame = spark.read.format("tfrecords").option("recordType", "Example").schema(exampleSchema).load(path)
-      val actualDf = importedDf.select("id", "IntegerLabel", "LongLabel", "FloatLabel", "DoubleLabel", "DoubleArrayLabel", "StrLabel").sort("StrLabel")
+      val actualDf = importedDf.select("id", "IntegerLabel", "LongLabel", "FloatLabel",
+        "DoubleLabel", "DoubleArrayLabel", "StrLabel", "BinaryLabel").sort("StrLabel")
 
       val expectedRows = df.collect()
       val actualRows = actualDf.collect()
 
-      assert(expectedRows === actualRows)
+      expectedRows.zip(actualRows).foreach { case (expected: Row, actual: Row) =>
+        assert(expected ~== actual, exampleSchema)
+      }
     }
 
     "Test Import/Export of SequenceExample records" in {
@@ -103,12 +110,15 @@ class TensorFlowSuite extends SharedSparkSessionSuite {
 
       //If schema is not provided. It will automatically infer schema
       val importedDf: DataFrame = spark.read.format("tfrecords").option("recordType", "Example").schema(exampleSchema).load(path)
-      val actualDf = importedDf.select("id", "IntegerLabel", "LongLabel", "FloatLabel", "DoubleLabel", "DoubleArrayLabel", "StrLabel").sort("StrLabel")
+      val actualDf = importedDf.select("id", "IntegerLabel", "LongLabel", "FloatLabel",
+        "DoubleLabel", "DoubleArrayLabel", "StrLabel", "BinaryLabel").sort("StrLabel")
 
       val expectedRows = df.collect()
       val actualRows = actualDf.collect()
 
-      assert(expectedRows === actualRows)
+      expectedRows.zip(actualRows).foreach { case (expected: Row, actual: Row) =>
+        assert(expected ~== actual, exampleSchema)
+      }
 
     }
 

@@ -116,12 +116,14 @@ object DefaultTfRecordRowDecoder extends TfRecordRowDecoder {
       case DoubleType => DoubleFeatureDecoder.decode(feature)
       case DecimalType() => DecimalFeatureDecoder.decode(feature)
       case StringType => StringFeatureDecoder.decode(feature)
+      case BinaryType => BinaryFeatureDecoder.decode(feature)
       case ArrayType(IntegerType, _) => IntListFeatureDecoder.decode(feature)
       case ArrayType(LongType, _) => LongListFeatureDecoder.decode(feature)
       case ArrayType(FloatType, _) => FloatListFeatureDecoder.decode(feature)
       case ArrayType(DoubleType, _) => DoubleListFeatureDecoder.decode(feature)
       case ArrayType(DecimalType(), _) => DecimalListFeatureDecoder.decode(feature)
       case ArrayType(StringType, _) => StringListFeatureDecoder.decode(feature)
+      case ArrayType(BinaryType, _) => BinaryListFeatureDecoder.decode(feature)
       case VectorType =>  Vectors.dense(DoubleListFeatureDecoder.decode(feature).toArray)
       case _ => throw new scala.RuntimeException(s"Cannot convert Feature to unsupported data type ${colDataType}")
     }
@@ -137,6 +139,7 @@ object DefaultTfRecordRowDecoder extends TfRecordRowDecoder {
       case ArrayType(ArrayType(DoubleType, _), _) => DoubleFeatureListDecoder.decode(featureList)
       case ArrayType(ArrayType(DecimalType(), _), _) => DecimalFeatureListDecoder.decode(featureList)
       case ArrayType(ArrayType(StringType, _), _) => StringFeatureListDecoder.decode(featureList)
+      case ArrayType(ArrayType(BinaryType, _), _) => BinaryFeatureListDecoder.decode(featureList)
       case _ => throw new scala.RuntimeException(s"Cannot convert FeatureList to unsupported data type ${colDataType}")
     }
   }
