@@ -41,16 +41,18 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
         StructField("StrArrayLabel", ArrayType(StringType)),
         StructField("DenseVectorLabel", VectorType),
         StructField("SparseVectorLabel", VectorType),
-        StructField("BinaryLabel", BinaryType)
+        StructField("BinaryLabel", BinaryType),
+        StructField("BinaryArrayLabel", ArrayType(BinaryType))
       ))
       val doubleArray = Array(1.1, 111.1, 11111.1)
       val decimalArray = Array(Decimal(4.0), Decimal(8.0))
       val sparseVector = Vectors.sparse(3, Seq((1, 2.0), (2, 1.5)))
       val denseVector = Vectors.dense(Array(5.6, 7.0))
       val byteArray = Array[Byte](0xde.toByte, 0xad.toByte, 0xbe.toByte, 0xef.toByte)
+      val byteArray1 = Array[Byte](-128, 23, 127)
 
       val row = Array[Any](1, 23L, 10.0F, 14.0, Decimal(6.5), doubleArray, decimalArray,
-        "r1", Seq("r2", "r3"), denseVector, sparseVector, byteArray)
+        "r1", Seq("r2", "r3"), denseVector, sparseVector, byteArray, Seq(byteArray, byteArray1))
       val rowWithSchema = new GenericRowWithSchema(row, schemaStructType)
 
       //Encode Sql Row to TensorFlow example
@@ -58,7 +60,7 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
 
       //Verify each Datatype converted to TensorFlow datatypes
       val featureMap = example.getFeatures.getFeatureMap.asScala
-      assert(featureMap.size == 12)
+      assert(featureMap.size == row.length)
 
       assert(featureMap("IntegerLabel").getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER)
       assert(featureMap("IntegerLabel").getInt64List.getValue(0).toInt == 1)
@@ -95,6 +97,10 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
 
       assert(featureMap("BinaryLabel").getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER)
       assert(featureMap("BinaryLabel").getBytesList.getValue(0).toByteArray.deep == byteArray.deep)
+
+      assert(featureMap("BinaryArrayLabel").getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER)
+      val binaryArrayValue = featureMap("BinaryArrayLabel").getBytesList.getValueList.asScala.map((byteArray) => byteArray.asScala.toArray.map(_.toByte))
+      assert(binaryArrayValue.toArray.deep == Array(byteArray, byteArray1).deep)
     }
 
     "Encode given Row as TensorFlow SequenceExample" in {
@@ -105,7 +111,8 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
         StructField("FloatArrayOfArrayLabel", ArrayType(ArrayType(FloatType))),
         StructField("DoubleArrayOfArrayLabel", ArrayType(ArrayType(DoubleType))),
         StructField("DecimalArrayOfArrayLabel", ArrayType(ArrayType(DataTypes.createDecimalType()))),
-        StructField("StringArrayOfArrayLabel", ArrayType(ArrayType(StringType)))
+        StructField("StringArrayOfArrayLabel", ArrayType(ArrayType(StringType))),
+        StructField("BinaryArrayOfArrayLabel", ArrayType(ArrayType(BinaryType)))
       ))
 
       val longListOfLists = Seq(Seq(3L, 5L), Seq(-8L, 0L))
@@ -113,9 +120,10 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
       val doubleListOfLists = Seq(Seq(3.0), Seq(6.0, 9.0))
       val decimalListOfLists = Seq(Seq(Decimal(2.0), Decimal(4.0)), Seq(Decimal(6.0)))
       val stringListOfLists = Seq(Seq("r1"), Seq("r2", "r3"), Seq("r4"))
+      val binaryListOfLists = stringListOfLists.map(stringList => stringList.map(_.getBytes))
 
       val rowWithSchema = new GenericRowWithSchema(Array[Any](10, longListOfLists, floatListOfLists,
-        doubleListOfLists, decimalListOfLists, stringListOfLists), schemaStructType)
+        doubleListOfLists, decimalListOfLists, stringListOfLists, binaryListOfLists), schemaStructType)
 
       //Encode Sql Row to TensorFlow example
       val seqExample = DefaultTfRecordRowEncoder.encodeSequenceExample(rowWithSchema)
@@ -128,7 +136,7 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
       assert(featureMap("IntegerLabel").getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER)
       assert(featureMap("IntegerLabel").getInt64List.getValue(0).toInt == 10)
 
-      assert(featureListMap.size == 5)
+      assert(featureListMap.size == 6)
       assert(featureListMap("LongArrayOfArrayLabel").getFeatureList.asScala.map(
         _.getInt64List.getValueList.asScala.toSeq) === longListOfLists)
       assert(featureListMap("FloatArrayOfArrayLabel").getFeatureList.asScala.map(
@@ -139,6 +147,8 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
         _.getFloatList.getValueList.asScala.map(x => Decimal(x.toDouble)).toSeq) ~== decimalListOfLists)
       assert(featureListMap("StringArrayOfArrayLabel").getFeatureList.asScala.map(
         _.getBytesList.getValueList.asScala.map(_.toStringUtf8).toSeq) === stringListOfLists)
+      assert(featureListMap("BinaryArrayOfArrayLabel").getFeatureList.asScala.map(
+        _.getBytesList.getValueList.asScala.map(byteList => byteList.asScala.toSeq)) === binaryListOfLists.map(_.map(_.toSeq)))
     }
 
     "Throw an exception for non-nullable data types" in {

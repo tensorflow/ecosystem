@@ -110,8 +110,8 @@ The supported Spark data types are listed in the table below:
 | Type            | Spark DataTypes                          |
 | --------------- |:------------------------------------------|
 | Scalar          | IntegerType, LongType, FloatType, DoubleType, DecimalType, StringType, BinaryType |
-| Array           | VectorType, ArrayType of IntegerType, LongType, FloatType, DoubleType, DecimalType, or StringType |
-| Array of Arrays | ArrayType of ArrayType of IntegerType, LongType, FloatType, DoubleType, DecimalType, or StringType |
+| Array           | VectorType, ArrayType of IntegerType, LongType, FloatType, DoubleType, DecimalType, BinaryType, or StringType |
+| Array of Arrays | ArrayType of ArrayType of IntegerType, LongType, FloatType, DoubleType, DecimalType, BinaryType, or StringType |
 
 ## Usage Examples
 

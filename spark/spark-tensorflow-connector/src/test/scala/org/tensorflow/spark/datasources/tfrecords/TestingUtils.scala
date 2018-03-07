@@ -154,6 +154,9 @@ object TestingUtils extends Matchers {
           case ((DoubleType, DoubleType), i) =>
             left.getDouble(i) === (right.getDouble(i) +- epsilon)
 
+          case ((BinaryType, BinaryType), i) =>
+            left.getAs[Array[Byte]](i).toSeq === right.getAs[Array[Byte]](i).toSeq
+
           case ((ArrayType(FloatType,_), ArrayType(FloatType,_)), i) =>
             val leftArray = ArrayData.toArrayData(left.get(i)).toFloatArray().toSeq
             val rightArray = ArrayData.toArrayData(right.get(i)).toFloatArray().toSeq
@@ -163,6 +166,11 @@ object TestingUtils extends Matchers {
             val leftArray = ArrayData.toArrayData(left.get(i)).toDoubleArray().toSeq
             val rightArray = ArrayData.toArrayData(right.get(i)).toDoubleArray().toSeq
             leftArray ~== (rightArray, epsilon)
+
+          case ((ArrayType(BinaryType,_), ArrayType(BinaryType,_)), i) =>
+            val leftArray = ArrayData.toArrayData(left.get(i)).toArray[Array[Byte]](BinaryType).map(_.toSeq).toSeq
+            val rightArray = ArrayData.toArrayData(right.get(i)).toArray[Array[Byte]](BinaryType).map(_.toSeq).toSeq
+            leftArray === rightArray
 
           case ((ArrayType(ArrayType(FloatType,_),_), ArrayType(ArrayType(FloatType,_),_)), i) =>
             val leftArrays = ArrayData.toArrayData(left.get(i)).array.toSeq.map {arr =>
@@ -181,6 +189,15 @@ object TestingUtils extends Matchers {
               ArrayData.toArrayData(arr).toDoubleArray().toSeq
             }
             leftArrays ~== (rightArrays, epsilon)
+
+          case ((ArrayType(ArrayType(BinaryType,_),_), ArrayType(ArrayType(BinaryType,_),_)), i) =>
+            val leftArrays = ArrayData.toArrayData(left.get(i)).array.toSeq.map {arr =>
+              ArrayData.toArrayData(arr).toArray[Array[Byte]](BinaryType).map(_.toSeq).toSeq
+            }
+            val rightArrays = ArrayData.toArrayData(right.get(i)).array.toSeq.map {arr =>
+              ArrayData.toArrayData(arr).toArray[Array[Byte]](BinaryType).map(_.toSeq).toSeq
+            }
+            leftArrays === rightArrays
 
           case((a,b), i) => left.get(i) === right.get(i)
         }
