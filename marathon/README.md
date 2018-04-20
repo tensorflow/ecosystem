@@ -49,8 +49,7 @@ To start the cluster, simply post the Marathon json config file to the Marathon 
 
 You may want to make sure your cluster is running the training program correctly. Navigate to the DC/OS web console and look for stdout or stderr of the chief worker. The `mnist.py` example would print losses for each step and final loss when training is done.
 
-![Screenshot of the chief worker]
-(../images/chief_worker_stdout.png "Screenshot of the chief worker")
+![Screenshot of the chief worker](../images/chief_worker_stdout.png "Screenshot of the chief worker")
 
 If TensorBoard is enabled, navigate to `tensorboard.marathon.mesos:6006` with your browser or find out its IP address from the DC/OS web console.
 

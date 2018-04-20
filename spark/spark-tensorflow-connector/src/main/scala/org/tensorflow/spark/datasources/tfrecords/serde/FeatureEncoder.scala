@@ -16,7 +16,7 @@
 package org.tensorflow.spark.datasources.tfrecords.serde
 
 import org.tensorflow.example._
-import org.tensorflow.hadoop.shaded.protobuf.ByteString
+import com.google.protobuf.ByteString
 
 trait FeatureEncoder[T] {
   /**
@@ -61,11 +61,11 @@ object FloatListFeatureEncoder extends FeatureEncoder[Seq[Float]] {
 /**
  * Encode input value to ByteList
  */
-object BytesListFeatureEncoder extends FeatureEncoder[Seq[String]] {
-  override def encode(value: Seq[String]): Feature = {
+object BytesListFeatureEncoder extends FeatureEncoder[Seq[Array[Byte]]] {
+  override def encode(value: Seq[Array[Byte]]): Feature = {
     val bytesListBuilder = BytesList.newBuilder()
     value.foreach {x =>
-      bytesListBuilder.addValue(ByteString.copyFrom(x.getBytes))
+      bytesListBuilder.addValue(ByteString.copyFrom(x))
     }
     val bytesList = bytesListBuilder.build()
     Feature.newBuilder().setBytesList(bytesList).build()

@@ -7,10 +7,6 @@ The library implements data import from the standard TensorFlow record format ([
 
 This is the initial release of the `spark-tensorflow-connector` repo.
 
-## Known issues
-
-None.
-
 ## Prerequisites
 
 1. [Apache Spark 2.0 (or later)](http://spark.apache.org/)
@@ -20,37 +16,37 @@ None.
 3. [TensorFlow Hadoop](../../hadoop) - Provided as Maven dependency. You can also build the latest version as described [here.](../../hadoop)
 
 ## Building the library
-You can build the library using both Maven and SBT build tools
-
-#### Maven
-Build the library using Maven(3.3) as shown below
+Build the library using Maven 3.3.9 or newer as shown below:
 
 ```sh
+# Build TensorFlow Hadoop
+cd ../../hadoop
+mvn clean install
+
+# Build Spark TensorFlow connector
+cd ../spark/spark-tensorflow-connector
 mvn clean install
 ```
 
-To use a different version of TensorFlow Hadoop, use:
+To build the library for a different version of TensorFlow, e.g., 1.5.0, use:
 ```sh
-mvn clean install -Dtensorflow.hadoop.version=1.0-SNAPSHOT
+# Build TensorFlow Hadoop
+cd ../../hadoop
+mvn versions:set -DnewVersion=1.5.0
+mvn clean install
+
+# Build Spark TensorFlow connector
+cd ../spark/spark-tensorflow-connector
+mvn versions:set -DnewVersion=1.5.0
+mvn clean install
 ```
 
-#### SBT 
-Build the library using SBT(0.13.13) as show below
-```sh
-sbt clean assembly
-```
 
 ## Using Spark Shell
 Run this library in Spark using the `--jars` command line option in `spark-shell` or `spark-submit`. For example:
 
-Maven Jars
 ```sh
-$SPARK_HOME/bin/spark-shell --jars target/spark-tensorflow-connector-1.0-SNAPSHOT.jar,target/lib/tensorflow-hadoop-1.0-06262017-SNAPSHOT-shaded-protobuf.jar
-```
-
-SBT Jars
-```sh
-$SPARK_HOME/bin/spark-shell --jars target/scala-2.11/spark-tensorflow-connector-assembly-1.0.0.jar
+$SPARK_HOME/bin/spark-shell --jars target/spark-tensorflow-connector_2.11-1.6.0.jar
 ```
 
 ## Features
@@ -67,6 +63,30 @@ When writing Spark DataFrame to TensorFlow records, the API accepts several opti
 * `recordType`: output format of TensorFlow records. By default it is Example. Possible values are:
   * `Example`: TensorFlow [Example](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/example/example.proto) records
   * `SequenceExample`: TensorFlow [SequenceExample](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/example/example.proto) records
+* `writeLocality`: determines whether the TensorFlow records are written locally on the workers
+or on a distributed file system. Possible values are:
+  * `distributed` (default): the dataframe is written using Spark's default file system.
+  * `local`: writes the content on the disks of each the Spark workers, in a partitioned manner
+  (see details in the paragraph below).
+
+_Local mode write_ each of the workers stores on the local disk a subset of the data.
+The subset that is stored on each worker is determined by the partitioning of the Dataframe.
+Each of the partitions is coalesced into a single TFRecord file and written on the node where
+the partition lives.
+This is useful in the context of distributed training, in which each of the workers gets a
+subset of the data to work on.
+When this mode is activated, the path provided to the writer is interpreted as a base path that is
+created on each of the worker nodes, and that will be populated with data from the dataframe. For
+ example, the following code:
+
+```scala
+myDataFrame.write.format("tfrecords").option("writeLocality", "local").save("/path")
+```
+
+will lead to each worker nodes to have the following files:
+  - worker1: /path/part-0001.tfrecord, /path/part-0002.tfrecord, ...
+  - worker2: /path/part-0042.tfrecord, ...
+
 
 ## Schema inference
 This library supports automatic schema inference when reading TensorFlow records into Spark DataFrames.
@@ -82,6 +102,16 @@ The schema inference rules are described in the table below:
 | SequenceExample          | FeatureList of Int64List | ArrayType(ArrayType(LongType)) |
 | SequenceExample          | FeatureList of FloatList | ArrayType(ArrayType(FloatType)) |
 | SequenceExample          | FeatureList of BytesList | ArrayType(ArrayType(StringType)) |
+
+## Supported data types
+
+The supported Spark data types are listed in the table below:
+
+| Type            | Spark DataTypes                          |
+| --------------- |:------------------------------------------|
+| Scalar          | IntegerType, LongType, FloatType, DoubleType, DecimalType, StringType, BinaryType |
+| Array           | VectorType, ArrayType of IntegerType, LongType, FloatType, DoubleType, DecimalType, BinaryType, or StringType |
+| Array of Arrays | ArrayType of ArrayType of IntegerType, LongType, FloatType, DoubleType, DecimalType, BinaryType, or StringType |
 
 ## Usage Examples
 
@@ -143,7 +173,7 @@ val videoSchema = StructType(List(StructField("video_id", StringType),
 val videoDf: DataFrame = spark.read.format("tfrecords").schema(videoSchema).option("recordType", "Example").load("file:///tmp/video_level-train-0.tfrecord")
 videoDf.show()
 videoDf.write.format("tfrecords").option("recordType", "Example").save("youtube-8m-video.tfrecord")
-val importedDf1: DataFrame = spark.read.format("tfrecords").option("recordType", "Example").schema(videoSchema).load("youtube-8m-video.tfrecords")
+val importedDf1: DataFrame = spark.read.format("tfrecords").option("recordType", "Example").schema(videoSchema).load("youtube-8m-video.tfrecord")
 importedDf1.show()
 
 //Import Frame-level SequenceExample dataset into DataFrame
@@ -154,6 +184,6 @@ val frameSchema = StructType(List(StructField("video_id", StringType),
 val frameDf: DataFrame = spark.read.format("tfrecords").schema(frameSchema).option("recordType", "SequenceExample").load("file:///tmp/frame_level-train-0.tfrecord")
 frameDf.show()
 frameDf.write.format("tfrecords").option("recordType", "SequenceExample").save("youtube-8m-frame.tfrecord")
-val importedDf2: DataFrame = spark.read.format("tfrecords").option("recordType", "SequenceExample").schema(frameSchema).load("youtube-8m-frame.tfrecords")
+val importedDf2: DataFrame = spark.read.format("tfrecords").option("recordType", "SequenceExample").schema(frameSchema).load("youtube-8m-frame.tfrecord")
 importedDf2.show()
 ```

@@ -15,6 +15,7 @@
  */
 package org.tensorflow.spark.datasources.tfrecords.serde
 
+import org.apache.spark.sql.types.Decimal
 import org.tensorflow.example.Feature
 import scala.collection.JavaConverters._
 
@@ -152,6 +153,24 @@ object DoubleFeatureDecoder extends FeatureDecoder[Double] {
 }
 
 /**
+ * Decode TensorFlow "Feature" to Decimal
+ */
+object DecimalFeatureDecoder extends FeatureDecoder[Decimal] {
+  override def decode(feature: Feature): Decimal = {
+    require(feature != null && feature.getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER, "Feature must be of type FloatList")
+    try {
+      val floatList = feature.getFloatList.getValueList
+      require(floatList.size() == 1, "Length of FloatList must equal 1")
+      Decimal(floatList.get(0).doubleValue())
+    }
+    catch {
+      case ex: Exception =>
+        throw new RuntimeException(s"Cannot convert feature to Decimal.", ex)
+    }
+  }
+}
+
+/**
  * Decode TensorFlow "Feature" to Double array
  */
 object DoubleListFeatureDecoder extends FeatureDecoder[Seq[Double]] {
@@ -164,6 +183,57 @@ object DoubleListFeatureDecoder extends FeatureDecoder[Seq[Double]] {
     catch {
       case ex: Exception =>
         throw new RuntimeException(s"Cannot convert feature to Double array.", ex)
+    }
+  }
+}
+
+/**
+ * Decode TensorFlow "Feature" to Decimal array
+ */
+object DecimalListFeatureDecoder extends FeatureDecoder[Seq[Decimal]] {
+  override def decode(feature: Feature): Seq[Decimal] = {
+    require(feature != null && feature.getKindCase.getNumber == Feature.FLOAT_LIST_FIELD_NUMBER, "Feature must be of type FloatList")
+    try {
+      val array = feature.getFloatList.getValueList.asScala.toSeq
+      array.map(x => Decimal(x.toDouble))
+    }
+    catch {
+      case ex: Exception =>
+        throw new RuntimeException(s"Cannot convert feature to Decimal array.", ex)
+    }
+  }
+}
+
+/**
+ * Decode TensorFlow "Feature" to byte array
+ */
+object BinaryFeatureDecoder extends FeatureDecoder[Array[Byte]] {
+  override def decode(feature: Feature): Array[Byte] = {
+    require(feature != null && feature.getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER, "Feature must be of type ByteList")
+    try {
+      val bytesList = feature.getBytesList.getValueList
+      require(bytesList.size() == 1, "Length of BytesList must equal 1")
+      bytesList.get(0).asScala.toArray.map(_.toByte)
+    }
+    catch {
+      case ex: Exception =>
+        throw new RuntimeException(s"Cannot convert feature to byte array.", ex)
+    }
+  }
+}
+
+/**
+ * Decode TensorFlow "Feature" to array of byte arrays
+ */
+object BinaryListFeatureDecoder extends FeatureDecoder[Seq[Array[Byte]]] {
+  override def decode(feature: Feature): Seq[Array[Byte]] = {
+    require(feature != null && feature.getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER, "Feature must be of type ByteList")
+    try {
+      feature.getBytesList.getValueList.asScala.map((byteArray) => byteArray.asScala.toArray.map(_.toByte))
+    }
+    catch {
+      case ex: Exception =>
+        throw new RuntimeException(s"Cannot convert feature to byte array.", ex)
     }
   }
 }

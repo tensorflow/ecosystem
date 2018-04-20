@@ -15,7 +15,7 @@
  */
 package org.tensorflow.spark.datasources.tfrecords.serde
 
-import org.tensorflow.hadoop.shaded.protobuf.ByteString
+import com.google.protobuf.ByteString
 import org.tensorflow.spark.datasources.tfrecords.TestingUtils._
 import org.scalatest.{Matchers, WordSpec}
 import org.tensorflow.example._
@@ -126,6 +126,35 @@ class FeatureListDecoderTest extends WordSpec with Matchers{
         val feature = Feature.newBuilder().setBytesList(bytesList).build()
         val featureList = FeatureList.newBuilder().addFeature(feature).build()
         DoubleFeatureListDecoder.decode(featureList)
+      }
+    }
+  }
+
+  "Decimal FeatureList decoder" should {
+
+    "Decode FeatureList to 2-dimensional decimal array" in {
+      val floatList1 = FloatList.newBuilder().addValue(4.3F).addValue(13.8F).build()
+      val floatList2 = FloatList.newBuilder().addValue(-12.0F).build()
+      val feature1 = Feature.newBuilder().setFloatList(floatList1).build()
+      val feature2 = Feature.newBuilder().setFloatList(floatList2).build()
+      val featureList = FeatureList.newBuilder().addFeature(feature1).addFeature(feature2).build()
+
+      val arr = DecimalFeatureListDecoder.decode(featureList)
+      assert(arr(0).map(_.toDouble) ~== Seq(4.3d,13.8d))
+      assert(arr(1).map(_.toDouble) ~== Seq(-12.0d))
+    }
+
+    "Decode empty feature list to empty array" in {
+      val featureList = FeatureList.newBuilder().build()
+      assert(DecimalFeatureListDecoder.decode(featureList).size === 0)
+    }
+
+    "Throw an exception if FeatureList is not of type FloatList" in {
+      intercept[Exception] {
+        val bytesList = BytesList.newBuilder().addValue(ByteString.copyFrom("charles".getBytes)).build()
+        val feature = Feature.newBuilder().setBytesList(bytesList).build()
+        val featureList = FeatureList.newBuilder().addFeature(feature).build()
+        DecimalFeatureListDecoder.decode(featureList)
       }
     }
   }

@@ -17,7 +17,7 @@ package org.tensorflow.spark.datasources.tfrecords.serde
 
 import org.scalatest.{Matchers, WordSpec}
 import org.tensorflow.example.{BytesList, Feature, FloatList, Int64List}
-import org.tensorflow.hadoop.shaded.protobuf.ByteString
+import com.google.protobuf.ByteString
 import org.tensorflow.spark.datasources.tfrecords.TestingUtils._
 
 class FeatureDecoderTest extends WordSpec with Matchers {
@@ -182,7 +182,49 @@ class FeatureDecoderTest extends WordSpec with Matchers {
       assert(DoubleListFeatureDecoder.decode(floatFeature) ~== Seq(2.5d, 4.0d))
     }
 
-    "Throw an exception if feature is not a DoubleList" in {
+    "Throw an exception if feature is not a FloatList" in {
+      intercept[Exception] {
+        val bytesList = BytesList.newBuilder().addValue(ByteString.copyFrom("str-input".getBytes)).build()
+        val bytesFeature = Feature.newBuilder().setBytesList(bytesList).build()
+        FloatListFeatureDecoder.decode(bytesFeature)
+      }
+    }
+  }
+
+  "Decimal Feature decoder" should {
+
+    "Decode Feature to Decimal" in {
+      val floatList = FloatList.newBuilder().addValue(2.55F).build()
+      val floatFeature = Feature.newBuilder().setFloatList(floatList).build()
+      assert(DecimalFeatureDecoder.decode(floatFeature).toDouble === 2.55d +- epsilon)
+    }
+
+    "Throw an exception if length of feature array exceeds 1" in {
+      intercept[Exception] {
+        val floatList = FloatList.newBuilder().addValue(1.5F).addValue(3.33F).build()
+        val floatFeature = Feature.newBuilder().setFloatList(floatList).build()
+        DecimalFeatureDecoder.decode(floatFeature)
+      }
+    }
+
+    "Throw an exception if feature is not a FloatList" in {
+      intercept[Exception] {
+        val bytesList = BytesList.newBuilder().addValue(ByteString.copyFrom("str-input".getBytes)).build()
+        val bytesFeature = Feature.newBuilder().setBytesList(bytesList).build()
+        DecimalFeatureDecoder.decode(bytesFeature)
+      }
+    }
+  }
+
+  "Decimal List Feature decoder" should {
+
+    "Decode Feature to Decimal List" in {
+      val floatList = FloatList.newBuilder().addValue(2.5F).addValue(4.0F).build()
+      val floatFeature = Feature.newBuilder().setFloatList(floatList).build()
+      assert(DecimalListFeatureDecoder.decode(floatFeature).map(_.toDouble) ~== Seq(2.5d, 4.0d))
+    }
+
+    "Throw an exception if feature is not a FloatList" in {
       intercept[Exception] {
         val bytesList = BytesList.newBuilder().addValue(ByteString.copyFrom("str-input".getBytes)).build()
         val bytesFeature = Feature.newBuilder().setBytesList(bytesList).build()

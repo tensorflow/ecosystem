@@ -56,6 +56,22 @@ object TestingUtils extends Matchers {
   }
 
   /**
+   * Implicit class for comparing two decimal values using absolute tolerance.
+   */
+  implicit class DecimalArrayWithAlmostEquals(val left: Seq[Decimal]) {
+
+    /**
+     * When the difference of two values are within eps, returns true; otherwise, returns false.
+     */
+    def ~==(right: Seq[Decimal], epsilon : Double = 1E-6): Boolean = {
+      if (left.size === right.size) {
+        (left zip right) forall { case (a, b) => a.toDouble === (b.toDouble +- epsilon) }
+      }
+      else false
+    }
+  }
+
+  /**
    * Implicit class for comparing two double values using absolute tolerance.
    */
   implicit class FloatMatrixWithAlmostEquals(val left: Seq[Seq[Float]]) {
@@ -80,6 +96,22 @@ object TestingUtils extends Matchers {
      * When the difference of two values are within eps, returns true; otherwise, returns false.
      */
     def ~==(right: Seq[Seq[Double]], epsilon : Double = 1E-6): Boolean = {
+      if (left.size === right.size) {
+        (left zip right) forall { case (a, b) => a ~== (b, epsilon) }
+      }
+      else false
+    }
+  }
+
+  /**
+   * Implicit class for comparing two decimal values using absolute tolerance.
+   */
+  implicit class DecimalMatrixWithAlmostEquals(val left: Seq[Seq[Decimal]]) {
+
+    /**
+     * When the difference of two values are within eps, returns true; otherwise, returns false.
+     */
+    def ~==(right: Seq[Seq[Decimal]], epsilon : Double = 1E-6): Boolean = {
       if (left.size === right.size) {
         (left zip right) forall { case (a, b) => a ~== (b, epsilon) }
       }
@@ -113,11 +145,17 @@ object TestingUtils extends Matchers {
         val rightDataTypes = right.schema.fields.map(_.dataType)
 
         (leftDataTypes zip rightDataTypes).zipWithIndex.forall {
+          case (x, i) if left.get(i) == null || right.get(i) == null =>
+            left.get(i) == null && right.get(i) == null
+
           case ((FloatType, FloatType), i) =>
             left.getFloat(i) === (right.getFloat(i) +- epsilon)
 
           case ((DoubleType, DoubleType), i) =>
             left.getDouble(i) === (right.getDouble(i) +- epsilon)
+
+          case ((BinaryType, BinaryType), i) =>
+            left.getAs[Array[Byte]](i).toSeq === right.getAs[Array[Byte]](i).toSeq
 
           case ((ArrayType(FloatType,_), ArrayType(FloatType,_)), i) =>
             val leftArray = ArrayData.toArrayData(left.get(i)).toFloatArray().toSeq
@@ -128,6 +166,11 @@ object TestingUtils extends Matchers {
             val leftArray = ArrayData.toArrayData(left.get(i)).toDoubleArray().toSeq
             val rightArray = ArrayData.toArrayData(right.get(i)).toDoubleArray().toSeq
             leftArray ~== (rightArray, epsilon)
+
+          case ((ArrayType(BinaryType,_), ArrayType(BinaryType,_)), i) =>
+            val leftArray = ArrayData.toArrayData(left.get(i)).toArray[Array[Byte]](BinaryType).map(_.toSeq).toSeq
+            val rightArray = ArrayData.toArrayData(right.get(i)).toArray[Array[Byte]](BinaryType).map(_.toSeq).toSeq
+            leftArray === rightArray
 
           case ((ArrayType(ArrayType(FloatType,_),_), ArrayType(ArrayType(FloatType,_),_)), i) =>
             val leftArrays = ArrayData.toArrayData(left.get(i)).array.toSeq.map {arr =>
@@ -146,6 +189,15 @@ object TestingUtils extends Matchers {
               ArrayData.toArrayData(arr).toDoubleArray().toSeq
             }
             leftArrays ~== (rightArrays, epsilon)
+
+          case ((ArrayType(ArrayType(BinaryType,_),_), ArrayType(ArrayType(BinaryType,_),_)), i) =>
+            val leftArrays = ArrayData.toArrayData(left.get(i)).array.toSeq.map {arr =>
+              ArrayData.toArrayData(arr).toArray[Array[Byte]](BinaryType).map(_.toSeq).toSeq
+            }
+            val rightArrays = ArrayData.toArrayData(right.get(i)).array.toSeq.map {arr =>
+              ArrayData.toArrayData(arr).toArray[Array[Byte]](BinaryType).map(_.toSeq).toSeq
+            }
+            leftArrays === rightArrays
 
           case((a,b), i) => left.get(i) === right.get(i)
         }

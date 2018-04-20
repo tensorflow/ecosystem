@@ -15,39 +15,45 @@ limitations under the License.
 
 package org.tensorflow.hadoop.io;
 
-import org.tensorflow.hadoop.util.TFRecordWriter;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.mapred.FileOutputFormat;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.RecordWriter;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.util.Progressable;
+import org.tensorflow.hadoop.util.TFRecordWriter;
 
 import java.io.IOException;
 
-public class TFRecordFileOutputFormat extends FileOutputFormat<BytesWritable, NullWritable> {
-  @Override public RecordWriter<BytesWritable, NullWritable> getRecordWriter(
-      TaskAttemptContext context) throws IOException, InterruptedException {
-    Configuration conf = context.getConfiguration();
-    Path file = getDefaultWorkFile(context, "");
-    FileSystem fs = file.getFileSystem(conf);
+public class TFRecordFileOutputFormatV1 extends FileOutputFormat<BytesWritable, Writable> {
+  @Override
+  public RecordWriter<BytesWritable, Writable> getRecordWriter(FileSystem ignored,
+                                                               JobConf job, String name,
+                                                               Progressable progress) throws IOException {
+    Path file = FileOutputFormat.getTaskOutputPath(job, name);
+    FileSystem fs = file.getFileSystem(job);
 
-    int bufferSize = TFRecordIOConf.getBufferSize(conf);
+    int bufferSize = TFRecordIOConf.getBufferSize(job);
     final FSDataOutputStream fsdos = fs.create(file, true, bufferSize);
     final TFRecordWriter writer = new TFRecordWriter(fsdos);
-    return new RecordWriter<BytesWritable, NullWritable>() {
-      @Override public void write(BytesWritable key, NullWritable value)
-          throws IOException, InterruptedException {
+    return new RecordWriter<BytesWritable, Writable>() {
+      @Override
+      public void write(BytesWritable key, Writable value)
+        throws IOException {
         writer.write(key.getBytes(), 0, key.getLength());
       }
 
-      @Override public void close(TaskAttemptContext context)
-          throws IOException, InterruptedException {
+      @Override
+      public void close(Reporter reporter)
+        throws IOException {
         fsdos.close();
       }
     };
   }
+
 }

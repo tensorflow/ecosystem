@@ -15,11 +15,17 @@
  */
 package org.tensorflow.spark.datasources.tfrecords
 
+import java.io._
+import java.nio.file.Paths
+
+import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.{BytesWritable, NullWritable}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
 import org.tensorflow.hadoop.io.TFRecordFileOutputFormat
+import org.tensorflow.hadoop.util._
 import org.tensorflow.spark.datasources.tfrecords.serde.DefaultTfRecordRowEncoder
 
 /**
@@ -59,9 +65,75 @@ class DefaultSource extends DataSourceRegister
           throw new IllegalArgumentException(s"Unsupported recordType ${recordType}: recordType can be Example or SequenceExample")
       }
     })
-    features.saveAsNewAPIHadoopFile[TFRecordFileOutputFormat](path)
 
+    parameters.getOrElse("writeLocality", "distributed") match {
+      case "distributed" =>
+        saveDistributed(features, path, sqlContext, mode)
+      case "local" =>
+        saveLocal(features, path, mode)
+      case s: String =>
+        throw new IllegalArgumentException(
+          s"Expected 'distributed' or 'local', got $s")
+    }
     TensorflowRelation(parameters)(sqlContext.sparkSession)
+  }
+
+  private def save(features: RDD[(BytesWritable, NullWritable)], path: String) = {
+      features.saveAsNewAPIHadoopFile[TFRecordFileOutputFormat](path)
+  }
+
+  private def saveDistributed(
+      features: RDD[(BytesWritable, NullWritable)],
+      path: String,
+      sqlContext: SQLContext,
+      mode: SaveMode): Unit = {
+    val hadoopConf = sqlContext.sparkContext.hadoopConfiguration
+    val outputPath = new Path(path)
+    val fs = outputPath.getFileSystem(hadoopConf)
+    val qualifiedOutputPath = outputPath.makeQualified(fs.getUri, fs.getWorkingDirectory)
+
+    val pathExists = fs.exists(qualifiedOutputPath)
+
+    mode match {
+      case SaveMode.Overwrite =>
+        fs.delete(qualifiedOutputPath, true)
+        save(features, path)
+
+      case SaveMode.Append =>
+        throw new IllegalArgumentException("Append mode is not supported")
+
+      case SaveMode.ErrorIfExists =>
+        if (pathExists)
+          throw new IllegalStateException(
+            s"Path $path already exists. SaveMode: ErrorIfExists.")
+        save(features, path)
+
+      case SaveMode.Ignore =>
+        // With `SaveMode.Ignore` mode, if data already exists, the save operation is expected
+        // to not save the contents of the DataFrame and to not change the existing data.
+        // Therefore, it is okay to do nothing here and then just return the relation below.
+        if (pathExists == false)
+          save(features, path)
+    }
+  }
+
+  private def saveLocal(
+      features: RDD[(BytesWritable, NullWritable)],
+      localPath: String,
+      mode: SaveMode): Unit = {
+    val cleanedPath = Paths.get(localPath).toAbsolutePath.toString
+    if (mode == SaveMode.Append) {
+      throw new IllegalArgumentException("Append mode is not supported in local write mode")
+    }
+    // Not supported now, but it should be a small fix eventually.
+    if (mode == SaveMode.Overwrite) {
+      throw new IllegalArgumentException("Overwrite mode is not supported in local write mode")
+    }
+
+    val f = DefaultSource.writePartitionLocalFun(localPath, mode)
+
+    // Perform the action.
+    features.mapPartitionsWithIndex(f).collect()
   }
 
   // Reads TensorFlow Records into DataFrame with Custom Schema
@@ -75,4 +147,53 @@ class DefaultSource extends DataSourceRegister
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): TensorflowRelation = {
     TensorflowRelation(parameters)(sqlContext.sparkSession)
   }
+}
+
+object DefaultSource {
+  // The function run on each worker.
+  // Writes the partition to a file and returns the number of records output.
+  private def writePartitionLocal(
+      index: Int,
+      part: Iterator[(BytesWritable, NullWritable)],
+      localPath: String,
+      mode: SaveMode): Iterator[Int] = {
+    val dir = new File(localPath)
+    if (dir.exists()) {
+      if (mode == SaveMode.ErrorIfExists) {
+        throw new IllegalStateException(
+          s"LocalPath $localPath already exists. SaveMode: ErrorIfExists.")
+      }
+      if (mode == SaveMode.Ignore) {
+        return Iterator.empty
+      }
+    }
+
+    // Make the directory if it does not exist
+    dir.mkdirs()
+    // The path to the partition file.
+    val filePath = localPath + s"/part-" + String.format("%05d", new java.lang.Integer(index))
+    val fos = new DataOutputStream(new FileOutputStream(filePath))
+    var count = 0
+    try {
+      val tfw = new TFRecordWriter(fos)
+      for((bw, _) <- part) {
+        tfw.write(bw.getBytes)
+        count += 1
+      }
+    } finally {
+      fos.close()
+    }
+    Iterator(count)
+  }
+
+  // Working around the closure variable captures.
+  private def writePartitionLocalFun(
+      localPath: String,
+      mode: SaveMode): (Int, Iterator[(BytesWritable, NullWritable)]) => Iterator[Int] = {
+    def mapFun(index: Int, part: Iterator[(BytesWritable, NullWritable)]) = {
+      writePartitionLocal(index, part, localPath, mode)
+    }
+    mapFun
+  }
+
 }
