@@ -9,7 +9,7 @@ RUN add-apt-repository -y ppa:openjdk-r/ppa && \
     rm -rf /var/lib/apt/lists/*
 
 ENV HADOOP_VERSION 2.7.3
-RUN curl -O http://www-us.apache.org/dist/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz && \
+RUN curl -O https://archive.apache.org/dist/hadoop/core/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz && \
     tar xfz hadoop-${HADOOP_VERSION}.tar.gz && \
     mv hadoop-${HADOOP_VERSION} /usr/local/hadoop && \
     rm hadoop-${HADOOP_VERSION}.tar.gz
