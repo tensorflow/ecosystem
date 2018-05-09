@@ -9,6 +9,21 @@
     <version>1.6.0</version>
     <name>spark-tensorflow-connector</name>
     <url>https://www.tensorflow.org</url>
+    <description>TensorFlow TFRecord connector for Apache Spark DataFrames</description>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/tensorflow/ecosystem.git</url>
+        <connection>git@github.com:tensorflow/ecosystem.git</connection>
+        <developerConnection>scm:git:https://github.com/tensorflow/ecosystem.git</developerConnection>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -23,178 +38,124 @@
         <junit.version>4.11</junit.version>
     </properties>
 
-    <profiles>
-        <profile>
-            <id>compile</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-                <property>
-                    <name>!NEVERSETME</name>
-                </property>
-            </activation>
-            <build>
-                <pluginManagement>
-                    <plugins>
-                        <plugin>
-                            <inherited>true</inherited>
-                            <groupId>net.alchim31.maven</groupId>
-                            <artifactId>scala-maven-plugin</artifactId>
-                            <version>${scala.maven.version}</version>
-                            <executions>
-                                <execution>
-                                    <id>compile</id>
-                                    <goals>
-                                        <goal>add-source</goal>
-                                        <goal>compile</goal>
-                                    </goals>
-                                    <configuration>
-                                        <jvmArgs>
-                                            <jvmArg>-Xms256m</jvmArg>
-                                            <jvmArg>-Xmx512m</jvmArg>
-                                        </jvmArgs>
-                                        <args>
-                                            <arg>-g:vars</arg>
-                                            <arg>-deprecation</arg>
-                                            <arg>-feature</arg>
-                                            <arg>-unchecked</arg>
-                                            <arg>-Xfatal-warnings</arg>
-                                            <arg>-language:implicitConversions</arg>
-                                            <arg>-language:existentials</arg>
-                                        </args>
-                                    </configuration>
-                                </execution>
-                                <execution>
-                                    <id>test</id>
-                                    <goals>
-                                        <goal>add-source</goal>
-                                        <goal>testCompile</goal>
-                                    </goals>
-                                </execution>
-                            </executions>
-                            <configuration>
-                                <recompileMode>incremental</recompileMode>
-                                <useZincServer>true</useZincServer>
-                                <scalaVersion>${scala.binary.version}</scalaVersion>
-                                <checkMultipleScalaVersions>false</checkMultipleScalaVersions>
-                            </configuration>
-                        </plugin>
-                        <!-- Shade protobuf dependency. -->
-                        <plugin>
-                            <artifactId>maven-shade-plugin</artifactId>
-                            <executions>
-                                <execution>
-                                    <phase>package</phase>
-                                    <goals>
-                                        <goal>shade</goal>
-                                    </goals>
-                                    <configuration>
-                                        <minimizeJar>true</minimizeJar>
-                                        <artifactSet>
-                                            <includes>
-                                                <include>com.google.protobuf:protobuf-java</include>
-                                                <include>org.tensorflow:tensorflow-hadoop</include>
-                                                <include>org.tensorflow:proto</include>
-                                            </includes>
-                                        </artifactSet>
-                                        <filters>
-                                            <filter>
-                                                <!-- Remove the source to keep the result smaller. -->
-                                                <artifact>com.google.protobuf:protobuf-java</artifact>
-                                                <excludes>
-                                                    <exclude>**/*.java</exclude>
-                                                </excludes>
-                                            </filter>
-                                        </filters>
-                                        <relocations>
-                                            <relocation>
-                                                <pattern>com.google.protobuf</pattern>
-                                                <shadedPattern>org.tensorflow.spark.shaded.com.google.protobuf</shadedPattern>
-                                            </relocation>
-                                        </relocations>
-                                    </configuration>
-                                </execution>
-                            </executions>
-                        </plugin>
-                    </plugins>
-                </pluginManagement>
-                <plugins>
-                    <plugin>
-                        <groupId>net.alchim31.maven</groupId>
-                        <artifactId>scala-maven-plugin</artifactId>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>test</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-                <property>
-                    <name>!NEVERSETME</name>
-                </property>
-            </activation>
-            <build>
-                <pluginManagement>
-                    <plugins>
-                        <plugin>
-                            <inherited>true</inherited>
-                            <groupId>net.alchim31.maven</groupId>
-                            <artifactId>scala-maven-plugin</artifactId>
-                            <version>${scala.maven.version}</version>
-                            <executions>
-                                <execution>
-                                    <id>compile</id>
-                                </execution>
-                            </executions>
-                        </plugin>
-                        <plugin>
-                            <inherited>true</inherited>
-                            <groupId>org.scalatest</groupId>
-                            <artifactId>scalatest-maven-plugin</artifactId>
-                            <version>${scalatest.maven.version}</version>
-                            <executions>
-                                <execution>
-                                    <id>scalaTest</id>
-                                    <phase>test</phase>
-                                    <goals>
-                                        <goal>test</goal>
-                                    </goals>
-                                </execution>
-                            </executions>
-                        </plugin>
-                    </plugins>
-                </pluginManagement>
-                <plugins>
-                    <plugin>
-                        <groupId>net.alchim31.maven</groupId>
-                        <artifactId>scala-maven-plugin</artifactId>
-                    </plugin>
-                </plugins>
-            </build>
-            <dependencyManagement>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.scalatest</groupId>
-                        <artifactId>scalatest_${scala.binary.version}</artifactId>
-                        <version>${scala.test.version}</version>
-                        <scope>test</scope>
-                    </dependency>
-                </dependencies>
-            </dependencyManagement>
-
-            <dependencies>
-                <dependency>
-                    <groupId>org.scalatest</groupId>
-                    <artifactId>scalatest_${scala.binary.version}</artifactId>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-
-    </profiles>
-
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <inherited>true</inherited>
+                    <groupId>net.alchim31.maven</groupId>
+                    <artifactId>scala-maven-plugin</artifactId>
+                    <version>${scala.maven.version}</version>
+                    <executions>
+                        <execution>
+                            <id>compile</id>
+                            <goals>
+                                <goal>add-source</goal>
+                                <goal>compile</goal>
+                            </goals>
+                            <configuration>
+                                <jvmArgs>
+                                    <jvmArg>-Xms256m</jvmArg>
+                                    <jvmArg>-Xmx512m</jvmArg>
+                                </jvmArgs>
+                                <args>
+                                    <arg>-g:vars</arg>
+                                    <arg>-deprecation</arg>
+                                    <arg>-feature</arg>
+                                    <arg>-unchecked</arg>
+                                    <arg>-Xfatal-warnings</arg>
+                                    <arg>-language:implicitConversions</arg>
+                                    <arg>-language:existentials</arg>
+                                </args>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>test</id>
+                            <goals>
+                                <goal>add-source</goal>
+                                <goal>testCompile</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <recompileMode>incremental</recompileMode>
+                        <useZincServer>true</useZincServer>
+                        <scalaVersion>${scala.binary.version}</scalaVersion>
+                        <checkMultipleScalaVersions>false</checkMultipleScalaVersions>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <inherited>true</inherited>
+                    <groupId>org.scalatest</groupId>
+                    <artifactId>scalatest-maven-plugin</artifactId>
+                    <version>${scalatest.maven.version}</version>
+                    <executions>
+                        <execution>
+                            <id>scalaTest</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>test</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <!-- Shade protobuf dependency. -->
+                <plugin>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.1.0</version>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>shade</goal>
+                            </goals>
+                            <configuration>
+                                <minimizeJar>true</minimizeJar>
+                                <artifactSet>
+                                    <includes>
+                                        <include>com.google.protobuf:protobuf-java</include>
+                                        <include>org.tensorflow:tensorflow-hadoop</include>
+                                        <include>org.tensorflow:proto</include>
+                                    </includes>
+                                </artifactSet>
+                                <filters>
+                                    <filter>
+                                        <!-- Remove the source to keep the result smaller. -->
+                                        <artifact>com.google.protobuf:protobuf-java</artifact>
+                                        <excludes>
+                                            <exclude>**/*.java</exclude>
+                                        </excludes>
+                                    </filter>
+                                </filters>
+                                <relocations>
+                                    <relocation>
+                                        <pattern>com.google.protobuf</pattern>
+                                        <shadedPattern>
+                                            org.tensorflow.spark.shaded.com.google.protobuf
+                                        </shadedPattern>
+                                    </relocation>
+                                </relocations>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <!-- GPG signed components: http://central.sonatype.org/pages/apache-maven.html#gpg-signed-components -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.5</version>
+                    <executions>
+                        <execution>
+                            <id>sign-artifacts</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
@@ -219,6 +180,95 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>test</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>!NEVERSETME</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.scalatest</groupId>
+                        <artifactId>scalatest_${scala.binary.version}</artifactId>
+                        <version>${scala.test.version}</version>
+                        <scope>test</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+            <dependencies>
+                <dependency>
+                    <groupId>org.scalatest</groupId>
+                    <artifactId>scalatest_${scala.binary.version}</artifactId>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <!-- Two profiles are used:
+             ossrh - deploys to ossrh/maven central
+             bintray - deploys to bintray/jcenter. -->
+        <profile>
+            <id>ossrh</id>
+            <distributionManagement>
+                <!-- Sonatype requirements from http://central.sonatype.org/pages/apache-maven.html -->
+                <snapshotRepository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                </snapshotRepository>
+                <repository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+            </distributionManagement>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>bintray</id>
+            <distributionManagement>
+                <!-- https://blog.bintray.com/2015/09/17/publishing-your-maven-project-to-bintray/ -->
+                <repository>
+                    <id>bintray</id>
+                    <url>https://api.bintray.com/maven/google/tensorflow/tensorflow/;publish=0</url>
+                </repository>
+            </distributionManagement>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <developers>
+        <developer>
+            <name>TensorFlowers</name>
+            <organization>TensorFlow</organization>
+            <organizationUrl>http://www.tensorflow.org</organizationUrl>
+        </developer>
+    </developers>
 
     <dependencies>
         <dependency>
