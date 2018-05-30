@@ -118,7 +118,8 @@
                 <!-- Sonatype requirements from http://central.sonatype.org/pages/apache-maven.html -->
                 <snapshotRepository>
                     <id>ossrh</id>
-                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                    <url>https://tap.jfrog.io/tap/public-snapshots</url>
+                    <!--<url>https://oss.sonatype.org/content/repositories/snapshots</url>-->
                 </snapshotRepository>
                 <repository>
                     <id>ossrh</id>
