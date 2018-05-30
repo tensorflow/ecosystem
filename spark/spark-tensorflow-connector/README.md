@@ -3,9 +3,10 @@
 This repo contains a library for loading and storing TensorFlow records with [Apache Spark](http://spark.apache.org/).
 The library implements data import from the standard TensorFlow record format ([TFRecords](https://www.tensorflow.org/how_tos/reading_data/)) into Spark SQL DataFrames, and data export from DataFrames to TensorFlow records.
 
-## What's new
+## Changelog
 
-This is the initial release of the `spark-tensorflow-connector` repo.
+* 05/29/2018 - Changed the artifactId from `org.tensorflow.spark-tensorflow-connector` to `org.tensorflow.spark-connector`
+
 
 ## Prerequisites
 
@@ -41,12 +42,28 @@ mvn versions:set -DnewVersion=1.5.0
 mvn clean install
 ```
 
+To build the library for a different version of Apache Spark, e.g., 2.2.1, use:
+
+```
+# From spark-tensorflow-connector directory
+mvn clean install -Dspark.version=2.2.1
+```
+
+After installation (or deployment), the package can be used with the following dependency:
+
+    ```xml
+    <dependency>
+      <groupId>org.tensorflow</groupId>
+      <artifactId>spark-connector_2.11</artifactId>
+      <version>1.8.0</version>
+    </dependency>
+    ```
 
 ## Using Spark Shell
 Run this library in Spark using the `--jars` command line option in `spark-shell` or `spark-submit`. For example:
 
 ```sh
-$SPARK_HOME/bin/spark-shell --jars target/spark-tensorflow-connector_2.11-1.6.0.jar
+$SPARK_HOME/bin/spark-shell --jars target/spark-connector_2.11-1.8.0.jar
 ```
 
 ## Features
@@ -155,8 +172,14 @@ importedDf2.show()
 Here's how to import the [YouTube-8M](https://research.google.com/youtube8m/) dataset into a Spark DataFrame.
 
 ```sh
-curl http://us.data.yt8m.org/1/video_level/train/train-0.tfrecord > /tmp/video_level-train-0.tfrecord
-curl http://us.data.yt8m.org/1/frame_level/train/train-0.tfrecord > /tmp/frame_level-train-0.tfrecord
+mkdir -p /tmp/youtube-8m-frames
+pushd /tmp/youtube-8m-frames
+curl data.yt8m.org/download.py | shard=1,3844 partition=2/frame/train mirror=us python
+
+mkdir -p /tmp/youtube-8m-videos
+cd /tmp/youtube-8m-videos
+curl data.yt8m.org/download.py | shard=1,3844 partition=2/video/train mirror=us python
+popd
 ```
 
 ```scala
@@ -166,22 +189,22 @@ import org.apache.spark.sql.catalyst.expressions.GenericRow
 import org.apache.spark.sql.types._
 
 //Import Video-level Example dataset into DataFrame
-val videoSchema = StructType(List(StructField("video_id", StringType),
+val videoSchema = StructType(List(StructField("id", StringType),
                              StructField("labels", ArrayType(IntegerType, true)),
                              StructField("mean_rgb", ArrayType(FloatType, true)),
                              StructField("mean_audio", ArrayType(FloatType, true))))
-val videoDf: DataFrame = spark.read.format("tfrecords").schema(videoSchema).option("recordType", "Example").load("file:///tmp/video_level-train-0.tfrecord")
+val videoDf: DataFrame = spark.read.format("tfrecords").schema(videoSchema).option("recordType", "Example").load("file:///tmp/youtube-8m-videos/*.tfrecord")
 videoDf.show()
 videoDf.write.format("tfrecords").option("recordType", "Example").save("youtube-8m-video.tfrecord")
 val importedDf1: DataFrame = spark.read.format("tfrecords").option("recordType", "Example").schema(videoSchema).load("youtube-8m-video.tfrecord")
 importedDf1.show()
 
 //Import Frame-level SequenceExample dataset into DataFrame
-val frameSchema = StructType(List(StructField("video_id", StringType),
+val frameSchema = StructType(List(StructField("id", StringType),
                              StructField("labels", ArrayType(IntegerType, true)),
-                             StructField("rgb", ArrayType(ArrayType(StringType, true),true)),
-                             StructField("audio", ArrayType(ArrayType(StringType, true),true))))
-val frameDf: DataFrame = spark.read.format("tfrecords").schema(frameSchema).option("recordType", "SequenceExample").load("file:///tmp/frame_level-train-0.tfrecord")
+                             StructField("rgb", ArrayType(ArrayType(BinaryType, true),true)),
+                             StructField("audio", ArrayType(ArrayType(BinaryType, true),true))))
+val frameDf: DataFrame = spark.read.format("tfrecords").schema(frameSchema).option("recordType", "SequenceExample").load("file:///tmp/youtube-8m-frames/*.tfrecord")
 frameDf.show()
 frameDf.write.format("tfrecords").option("recordType", "SequenceExample").save("youtube-8m-frame.tfrecord")
 val importedDf2: DataFrame = spark.read.format("tfrecords").option("recordType", "SequenceExample").schema(frameSchema).load("youtube-8m-frame.tfrecord")
