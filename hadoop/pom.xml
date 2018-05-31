@@ -3,9 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.tensorflow</groupId>
-    <artifactId>tensorflow-hadoop</artifactId>
+    <artifactId>hadoop</artifactId>
     <packaging>jar</packaging>
-    <version>1.6.0</version>
+    <version>1.8.0</version>
     <name>tensorflow-hadoop</name>
     <url>https://www.tensorflow.org</url>
     <description>TensorFlow TFRecord InputFormat/OutputFormat for Apache Hadoop</description>
