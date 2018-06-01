@@ -145,12 +145,12 @@ val testRows: Array[Row] = Array(
 new GenericRow(Array[Any](11, 1, 23L, 10.0F, 14.0, List(1.0, 2.0), "r1")),
 new GenericRow(Array[Any](21, 2, 24L, 12.0F, 15.0, List(2.0, 2.0), "r2")))
 val schema = StructType(List(StructField("id", IntegerType), 
-                             StructField("IntegerTypeLabel", IntegerType),
-                             StructField("LongTypeLabel", LongType),
-                             StructField("FloatTypeLabel", FloatType),
-                             StructField("DoubleTypeLabel", DoubleType),
-                             StructField("VectorLabel", ArrayType(DoubleType, true)),
-                             StructField("name", StringType)))
+                             StructField("IntegerCol", IntegerType),
+                             StructField("LongCol", LongType),
+                             StructField("FloatCol", FloatType),
+                             StructField("DoubleCol", DoubleType),
+                             StructField("VectorCol", ArrayType(DoubleType, true)),
+                             StructField("StringCol", StringType)))
                              
 val rdd = spark.sparkContext.parallelize(testRows)
 
