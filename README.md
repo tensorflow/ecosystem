@@ -11,6 +11,10 @@ request.
 
 - [docker](docker) - Docker configuration for running TensorFlow on
   cluster managers.
+- [kubeflow](https://github.com/kubeflow/kubeflow) - A Kubernetes native platform for ML
+	* A K8s custom resource for running distributed [TensorFlow jobs](https://github.com/kubeflow/kubeflow/blob/master/user_guide.md#submitting-a-tensorflow-training-job) 
+	* Jupyter images for different versions of TensorFlow
+	* [TFServing](https://github.com/kubeflow/kubeflow/blob/master/user_guide.md#serve-a-model-using-tensorflow-serving) Docker images and K8s templates
 - [kubernetes](kubernetes) - Templates for running distributed TensorFlow on
   Kubernetes.
 - [marathon](marathon) - Templates for running distributed TensorFlow using
