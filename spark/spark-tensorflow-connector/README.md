@@ -1,7 +1,10 @@
 # spark-tensorflow-connector
 
 This repo contains a library for loading and storing TensorFlow records with [Apache Spark](http://spark.apache.org/).
-The library implements data import from the standard TensorFlow record format ([TFRecords](https://www.tensorflow.org/how_tos/reading_data/)) into Spark SQL DataFrames, and data export from DataFrames to TensorFlow records.
+The library implements data import from the standard TensorFlow record format ([TFRecords](https://www.tensorflow.org/how_tos/reading_data/))
+into Spark SQL DataFrames, and data export from DataFrames to TensorFlow records.
+
+The library supports both the Scala and PySpark APIs. See [Usage examples](#usage-examples) for sample PySpark and Scala code.
 
 ## Changelog
 
@@ -51,7 +54,7 @@ mvn clean install -Dspark.version=2.2.1
 
 After installation (or deployment), the package can be used with the following dependency:
 
-    ```xml
+    ```
     <dependency>
       <groupId>org.tensorflow</groupId>
       <artifactId>spark-connector_2.11</artifactId>
@@ -60,7 +63,7 @@ After installation (or deployment), the package can be used with the following d
     ```
 
 ## Using Spark Shell
-Run this library in Spark using the `--jars` command line option in `spark-shell` or `spark-submit`. For example:
+Run this library in Spark using the `--jars` command line option in `spark-shell`, `pyspark` or `spark-submit`. For example:
 
 ```sh
 $SPARK_HOME/bin/spark-shell --jars target/spark-connector_2.11-1.8.0.jar
@@ -132,7 +135,39 @@ The supported Spark data types are listed in the table below:
 
 ## Usage Examples
 
-The following code snippet demonstrates usage on test data.
+### Python API
+Run PySpark with the spark_connector in the jars argument as shown below:
+
+`$SPARK_HOME/bin/pyspark --jars target/spark-connector_2.11-1.8.0.jar`
+
+The following Python code snippet demonstrates usage on test data.
+
+```
+from pyspark.sql.types import *
+
+path = "test-output.tfrecord"
+
+fields = [StructField("id", IntegerType()), StructField("IntegerCol", IntegerType()),
+          StructField("LongCol", LongType()), StructField("FloatCol", FloatType()),
+          StructField("DoubleCol", DoubleType()), StructField("VectorCol", ArrayType(DoubleType(), True)),
+          StructField("StringCol", StringType())]
+schema = StructType(fields)
+test_rows = [[11, 1, 23, 10.0, 14.0, [1.0, 2.0], "r1"], [21, 2, 24, 12.0, 15.0, [2.0, 2.0], "r2"]]
+rdd = spark.sparkContext.parallelize(test_rows)
+df = spark.createDataFrame(rdd, schema)
+df.write.format("tfrecords").option("recordType", "Example").save(path)
+
+df = spark.read.format("tfrecords").option("recordType", "Example").load(path)
+df.show()
+```
+
+### Scala API
+Run Spark shell with the spark_connector in the jars argument as shown below:
+```sh
+$SPARK_HOME/bin/spark-shell --jars target/spark-connector_2.11-1.8.0.jar
+```
+
+The following Scala code snippet demonstrates usage on test data.
 
 ```scala
 import org.apache.commons.io.FileUtils
@@ -180,6 +215,8 @@ mkdir -p /tmp/youtube-8m-videos
 cd /tmp/youtube-8m-videos
 curl data.yt8m.org/download.py | shard=1,3844 partition=2/video/train mirror=us python
 popd
+
+$SPARK_HOME/bin/spark-shell --jars target/spark-connector_2.11-1.8.0.jar
 ```
 
 ```scala
