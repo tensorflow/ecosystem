@@ -35,10 +35,13 @@ public class Crc32C implements Checksum {
 
   /**
    * Return a masked representation of crc.
-   * <p/>
-   * Motivation: it is problematic to compute the CRC of a string that
-   * contains embedded CRCs.  Therefore we recommend that CRCs stored
-   * somewhere (e.g., in files) should be masked before being stored.
+   * <p>
+   *  Motivation: it is problematic to compute the CRC of a string that
+   *  contains embedded CRCs.  Therefore we recommend that CRCs stored
+   *  somewhere (e.g., in files) should be masked before being stored.
+   * </p>
+   * @param crc CRC
+   * @return masked CRC
    */
   public static int mask(int crc) {
     // Rotate right by 15 bits and add a constant.
@@ -47,6 +50,8 @@ public class Crc32C implements Checksum {
 
   /**
    * Return the crc whose masked representation is masked_crc.
+   * @param maskedCrc masked CRC
+   * @return crc whose masked representation is masked_crc
    */
   public static int unmask(int maskedCrc) {
     int rot = maskedCrc - MASK_DELTA;
