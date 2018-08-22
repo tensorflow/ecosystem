@@ -11,8 +11,9 @@ This can also be used with [Apache Spark](http://spark.apache.org/).
 2. Tested with Hadoop 2.6.0. Patches are welcome if there are incompatibilities
    with your Hadoop version.
 
-## Changelog
+## Breaking changes
 
+* 08/20/2018 - Reverted artifactId back to `org.tensorflow.tensorflow-hadoop`
 * 05/29/2018 - Changed the artifactId from `org.tensorflow.tensorflow-hadoop` to `org.tensorflow.hadoop`
 
 ## Build and install
@@ -41,8 +42,8 @@ This can also be used with [Apache Spark](http://spark.apache.org/).
     ```xml
     <dependency>
       <groupId>org.tensorflow</groupId>
-      <artifactId>hadoop</artifactId>
-      <version>1.8.0</version>
+      <artifactId>tensorflow-hadoop</artifactId>
+      <version>1.10.0</version>
     </dependency>
     ```
 
