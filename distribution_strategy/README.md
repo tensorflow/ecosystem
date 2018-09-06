@@ -11,7 +11,7 @@ its [Kubernetes Engine](https://cloud.google.com/kubernetes-engine/).
 
 This directory contains the following file:
 
--   template.yaml.jinga: a jinga template to be rendered into a Kubernetes yaml
+-   template.yaml.jinja: a jinja template to be rendered into a Kubernetes yaml
     file
 -   Dockerfile.keras_model_to_estimator: a docker file to build the model image
 -   Dockerfile.tf_std_server: a docker file to build the standard TensorFlow
