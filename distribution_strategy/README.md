@@ -6,7 +6,7 @@ Distribution Strategies.
 Please first read the
 [documentation](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/distribute/README.md#multi-worker-training)
 of Distribution Strategy for multi-worker training. We also assume that readers
-of this page have background of [Google Cloud](https://cloud.google.com/) and
+of this page have experience with [Google Cloud](https://cloud.google.com/) and
 its [Kubernetes Engine](https://cloud.google.com/kubernetes-engine/).
 
 This directory contains the following file:
