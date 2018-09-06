@@ -1,4 +1,4 @@
-# Multi-worker Training using Distribution Strategies
+# Multi-worker Training Using Distribution Strategies
 
 This directory provides an example of running multi-worker training with
 Distribution Strategies.
@@ -112,9 +112,10 @@ This directory contains the following file:
 Please refer to the
 [documentation](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/distribute/README.md#standalone-client-mode)
 of Distribution Strategy for the details of multi-worker training with
-standalone client mode. It basically is a cluster of standard TensorFlow servers
-and model running on my workstation which talks to the cluster to request and
-coordinate training.
+standalone client mode. It basically consists of a cluster of standard
+TensorFlow servers and a model running on your workstation which connects to the
+cluster to request and coordinate training. All the training will be controlled
+by the model running on your workstation.
 
 1.  First install Kubernetes python client:
 
