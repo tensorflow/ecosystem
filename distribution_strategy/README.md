@@ -1,4 +1,4 @@
-### Multi-worker Training using Distribution Strategies
+# Multi-worker Training using Distribution Strategies
 
 This directory provides an example of running multi-worker training with
 Distribution Strategies.
@@ -21,7 +21,7 @@ This directory contains the following file:
 -   keras_model_to_estimator_client.py: model code to run in standalone client
     mode
 
-##### Prerequisite
+## Prerequisite
 
 1.  You first need to have a Google Cloud project, set up a
     [service account](https://cloud.google.com/compute/docs/access/service-accounts)
@@ -58,7 +58,7 @@ This directory contains the following file:
     kubectl create secret generic credential --from-file=key.json=<path_to_json_file>
     ```
 
-#### How to run the example
+## How to run the example
 
 1.  Let's first build the Docker image:
 
@@ -107,7 +107,7 @@ This directory contains the following file:
     You'll see your cluster has started training. You can inspect logs of
     workers or use tensorboard to watch your model training.
 
-#### How to run with standalone client mode
+## How to run with standalone client mode
 
 Please refer to the
 [documentation](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/distribute/README.md#standalone-client-mode)
