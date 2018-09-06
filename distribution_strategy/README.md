@@ -9,7 +9,7 @@ of Distribution Strategy for multi-worker training. We also assume that readers
 of this page have experience with [Google Cloud](https://cloud.google.com/) and
 its [Kubernetes Engine](https://cloud.google.com/kubernetes-engine/).
 
-This directory contains the following file:
+This directory contains the following files:
 
 -   template.yaml.jinja: a jinja template to be rendered into a Kubernetes yaml
     file
