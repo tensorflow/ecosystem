@@ -159,3 +159,40 @@ by the model running on your workstation.
     ```bash export
     GOOGLE_APPLICATION_CREDENTIALS="<path_to_json_file>"
     ```
+
+## Alternative way to run with standalone client mode
+
+To run with standalone client mode, but without Kubernetes and Google Cloud you can start cluster processes on your workstation as well as client process.
+
+1. At first you need to manually define cluster configuration, for example:
+
+```
+{
+  "worker": ["localhost:1000", "localhost:1001"],
+  "chief": ["localhost:1002"]
+}
+```
+
+2. When you decided how cluster configuration will look like you can start worker and chief processes. Worker and chief processes use `TF_CONFIG` environment variable to get information about cluster configuration. Don't forget to set it before start each process:
+
+```
+export TF_CONFIG='{"cluster":{"worker":["localhost:10000", "localhost:10001"],"chief":["localhost:10002"]}, "task":{"type":"worker","index":0}}'
+python tf_std_server.py
+```
+
+```
+export TF_CONFIG='{"cluster":{"worker":["localhost:10000", "localhost:10001"],"chief":["localhost:10002"]}, "task":{"type":"worker","index":1}}'
+python tf_std_server.py
+```
+
+```
+export TF_CONFIG='{"cluster":{"worker":["localhost:10000", "localhost:10001"],"chief":["localhost:10002"]}, "task":{"type":"chief","index":0}}'
+python tf_std_server.py
+```
+
+3. When all worker and chief processes are started you can run client. Client also needs information about cluster configuration, so you should pass it via `TF_CLUSTER` environment variable:
+
+```
+export TF_CLUSTER='{"worker":["localhost:10000", "localhost:10001"],"chief":["localhost:10002"]}'
+python keras_model_to_estimator_client_alt.py /tmp/checkpoints
+```
