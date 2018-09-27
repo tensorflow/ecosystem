@@ -190,9 +190,8 @@ export TF_CONFIG='{"cluster":{"worker":["localhost:10000", "localhost:10001"],"c
 python tf_std_server.py
 ```
 
-3. When all worker and chief processes are started you can run client. Client also needs information about cluster configuration, so you should pass it via `TF_CLUSTER` environment variable:
+3. When all worker and chief processes are started you can run client. Client also needs information about cluster configuration, so you should pass it via arguments:
 
 ```
-export TF_CLUSTER='{"worker":["localhost:10000", "localhost:10001"],"chief":["localhost:10002"]}'
-python keras_model_to_estimator_client_alt.py /tmp/checkpoints
+python keras_model_to_estimator_client_alt.py /tmp/checkpoints '{"worker":["localhost:10000", "localhost:10001"],"chief":["localhost:10002"]}'
 ```

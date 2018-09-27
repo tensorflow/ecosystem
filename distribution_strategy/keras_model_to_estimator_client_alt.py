@@ -17,7 +17,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
 import sys
 import json
 
@@ -35,9 +34,9 @@ def input_fn():
 
 
 def main(args):
-  if len(args) < 2:
+  if len(args) < 3:
     print('You must specify model_dir for checkpoints such as'
-          ' /tmp/tfkeras_example/.')
+          ' /tmp/tfkeras_example/ and cluster configuration.')
     return
 
   model_dir = args[1]
@@ -61,7 +60,7 @@ def main(args):
       experimental_distribute=tf.contrib.distribute.DistributeConfig(
           train_distribute=tf.contrib.distribute.CollectiveAllReduceStrategy(),
           eval_distribute=tf.contrib.distribute.MirroredStrategy(),
-          remote_cluster=json.loads(os.environ['TF_CLUSTER'])
+          remote_cluster=json.loads(args[2])
       ))
   keras_estimator = tf.keras.estimator.model_to_estimator(
       keras_model=model, 
