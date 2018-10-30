@@ -32,20 +32,29 @@ public class TFRecordFileOutputFormat extends FileOutputFormat<BytesWritable, Nu
   @Override public RecordWriter<BytesWritable, NullWritable> getRecordWriter(
       TaskAttemptContext context) throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
-    Path file = getDefaultWorkFile(context, "");
-    FileSystem fs = file.getFileSystem(conf);
-
+    boolean isCompressed = getCompressOutput(context);
+    CompressionCodec codec = null;
+    String extension = "";
+    if (isCompressed) {
+      Class<? extends CompressionCodec> codecClass = getOutputCompressorClass(context, GzipCodec.class);
+      codec = ReflectionUtils.newInstance(codecClass, conf);
+      extension = codec.getDefaultExtension();
+    }
     int bufferSize = TFRecordIOConf.getBufferSize(conf);
-    final FSDataOutputStream fsdos = fs.create(file, true, bufferSize);
+    Path file = getDefaultWorkFile(context, extension);
+    FileSystem fs = file.getFileSystem(conf);
+    final DataOutputStream fsdos = isCompressed ?
+      new DataOutputStream(codec.createOutputStream(fs.create(file, true, bufferSize))) :
+      fs.create(file, true, bufferSize);
     final TFRecordWriter writer = new TFRecordWriter(fsdos);
     return new RecordWriter<BytesWritable, NullWritable>() {
       @Override public void write(BytesWritable key, NullWritable value)
-          throws IOException, InterruptedException {
+        throws IOException, InterruptedException {
         writer.write(key.getBytes(), 0, key.getLength());
       }
 
       @Override public void close(TaskAttemptContext context)
-          throws IOException, InterruptedException {
+        throws IOException, InterruptedException {
         fsdos.close();
       }
     };
