@@ -133,8 +133,7 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
         val decimalArray = ArrayData.toArrayData(row.get(index)).toArray[Decimal](DataTypes.createDecimalType())
         FloatListFeatureEncoder.encode(decimalArray.map(_.toFloat))
       case ArrayType(StringType, _) =>
-        BytesListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index))
-          .toArray[String](ObjectType(classOf[String])).map(_.getBytes))
+        BytesListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toArray[String](StringType).map(_.getBytes))
       case ArrayType(BinaryType, _) =>
         BytesListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toArray[Array[Byte]](BinaryType))
       case VectorType => {
@@ -185,7 +184,7 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
 
       case ArrayType(ArrayType(StringType, _), _) =>
         val arrayData = ArrayData.toArrayData(row.get(index)).array.map {arr =>
-          ArrayData.toArrayData(arr).toArray[String](ObjectType(classOf[String])).toSeq.map(_.getBytes)
+          ArrayData.toArrayData(arr).toArray[String](StringType).toSeq.map(_.getBytes)
         }.toSeq
         BytesFeatureListEncoder.encode(arrayData)
 
