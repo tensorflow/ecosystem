@@ -17,9 +17,13 @@ package org.tensorflow.spark.datasources.tfrecords
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
-import org.apache.spark.sql.catalyst.util.ArrayData
+import org.apache.spark.sql.catalyst.util.{ArrayData => _ArrayData, GenericArrayData}
 import org.apache.spark.sql.types._
 import org.scalatest.Matchers
+
+object ArrayData {
+  def toArrayData(input: Any): _ArrayData = new GenericArrayData(input)
+}
 
 object TestingUtils extends Matchers {
 

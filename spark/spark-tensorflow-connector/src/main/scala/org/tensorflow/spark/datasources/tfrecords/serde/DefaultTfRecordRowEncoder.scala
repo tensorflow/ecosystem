@@ -16,11 +16,15 @@
 package org.tensorflow.spark.datasources.tfrecords.serde
 
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.util.ArrayData
+import org.apache.spark.sql.catalyst.util.{ArrayData => _ArrayData, GenericArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.{DenseVector, SparseVector}
 import org.tensorflow.example._
+
+object ArrayData {
+  def toArrayData(input: Any): _ArrayData = new GenericArrayData(input)
+}
 
 trait TfRecordRowEncoder {
   /**
