@@ -140,6 +140,12 @@
                                             org.tensorflow.spark.shaded.com.google.protobuf
                                         </shadedPattern>
                                     </relocation>
+                                    <relocation>
+                                        <pattern>org.tensorflow.hadoop</pattern>
+                                        <shadedPattern>
+                                            org.tensorflow.spark.shaded.org.tensorflow.hadoop
+                                        </shadedPattern>
+                                    </relocation>
                                 </relocations>
                             </configuration>
                         </execution>
