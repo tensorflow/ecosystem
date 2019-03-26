@@ -15,6 +15,9 @@ limitations under the License.
 
 package org.tensorflow.hadoop.io;
 
+import org.apache.hadoop.fs.Seekable;
+import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.tensorflow.hadoop.util.TFRecordReader;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -30,13 +33,14 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 public class TFRecordFileInputFormat extends FileInputFormat<BytesWritable, NullWritable> {
   @Override public RecordReader<BytesWritable, NullWritable> createRecordReader(
       InputSplit inputSplit, final TaskAttemptContext context) throws IOException, InterruptedException {
 
     return new RecordReader<BytesWritable, NullWritable>() {
-      private FSDataInputStream fsdis;
+      private InputStream fsdis;
       private TFRecordReader reader;
       private long length;
       private long begin;
@@ -50,8 +54,16 @@ public class TFRecordFileInputFormat extends FileInputFormat<BytesWritable, Null
         begin = fileSplit.getStart();
 
         final Path file = fileSplit.getPath();
+        CompressionCodecFactory compressionCodecFactory = new CompressionCodecFactory(conf);
+        CompressionCodec codec = compressionCodecFactory.getCodec(file);
         FileSystem fs = file.getFileSystem(conf);
-        fsdis = fs.open(file, TFRecordIOConf.getBufferSize(conf));
+
+        FSDataInputStream fsIn = fs.open(file, TFRecordIOConf.getBufferSize(conf));
+        if (codec != null) {
+          fsdis = codec.createInputStream(fsIn);
+        } else {
+          fsdis = fsIn;
+        }
         reader = new TFRecordReader(fsdis, TFRecordIOConf.getDoCrc32Check(conf));
       }
 
@@ -69,7 +81,7 @@ public class TFRecordFileInputFormat extends FileInputFormat<BytesWritable, Null
       }
 
       @Override public float getProgress() throws IOException, InterruptedException {
-        return (fsdis.getPos() - begin) / (length + 1e-6f);
+        return (((Seekable)fsdis).getPos() - begin) / (length + 1e-6f);
       }
 
       @Override public void close() throws IOException {
