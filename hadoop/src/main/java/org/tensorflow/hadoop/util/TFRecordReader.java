@@ -18,14 +18,15 @@ package org.tensorflow.hadoop.util;
 import java.io.DataInput;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class TFRecordReader {
-  private final DataInput input;
+  private final InputStream input;
   private final boolean crcCheck;
 
-  public TFRecordReader(DataInput input, boolean crcCheck) {
+  public TFRecordReader(InputStream input, boolean crcCheck) {
     this.input = input;
     this.crcCheck = crcCheck;
   }
@@ -41,7 +42,7 @@ public class TFRecordReader {
     byte[] lenBytes = new byte[8];
     try {
       // Only catch EOF here, other case means corrupted file
-      input.readFully(lenBytes);
+      readFully(input, lenBytes);
     } catch (EOFException eof) {
       return null; // return null means EOF
     }
@@ -49,10 +50,10 @@ public class TFRecordReader {
 
     // Verify length crc32
     if (!crcCheck) {
-      input.skipBytes(4);
+      input.skip(4);
     } else {
       byte[] lenCrc32Bytes = new byte[4];
-      input.readFully(lenCrc32Bytes);
+      readFully(input, lenCrc32Bytes);
       int lenCrc32 = fromInt32LE(lenCrc32Bytes);
       if (lenCrc32 != Crc32C.maskedCrc32c(lenBytes)) {
         throw new IOException("Length header crc32 checking failed: " + lenCrc32 + " != " +
@@ -64,14 +65,14 @@ public class TFRecordReader {
       throw new IOException("Record size exceeds max value of int32: " + len);
     }
     byte[] data = new byte[len.intValue()];
-    input.readFully(data);
+    readFully(input, data);
 
     // Verify data crc32
     if (!crcCheck) {
-      input.skipBytes(4);
+      input.skip(4);
     } else {
       byte[] dataCrc32Bytes = new byte[4];
-      input.readFully(dataCrc32Bytes);
+      readFully(input, dataCrc32Bytes);
       int dataCrc32 = fromInt32LE(dataCrc32Bytes);
       if (dataCrc32 != Crc32C.maskedCrc32c(data)) {
         throw new IOException("Data crc32 checking failed: " + dataCrc32 + " != " +
@@ -93,5 +94,15 @@ public class TFRecordReader {
     ByteBuffer bb = ByteBuffer.wrap(data);
     bb.order(ByteOrder.LITTLE_ENDIAN);
     return bb.getInt();
+  }
+
+  private void readFully(InputStream in, byte[] buffer) throws IOException {
+    int nbytes;
+    for(int nread = 0; nread < buffer.length; nread += nbytes) {
+      nbytes = in.read(buffer, nread, buffer.length - nread);
+      if (nbytes < 0) {
+        throw new EOFException("End of file reached before reading fully.");
+      }
+    }
   }
 }
