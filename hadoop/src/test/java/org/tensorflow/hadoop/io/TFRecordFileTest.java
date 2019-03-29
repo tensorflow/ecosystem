@@ -95,23 +95,6 @@ public class TFRecordFileTest {
   }
 
   @Test
-  public void testWriteSmallZippedTfRecords() throws Exception {
-    Job job = Job.getInstance(new Configuration());
-    TaskAttemptContext context =
-            MapReduceTestUtil.createDummyMapTaskAttemptContext(job.getConfiguration());
-
-    Path dir = new Path(getTmpDirectory().toString(), "tfr-test-small-zipped");
-    writeTFRecords(job, context, dir, getExpectedRecords(), true);
-
-    String fileName = getFileName(job, new Path(getResourcesDirectory().toString(), "zipped-tf-records"));
-
-    assertEquals(FileUtils.readFileToString(new File(new File(getResourcesDirectory(), "zipped-tf-records"), fileName)),
-            FileUtils.readFileToString(new File(dir.toString(), fileName)));
-
-    deleteDirectory(job, dir);
-  }
-
-  @Test
   public void testReadSmallTfRecords() throws Exception {
     Job job = Job.getInstance(new Configuration());
     TaskAttemptContext context =
