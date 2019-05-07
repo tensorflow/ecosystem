@@ -21,6 +21,7 @@ import java.nio.file.Paths
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.{BytesWritable, NullWritable}
 import org.apache.spark.rdd.RDD
+import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql._
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
@@ -49,6 +50,7 @@ class DefaultSource extends DataSourceRegister
     data: DataFrame): BaseRelation = {
 
     val path = parameters("path")
+    val codec = parameters.getOrElse("codec", "")
 
     val recordType = parameters.getOrElse("recordType", "Example")
 
@@ -68,9 +70,9 @@ class DefaultSource extends DataSourceRegister
 
     parameters.getOrElse("writeLocality", "distributed") match {
       case "distributed" =>
-        saveDistributed(features, path, sqlContext, mode)
+        saveDistributed(features, path, sqlContext, mode, codec)
       case "local" =>
-        saveLocal(features, path, mode)
+        saveLocal(features, path, mode, codec)
       case s: String =>
         throw new IllegalArgumentException(
           s"Expected 'distributed' or 'local', got $s")
@@ -78,15 +80,27 @@ class DefaultSource extends DataSourceRegister
     TensorflowRelation(parameters)(sqlContext.sparkSession)
   }
 
-  private def save(features: RDD[(BytesWritable, NullWritable)], path: String) = {
-      features.saveAsNewAPIHadoopFile[TFRecordFileOutputFormat](path)
+  private def save(sqlContext: SQLContext, features: RDD[(BytesWritable, NullWritable)], path: String, codec: String) = {
+    val hadoopConf = new Configuration(sqlContext.sparkContext.hadoopConfiguration)
+    if (!codec.isEmpty) {
+      hadoopConf.set("mapreduce.output.fileoutputformat.compress", "true")
+      hadoopConf.set("mapreduce.output.fileoutputformat.compress.codec", codec)
+    }
+    features.saveAsNewAPIHadoopFile(
+      path,
+      classOf[NullWritable],
+      classOf[BytesWritable],
+      classOf[TFRecordFileOutputFormat],
+      hadoopConf
+    )
   }
 
   private def saveDistributed(
       features: RDD[(BytesWritable, NullWritable)],
       path: String,
       sqlContext: SQLContext,
-      mode: SaveMode): Unit = {
+      mode: SaveMode,
+      codec: String): Unit = {
     val hadoopConf = sqlContext.sparkContext.hadoopConfiguration
     val outputPath = new Path(path)
     val fs = outputPath.getFileSystem(hadoopConf)
@@ -97,7 +111,7 @@ class DefaultSource extends DataSourceRegister
     mode match {
       case SaveMode.Overwrite =>
         fs.delete(qualifiedOutputPath, true)
-        save(features, path)
+        save(sqlContext, features, path, codec)
 
       case SaveMode.Append =>
         throw new IllegalArgumentException("Append mode is not supported")
@@ -106,22 +120,26 @@ class DefaultSource extends DataSourceRegister
         if (pathExists)
           throw new IllegalStateException(
             s"Path $path already exists. SaveMode: ErrorIfExists.")
-        save(features, path)
+        save(sqlContext, features, path, codec)
 
       case SaveMode.Ignore =>
         // With `SaveMode.Ignore` mode, if data already exists, the save operation is expected
         // to not save the contents of the DataFrame and to not change the existing data.
         // Therefore, it is okay to do nothing here and then just return the relation below.
         if (pathExists == false)
-          save(features, path)
+          save(sqlContext, features, path, codec)
     }
   }
 
   private def saveLocal(
       features: RDD[(BytesWritable, NullWritable)],
       localPath: String,
-      mode: SaveMode): Unit = {
+      mode: SaveMode,
+      codec: String): Unit = {
     val cleanedPath = Paths.get(localPath).toAbsolutePath.toString
+    if (!codec.isEmpty) {
+      throw new IllegalArgumentException("codec can not be used in local write mode")
+    }
     if (mode == SaveMode.Append) {
       throw new IllegalArgumentException("Append mode is not supported in local write mode")
     }

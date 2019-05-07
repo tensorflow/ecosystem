@@ -80,6 +80,8 @@ When reading TensorFlow records into Spark DataFrame, the API accepts several op
 
 When writing Spark DataFrame to TensorFlow records, the API accepts several options:
 * `save`: output path to TensorFlow records. Output path to TensorFlow records on local or distributed filesystem.
+* `codec`: codec for compressinng Tensorflow records. For example, `option("codec", "org.apache.hadoop.io.compress.GzipCodec")` enables gzip
+compression. While reading compressed TensorFlow records, `codec` can be inferred automatically, so this option is not required for reading.
 * `recordType`: output format of TensorFlow records. By default it is Example. Possible values are:
   * `Example`: TensorFlow [Example](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/example/example.proto) records
   * `SequenceExample`: TensorFlow [SequenceExample](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/example/example.proto) records
