@@ -166,18 +166,39 @@ df = spark.read.format("tfrecords").option("recordType", "Example").load(path)
 df.show()
 ```
 
-#### Python inference with udf
+#### Python inference with pandas_udf and estimators (requires spark >= 2.4)
 
 ```
+import pandas as pd
 import pyspark
+from pyspark.sql.functions import struct, pandas_udf
 from pyspark.sql.column import Column, _to_java_column, _to_seq
 
-estimator = tf.contrib.predictor.from_saved_model(model_path)
+class EstimatorWrapper(object):
+    """
+    Simple wrapper around an estimator that is coming from a file.
+    We override __getstate__() and __setstate__() to allow easy serialization
+    of this instance on the workers when this is used in a UDF.
+    """
+    def __init__(self, model_path: str):
+        self.estimator = tf.contrib.predictor.from_saved_model(model_path)
+        self.model_path = model_path
+
+    def __getstate__(self):
+        return self.model_path
+
+    def __setstate__(self, model_path: str):
+        self.estimator = tf.contrib.predictor.from_saved_model(model_path)
+        self.model_path = model_path
+
+
+estimator_wrapper = EstimatorWrapper(model_path)
+estimator_wrapper_broadcast = spark.sparkContext.broadcast(estimator_wrapper) 
 
 def inference(tfr):
-    outputs = estimator({"inputs": [bytes(tfr)]})
-    return float(outputs["scores"][0][1])
-inference_udf = udf(inference, DoubleType())
+    outputs = estimator_wrapper_broadcast.value.estimator({"inputs": tfr})
+    return pd.Series(outputs["scores"][:, 1])
+inference_udf = pandas_udf(inference, FloatType())
 
 def tf_record_udf(col):
     sc = pyspark.SparkContext
@@ -187,8 +208,8 @@ def tf_record_udf(col):
 
 filtered_cols_in_one_row = struct([df[x] for x in df.columns])
 
-df.withColumn("tfr", tf_record_udf(filtered_cols_in_one_row)) \
-  .withColumn(column_name, inference_udf("tfr"))
+df.withColumn("prediction", 
+              inference_udf(tf_record_udf(filtered_cols_in_one_row)))
 ```
 
 ### Scala API
