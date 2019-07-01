@@ -5,21 +5,13 @@ import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.functions.{col, struct}
 import org.apache.spark.sql.types._
-import org.scalatest.{Matchers, WordSpec}
 import org.tensorflow.example.{Example, Feature, SequenceExample}
+import org.tensorflow.spark.datasources.tfrecords.SharedSparkSessionSuite
 import org.tensorflow.spark.datasources.tfrecords.TestingUtils._
 
 import scala.collection.JavaConverters._
 
-class DataFrameTfrConverterTest extends WordSpec with Matchers {
-
-  val sparkSession = SparkSession.builder()
-    .master("local[*]")
-    .appName("test")
-    .config("spark.driver.host", "localhost")
-    .config("spark.ui.enabled", value = false)
-    .getOrCreate()
-  val sparkContext = sparkSession.sparkContext
+class DataFrameTfrConverterTest extends SharedSparkSessionSuite {
 
   "DataFrame to tfr" should {
     "Encode given Row as TensorFlow Example" in {
@@ -49,8 +41,8 @@ class DataFrameTfrConverterTest extends WordSpec with Matchers {
               byteArray, Seq(byteArray, byteArray1)) ::
           Nil
 
-      val input = sparkSession
-        .createDataFrame(sparkContext.makeRDD(data), schema)
+      val input = spark
+        .createDataFrame(spark.sparkContext.makeRDD(data), schema)
 
       val examples = input
         .select(DataFrameTfrConverter.getRowToTFRecordExampleUdf(struct(input.columns.map(col): _*)).as("tfr"))
@@ -99,8 +91,8 @@ class DataFrameTfrConverterTest extends WordSpec with Matchers {
           stringListOfLists, binaryListOfLists) ::
           Nil
 
-      val input = sparkSession
-        .createDataFrame(sparkContext.makeRDD(data), schemaStructType)
+      val input = spark
+        .createDataFrame(spark.sparkContext.makeRDD(data), schemaStructType)
 
       val examples = input
         .select(DataFrameTfrConverter.getRowToTFRecordSequenceExampleUdf(struct(input.columns.map(col): _*)).as("tfr"))
