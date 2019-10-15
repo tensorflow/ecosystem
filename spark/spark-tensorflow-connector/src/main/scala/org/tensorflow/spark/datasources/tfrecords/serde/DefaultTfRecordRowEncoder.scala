@@ -93,7 +93,7 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
         }
       }
       case (structField, index) => structField.dataType match {
-        case ArrayType(ArrayType(_, _), _) | ArrayType(StringType, _) =>
+        case ArrayType(ArrayType(_, _), _) =>
           val featureList = encodeFeatureList(row, structField, index)
           featureLists.putFeatureList(structField.name, featureList)
         case _ =>

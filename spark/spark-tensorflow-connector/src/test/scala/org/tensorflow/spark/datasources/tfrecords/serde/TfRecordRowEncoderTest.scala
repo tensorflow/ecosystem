@@ -107,6 +107,7 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
 
       val schemaStructType = StructType(Array(
         StructField("IntegerLabel", IntegerType),
+        StructField("StringArrayLabel", ArrayType(StringType)),
         StructField("LongArrayOfArrayLabel", ArrayType(ArrayType(LongType))),
         StructField("FloatArrayOfArrayLabel", ArrayType(ArrayType(FloatType))),
         StructField("DoubleArrayOfArrayLabel", ArrayType(ArrayType(DoubleType))),
@@ -115,6 +116,7 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
         StructField("BinaryArrayOfArrayLabel", ArrayType(ArrayType(BinaryType)))
       ))
 
+      val stringList = Seq("r1", "r2", "r3")
       val longListOfLists = Seq(Seq(3L, 5L), Seq(-8L, 0L))
       val floatListOfLists = Seq(Seq(1.5F, -6.5F), Seq(-8.2F, 0F))
       val doubleListOfLists = Seq(Seq(3.0), Seq(6.0, 9.0))
@@ -122,7 +124,7 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
       val stringListOfLists = Seq(Seq("r1"), Seq("r2", "r3"), Seq("r4"))
       val binaryListOfLists = stringListOfLists.map(stringList => stringList.map(_.getBytes))
 
-      val rowWithSchema = new GenericRowWithSchema(Array[Any](10, longListOfLists, floatListOfLists,
+      val rowWithSchema = new GenericRowWithSchema(Array[Any](10, stringList, longListOfLists, floatListOfLists,
         doubleListOfLists, decimalListOfLists, stringListOfLists, binaryListOfLists), schemaStructType)
 
       //Encode Sql Row to TensorFlow example
@@ -132,9 +134,11 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
       val featureMap = seqExample.getContext.getFeatureMap.asScala
       val featureListMap = seqExample.getFeatureLists.getFeatureListMap.asScala
 
-      assert(featureMap.size == 1)
+      assert(featureMap.size == 2)
       assert(featureMap("IntegerLabel").getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER)
       assert(featureMap("IntegerLabel").getInt64List.getValue(0).toInt == 10)
+      assert(featureMap("StringArrayLabel").getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER)
+      assert(featureMap("StringArrayLabel").getBytesList.getValueList.asScala.map(_.toStringUtf8) === stringList)
 
       assert(featureListMap.size == 6)
       assert(featureListMap("LongArrayOfArrayLabel").getFeatureList.asScala.map(
