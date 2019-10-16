@@ -22,6 +22,8 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.expressions.GenericRow
 import org.apache.spark.sql.types._
 
+import org.apache.commons.io.FileUtils
+
 class LocalWriteSuite extends SharedSparkSessionSuite {
 
   val testRows: Array[Row] = Array(
@@ -49,19 +51,18 @@ class LocalWriteSuite extends SharedSparkSessionSuite {
       // In a distributed setting though, two different machines would each hold a single
       // partition.
       val localPath = Files.createTempDirectory("spark-connector-propagate").toAbsolutePath.toString
-      // Delete the directory, the default mode is ErrorIfExists
-      Files.delete(Paths.get(localPath))
+      val savePath = localPath + "/testResult"
       df.write.format("tfrecords")
         .option("recordType", "Example")
         .option("writeLocality", "local")
-        .save(localPath)
+        .save(savePath)
 
       // Read again this directory, this time using the Hadoop file readers, it should
       // return the same data.
       // This only works in this test and does not hold in general, because the partitions
       // will be written on the workers. Everything runs locally for tests.
       val df2 = spark.read.format("tfrecords").option("recordType", "Example")
-        .load(localPath).sort("id").select("id", "IntegerTypeLabel", "LongTypeLabel",
+        .load(savePath).sort("id").select("id", "IntegerTypeLabel", "LongTypeLabel",
         "FloatTypeLabel", "DoubleTypeLabel", "VectorLabel", "name") // Correct column order.
 
       assert(df2.collect().toSeq === testRows.toSeq)
