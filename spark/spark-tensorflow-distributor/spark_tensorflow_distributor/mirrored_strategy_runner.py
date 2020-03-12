@@ -1,3 +1,4 @@
+import GPUtil
 import logging
 import os
 import sys
@@ -27,38 +28,48 @@ class MirroredStrategyRunner:
 
     .. note:: See more at https://www.tensorflow.org/guide/distributed_training
     """
-    def __init__(self, num_gpus):
+    def __init__(self, num_gpus, use_gpu_scheduling=False):
         """
         :param num_gpus: Number of GPUs that participate in distributed training. When
         num_gpus < 0, training is done in local mode on the Spark driver, and otherwise
         training is distributed among the workers on the Spark cluster. For example,
         num_gpus = -4 means we train locally on 4 GPUs. If num_gpus = 16 we train
         on the Spark cluster with 16 GPUs.
+        :param use_gpu_scheduling: Uses accelerator aware scheduling added in Spark 3.0
+        to allocate GPUs
         """
         self.logger = _get_logger(self.__class__.__name__)
         self.num_gpus = num_gpus
-        if self.num_gpus < 0:
+        self.use_gpu_scheduling = use_gpu_scheduling
+        self.local_mode = self.num_gpus < 0
+        if self.local_mode is True:
             self.logger.warning(
-                'MirroredStrategyRunner will run on the driver node. '
+                'MirroredStrategyRunner will run in local mode on the driver node. '
                 'There would be resource contention if you share the cluster with others.'
             )
+            if use_gpu_scheduling is True:
+                self.logger.warning(
+                    'Will not use Spark GPU scheduling in local mode.'
+                )
             self.sc = None
             self.num_workers = None
+            self.num_gpus = -self.num_gpus
         else:
             spark = SparkSession.builder.getOrCreate()
             self.sc = spark.sparkContext
-            self.num_workers = self.sc._jsc.sc().maxNumConcurrentTasks()
+            self.num_workers = self.sc._jsc.sc().maxNumConcurrentTasks() // int(self.sc.getConf().get('spark.executor.cores'))
         self.logger.info(f'There are {self.num_workers} workers available.')
 
     def run(self, main, use_custom_strategy=False, **kwargs):
         """
         :param main: Function that contains TensorFlow training code
-        :param use_custom_strategy: Main function constructs its own TensorFlow strategy
+        :param use_custom_strategy: Main function constructs its own tensorflow.distribute.Strategy()
         :param kwargs: keyword arguments passed to the main function at invocation time
         :return: return value of the main function from the chief training worker (partition ID 0)
         """
 
         num_gpus = self.num_gpus
+        use_gpu_scheduling = self.use_gpu_scheduling
         num_workers = self.num_workers
 
         # Runs the main function
@@ -75,12 +86,10 @@ class MirroredStrategyRunner:
 
         # Gets the number of GPUs on the caller's machine
         def get_num_gpus():
-            from tensorflow.python.client import device_lib
-            return sum(1 for d in device_lib.list_local_devices() if d.device_type == 'GPU')
+            return len(GPUtil.getGPUs())
 
         # Run in local mode
-        if num_gpus < 0:
-            num_gpus = -num_gpus
+        if self.local_mode:
             if num_gpus < get_num_gpus():
                 os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(str(e) for e in range(num_gpus))
             return run_program()
@@ -139,8 +148,22 @@ class MirroredStrategyRunner:
                     owned_gpus += 1
                 return [int(e) for e in context.allGather(str(owned_gpus))]
 
+            # Sets the CUDA_VISIBLE_DEVICES env var based on Spark GPU scheduling
+            def set_gpus_with_gpu_scheduling(context):
+                resources = context.resources()
+                if 'gpu' not in resources:
+                    raise ValueError(
+                        'Attempted to use Spark GPU scheduling but GPU group not found in '
+                        'tast context resources.'
+                    )
+                os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(resources['gpu'].addresses)
+                return
+
             # Sets the CUDA_VISIBLE_DEVICES env var so only the appropriate GPUS are used
             def set_gpus(addrs, my_addr, context):
+                if use_gpu_scheduling is True:
+                    set_gpus_with_gpu_scheduling(context)
+                    return
                 my_num_gpus = get_num_gpus()
                 friend_group = [partition_id for partition_id, addr in enumerate(addrs) if addr == my_addr]
                 my_friend_group_id = friend_group.index(context.partitionId())
@@ -172,7 +195,7 @@ class MirroredStrategyRunner:
             .mapPartitions(wrapped_main) \
             .collect()
     
-    def _getConfBoolean(self, sqlContext, key, defaultValue):
+    def _get_conf_boolean(self, sql_context, key, default_value):
         """
         Get the conf "key" from the given sqlContext,
         or return the default value if the conf is not set.
@@ -181,7 +204,7 @@ class MirroredStrategyRunner:
         :param key: string for conf name
         """
         # Convert default value to str to avoid a Spark 2.3.1 + Python 3 bug: SPARK-25397
-        val = sqlContext.getConf(key, str(defaultValue))
+        val = sql_context.getConf(key, str(default_value))
         # Convert val to str to handle unicode issues across Python 2 and 3.
         lowercase_val = str(val.lower())
         if lowercase_val == 'true':
@@ -196,8 +219,8 @@ class MirroredStrategyRunner:
     def _check_encryption(self):
         if self.num_gpus >= 0:
             sql_context = SQLContext(self.sc)
-            is_ssl_enabled = self._getConfBoolean(sql_context, 'spark.ssl.enabled', 'false')
-            ignore_ssl = self._getConfBoolean(sql_context, 'tensorflow.ignoreSsl', 'false')
+            is_ssl_enabled = self._get_conf_boolean(sql_context, 'spark.ssl.enabled', 'false')
+            ignore_ssl = self._get_conf_boolean(sql_context, 'tensorflow.ignoreSsl', 'false')
             if is_ssl_enabled and ignore_ssl:
                 self.logger.warning(
                     """

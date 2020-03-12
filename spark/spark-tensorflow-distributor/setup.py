@@ -27,6 +27,7 @@ setuptools.setup(
   ],
   install_requires=[
     "tensorflow>=2.1.0",
-    "pyspark>=2.4.0"
+    "pyspark>=3.0.0",
+    "GPUtil>=1.4.0",
   ],
 )
