@@ -3,7 +3,7 @@ FROM ubuntu:18.04
 ARG PYTHON_INSTALL_VERSION
 
 RUN apt-get update && \
-    apt-get install -y unzip bzip2 build-essential openjdk-8-jdk ssh sudo wget
+    apt-get install -y unzip bzip2 build-essential openjdk-8-jdk sudo wget
 
 RUN apt-get update && \
     apt install -y software-properties-common && \
@@ -13,15 +13,6 @@ RUN apt-get update && \
     rm get-pip.py && \
     update-alternatives --install /usr/local/bin/python3 python3 /usr/bin/python${PYTHON_INSTALL_VERSION} 1 && \
     update-alternatives --install /usr/local/bin/python python /usr/bin/python${PYTHON_INSTALL_VERSION} 1
-
-# Add ubuntu user and enable password-less sudo
-RUN useradd -mU -s /bin/bash -G sudo ubuntu && \
-    echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-
-# Set up SSH. Docker will cache this layer. So the keys end up the same on all containers.
-# We still keep the private key for manual SSH during debugging.
-RUN ssh-keygen -q -f ~/.ssh/docker -N "" && \
-    cp ~/.ssh/docker.pub ~/.ssh/authorized_keys
 
 # Install Spark and update env variables
 # Modify this when the next Spark 3 release includes the allGather barrier mode API
@@ -61,4 +52,4 @@ RUN apt-get install -y curl && \
 VOLUME /mnt/spark-tensorflow-distributor
 WORKDIR /mnt/spark-tensorflow-distributor
 
-ENTRYPOINT service ssh restart && /bin/bash
+ENTRYPOINT /bin/bash
