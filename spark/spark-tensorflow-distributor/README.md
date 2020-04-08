@@ -23,7 +23,7 @@ pip install pyspark>=3.0.0
 For integration tests, first build the master and worker images and then run the test script.
 
 ```bash
-docker-compose build --build-arg PYTHON_INSTALL_VERSION=3.7 --build-arg UBUNTU_VERSION=18.04
+docker-compose build --build-arg PYTHON_INSTALL_VERSION=3.7
 ./tests/integration/run.sh
 ```
 
