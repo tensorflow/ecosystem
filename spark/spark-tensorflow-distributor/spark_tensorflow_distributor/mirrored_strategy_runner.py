@@ -6,7 +6,7 @@ import re
 import sys
 
 
-from pyspark.sql import SparkSession, SQLContext
+from pyspark.sql import SparkSession
 
 
 def _get_logger(name):
