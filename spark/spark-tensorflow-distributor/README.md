@@ -15,7 +15,7 @@ The installation does not install PySpark because for most users, PySpark is alr
 If you do not have PySpark installed, you can install it directly:
 
 ```bash
-pip install pyspark>=3.0.0
+pip install pyspark>=3.0.*
 ```
 
 ## Running Tests

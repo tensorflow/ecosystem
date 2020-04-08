@@ -6,8 +6,7 @@ import re
 import sys
 
 
-from pyspark.sql import SparkSession
-from pyspark.sql import SQLContext
+from pyspark.sql import SparkSession, SQLContext
 
 
 def _get_logger(name):
@@ -196,7 +195,8 @@ class MirroredStrategyRunner:
             pattern = re.compile('^[1-9][0-9]*|0$')
             if any(not pattern.match(address) for address in addresses):
                 raise ValueError(
-                    'GPU addresses found are not in the correct format for CUDA_VISIBLE_DEVICES.'
+                    f'Found GPU addresses {addresses} which are not all in the correct format for CUDA_VISIBLE_DEVICES, '
+                    'which requires integers with no zero padding.'
                 )
             return addresses
         else:
@@ -218,6 +218,7 @@ class MirroredStrategyRunner:
         else:
             import tensorflow as tf
             from tensorflow.python.eager import context
+            # Reset the tenosrflow eager context to clear leftover state from previous runs
             context._reset_context()
             strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
             with strategy.scope():
@@ -280,8 +281,6 @@ class MirroredStrategyRunner:
             result = run_tensorflow_program(train_fn, use_custom_strategy, **kwargs)
             if context.partitionId() == 0:
                 return [result]
-            else:
-                return [None]
 
         return wrapped_train_fn
 

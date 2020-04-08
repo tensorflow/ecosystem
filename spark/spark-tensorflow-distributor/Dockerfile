@@ -3,22 +3,16 @@ FROM ubuntu:18.04
 ARG PYTHON_INSTALL_VERSION
 
 RUN apt-get update && \
-    apt install -y software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && \
-    apt-get install -y wget
+    apt-get install -y unzip bzip2 build-essential openjdk-8-jdk ssh sudo wget
 
-RUN apt-get install -y python${PYTHON_INSTALL_VERSION} python${PYTHON_INSTALL_VERSION}-dev python${PYTHON_INSTALL_VERSION}-distutils && \
-    apt-get clean && \
+RUN apt-get update && \
+    apt install -y software-properties-common && \
+    apt-get install -y python${PYTHON_INSTALL_VERSION} python${PYTHON_INSTALL_VERSION}-dev python${PYTHON_INSTALL_VERSION}-distutils && \
     wget https://bootstrap.pypa.io/get-pip.py && \
     python$PYTHON_INSTALL_VERSION get-pip.py && \
     rm get-pip.py && \
-    ln -s /usr/bin/python${PYTHON_INSTALL_VERSION} /usr/local/bin/python3 && \
-    ln -s /usr/bin/python${PYTHON_INSTALL_VERSION} /usr/local/bin/python
-
-RUN apt-get update && \
-    apt-get install -y unzip bzip2 build-essential openjdk-8-jdk ssh sudo && \
-    apt-get clean
+    update-alternatives --install /usr/local/bin/python3 python3 /usr/bin/python${PYTHON_INSTALL_VERSION} 1 && \
+    update-alternatives --install /usr/local/bin/python python /usr/bin/python${PYTHON_INSTALL_VERSION} 1
 
 # Add ubuntu user and enable password-less sudo
 RUN useradd -mU -s /bin/bash -G sudo ubuntu && \
@@ -38,14 +32,11 @@ RUN pip install \
 # Set SPARK_HOME so that tests can easily find the scripts in $SPARK_HOME/sbin
 ENV SPARK_HOME /usr/local/lib/python${PYTHON_INSTALL_VERSION}/dist-packages/pyspark
 
-COPY ./ /opt/
-RUN pip install -r /opt/requirements.txt
+COPY ./requirements.txt /opt/
+RUN pip install -r /opt/requirements.txt && \
+    rm /opt/requirements.txt
 
-# Allow master service to start/stop spark on worker service
-RUN pip install docker
-
-RUN sudo apt-get remove docker docker-engine docker.io containerd runc && \
-    sudo apt-get update && \
+RUN sudo apt-get update && \
     sudo apt-get install -y \
         apt-transport-https \
         ca-certificates \
