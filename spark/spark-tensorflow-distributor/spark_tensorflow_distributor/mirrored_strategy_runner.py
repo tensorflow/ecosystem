@@ -281,6 +281,8 @@ class MirroredStrategyRunner:
             result = run_tensorflow_program(train_fn, use_custom_strategy, **kwargs)
             if context.partitionId() == 0:
                 return [result]
+            else:
+                return [None]
 
         return wrapped_train_fn
 
