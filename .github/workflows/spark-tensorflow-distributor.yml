@@ -52,6 +52,6 @@ jobs:
     - name: Run Integration Tests
       run: |
         cd spark/spark-tensorflow-distributor/
-        docker-compose build --build-arg PYTHON_INSTALL_VERSION='${{ matrix.python-version }}'
+        docker-compose pull
         chmod +x ./tests/integration/run.sh
         ./tests/integration/run.sh --num-workers 2
