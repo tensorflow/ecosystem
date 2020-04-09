@@ -3,7 +3,7 @@ FROM ubuntu:18.04
 ARG PYTHON_INSTALL_VERSION
 
 RUN apt-get update && \
-    apt-get install -y unzip bzip2 build-essential openjdk-8-jdk sudo wget
+    apt-get install -y --fix-missing unzip bzip2 build-essential openjdk-8-jdk sudo wget
 
 RUN apt-get update && \
     apt install -y software-properties-common && \
