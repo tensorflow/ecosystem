@@ -1,3 +1,19 @@
+"""
+Copyright 2016 The TensorFlow Authors. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
 import logging
 import math
 import os
@@ -33,38 +49,47 @@ class MirroredStrategyRunner:
     """
 
     def __init__(self,
+                 *,
                  num_slots,
                  local_mode=False,
                  use_gpu=True,
                  gpu_resource_name='gpu',
                  use_custom_strategy=False):
         """
-        :param num_slots: Total number of GPUs or CPU only Spark tasks that participate in distributed training.
-            For example, if num_slots = 16 we train on the Spark cluster with 16 GPUs if doing GPU training, or with
-            16 Spark tasks if doing CPU training. num_slots cannot be less than or equal to 0. Note that when doing CPU
-            training, Spark will still be subject to any GPU-aware scheduling confs set in the Spark
-            configuration. Note also that for GPU training, num_slots will limit the number of GPUs used
-            for training even if more are available, so that exactly num_slots GPUs are used in total. Spark does not
-            restrict CPU cores for tasks and so for CPU training, num_slots rarely needs to be greater than the
+        :param num_slots: Total number of GPUs or CPU only Spark tasks that participate in
+            distributed training. For example, if num_slots = 16 we train on the Spark
+            cluster with 16 GPUs if doing GPU training, or with 16 Spark tasks if doing
+            CPU training. num_slots cannot be less than or equal to 0. Note that when doing
+            CPU training, Spark will still be subject to any GPU-aware scheduling confs set
+            in the Spark configuration. Note also that for GPU training, num_slots will
+            limit the number of GPUs used for training even if more are available, so that
+            exactly num_slots GPUs are used in total. Spark does not restrict CPU cores for
+            tasks and so for CPU training, num_slots rarely needs to be greater than the
             number of workers and in local mode set num_slots=1.
-        :param local_mode: If True, the training function will be run locally on the driver. If False training
-            is distributed among the workers.
-        :param use_gpu: If True, training is done with GPUs using Spark resource scheduling with the gpu_resource_name
-            parameter as the resource name. If False, do CPU only training.
-        :param gpu_resource_name: The name of the Spark resource scheduling GPU resource. It may be set
-            under `spark.executor.resource.{gpu_resource_name}`, `spark.task.resource.{gpu_resource_name}`,
-            `spark.driver.resource.{gpu_resource_name}`, and `spark.worker.resource.{gpu_resource_name}` in the
-            Spark conf. Contact the cluster administrator to set these configurations. The resource
-            should be configured with a discovery script that is formatted according to the Spark configuration docs.
-            Make sure `spark.driver.resource.{gpu_resource_name}.discoveryScript` and 
-            `spark.driver.resource.{gpu_resource_name}.discoveryScript` are also set in the Spark conf.
-            In particular, the GPU addresses should be zero indexed. For example, the output of the discovery script for 3 GPUs
-            with gpu_resource_name='gpu' would be `{"name": "gpu", "addresses":["0","1","2"]}`. See an example discovery
-            script: `github.com/apache/spark/blob/master/examples/src/main/scripts/getGpusResources.sh`.
-        :param use_custom_strategy: When true, the training function passed to the MirroredStrategyRunner.run method must
-            construct and use its own tensorflow.distribute.Strategy() object. When false, MirroredStrategyRunner constructs
-            one for the user and wraps the training function in the strategy context, allowing the user to provide
-            non-distributed TensorFlow code that is executed as distributed code.
+        :param local_mode: If True, the training function will be run locally on the
+            driver. If False training is distributed among the workers.
+        :param use_gpu: If True, training is done with GPUs using Spark resource scheduling
+            with the gpu_resource_name parameter as the resource name. If False, do CPU only
+            training.
+        :param gpu_resource_name: The name of the Spark resource scheduling GPU resource. It
+            may be set under `spark.executor.resource.{gpu_resource_name}`,
+            `spark.task.resource.{gpu_resource_name}`,
+            `spark.driver.resource.{gpu_resource_name}`, and
+            `spark.worker.resource.{gpu_resource_name}` in the Spark conf. Contact the cluster
+            administrator to set these configurations. The resource should be configured with
+            a discovery script that is formatted according to the Spark configuration docs.
+            Make sure `spark.driver.resource.{gpu_resource_name}.discoveryScript` and
+            `spark.driver.resource.{gpu_resource_name}.discoveryScript` are also set in the
+            Spark conf. In particular, the GPU addresses should be zero indexed. For example,
+            the output of the discovery script for 3 GPUs with gpu_resource_name='gpu' would be
+            `{"name": "gpu", "addresses":["0","1","2"]}`. See an example discovery script:
+            `github.com/apache/spark/blob/master/examples/src/main/scripts/getGpusResources.sh`.
+        :param use_custom_strategy: When true, the training function passed to the
+            MirroredStrategyRunner.run method must construct and use its own
+            tensorflow.distribute.Strategy() object. When false, MirroredStrategyRunner
+            constructs one for the user and wraps the training function in the strategy
+            context, allowing the user to provide non-distributed TensorFlow code that is
+            executed as distributed code.
 
             Example with use_custom_strategy=True:
 
@@ -80,35 +105,38 @@ class MirroredStrategyRunner:
                     import tensorflow as tf
                     # training code
         """
-        self.logger = _get_logger(self.__class__.__name__)
-        self.num_slots = num_slots
-        if num_slots == 0:
-            raise ValueError('num_slots cannot be 0.')
-        self.use_custom_strategy = use_custom_strategy
-        self.gpu_resource_name = gpu_resource_name
-        self.is_gpu = self.gpu_resource_name is not None
-        if self.is_gpu:
-            self.logger.info('Doing GPU training...')
+        self._logger = _get_logger(self.__class__.__name__)
+        self._num_slots = num_slots
+        if num_slots <= 0:
+            raise ValueError(
+                f'num_slots is set to {num_slots} but cannot be less than or equal to 0.'
+            )
+        self._local_mode = local_mode
+        self._use_gpu = use_gpu
+        self._gpu_resource_name = gpu_resource_name
+        self._use_custom_strategy = use_custom_strategy
+        if self._use_gpu:
+            self._logger.info('Doing GPU training...')
         else:
-            self.logger.info('Doing CPU training...')
-        self.local_mode = self.num_slots < 0
+            self._logger.info('Doing CPU training...')
         spark = SparkSession.builder.getOrCreate()
         self.sc = spark.sparkContext
-        if self.local_mode is True:
-            self.logger.warning(
+        if self._local_mode is True:
+            self._logger.warning(
                 'MirroredStrategyRunner will run in local mode on the driver node. '
                 'There would be resource contention if the driver also runs other workloads.'
             )
-            self.num_slots = -self.num_slots
-            self.num_tasks = None
-            self.num_workers = None
+            self._num_tasks = None
         else:
-            self.num_tasks = self.get_num_tasks()
-            self.logger.info(f'Will run with {self.num_tasks} Spark tasks.')
+            self._num_tasks = self.get_num_tasks()
+            self._logger.info(f'Will run with {self._num_tasks} Spark tasks.')
 
     def get_num_tasks(self):
-        if self.is_gpu:
-            key = f'spark.task.resource.{self.gpu_resource_name}.amount'
+        """
+        :return: The number of Spark tasks to use for distributed training
+        """
+        if self._use_gpu:
+            key = f'spark.task.resource.{self._gpu_resource_name}.amount'
             if not self.sc.getConf().contains(key):
                 raise Exception(
                     'Your cluster might not have Spark GPU-aware scheduling enabled, '
@@ -120,51 +148,50 @@ class MirroredStrategyRunner:
                 raise ValueError(
                     f'The Spark conf `{key}` has a value of {task_gpu_amount} but it '
                     'should not have a value less than 1.')
-            return math.ceil(self.num_slots / task_gpu_amount)
-        else:
-            return self.num_slots
+            return math.ceil(self._num_slots / task_gpu_amount)
+        return self._num_slots
 
     def run(self, train_fn, **kwargs):
         """
         :param train_fn: Function that contains TensorFlow training code. If it constructs its own
             tensorflow.distribute.Strategy object, then construct MirroredStrategyRunner with
-            use_custom_strategy set to `True`. 
+            use_custom_strategy set to `True`.
         :param kwargs: keyword arguments passed to the training function at invocation time. When
-            train_fn is called, it will be called with train_fn(**kwargs)
-        :return: return value of the training function from the chief training worker (partition ID 0)
-            in distributed mode, or the direct return value of train_fn in local mode
+            train_fn is called, it will be called with train_fn(**kwargs).
+        :return: return value of the training function from the chief training worker
+            (partition ID 0) in distributed mode, or the direct return value of train_fn in
+            local mode.
         """
         spark_task_program = self._get_spark_task_program(train_fn, **kwargs)
 
         # Run in local mode
-        if self.local_mode:
+        if self._local_mode:
             old_cuda_visible_devices = os.environ.get('CUDA_VISIBLE_DEVICES',
                                                       '')
             cuda_state_was_set = 'CUDA_VISIBLE_DEVICES' in os.environ
             try:
-                if self.is_gpu:
-                    # TODO: specially handle the case that driver gpu resources is not properly configured
+                if self._use_gpu:
+                    # TODO: handle the case that driver gpu resources is not properly configured
                     gpus_owned = MirroredStrategyRunner._get_gpus_owned(
-                        self.sc.resources, self.gpu_resource_name)
+                        self.sc.resources, self._gpu_resource_name)
                     num_gpus_owned = len(gpus_owned)
-                    if self.num_slots > num_gpus_owned:
+                    if self._num_slots > num_gpus_owned:
                         raise ValueError(
-                            f'{self.num_slots} slots were requested for local training with '
+                            f'{self._num_slots} slots were requested for local training with '
                             f'GPU training but only {num_gpus_owned} GPUs '
                             'were available.')
-                    else:
-                        # TODO: Check GPU utilization to avoid resource contention
-                        os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(
-                            str(e)
-                            for e in random.sample(gpus_owned, self.num_slots))
+                    # TODO: Check GPU utilization to avoid resource contention
+                    os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(
+                        str(e)
+                        for e in random.sample(gpus_owned, self._num_slots))
                 else:
-                    if self.num_slots > 1:
+                    if self._num_slots > 1:
                         raise ValueError(
                             f'Cannot run with more than 1 CPU machine in local mode. '
                             'Try setting num_slots to -1.')
                     os.environ['CUDA_VISIBLE_DEVICES'] = ''
                 result = MirroredStrategyRunner._run_tensorflow_program(
-                    train_fn, self.use_custom_strategy, **kwargs)
+                    train_fn, self._use_custom_strategy, **kwargs)
             finally:
                 if cuda_state_was_set:
                     os.environ[
@@ -175,14 +202,14 @@ class MirroredStrategyRunner:
 
         # Run in distributed mode
         self._check_encryption()
-        self.logger.info('Distributed training in progress...')
-        self.logger.info(
+        self._logger.info('Distributed training in progress...')
+        self._logger.info(
             'View Spark executor stderr logs to inspect training...')
-        result = self.sc.parallelize(range(self.num_tasks), self.num_tasks) \
+        result = self.sc.parallelize(range(self._num_tasks), self._num_tasks) \
             .barrier() \
             .mapPartitions(spark_task_program) \
             .collect()[0]
-        self.logger.info(f'Training with {self.num_slots} slots is complete!')
+        self._logger.info(f'Training with {self._num_slots} slots is complete!')
         return result
 
     @staticmethod
@@ -195,46 +222,50 @@ class MirroredStrategyRunner:
             pattern = re.compile('^[1-9][0-9]*|0$')
             if any(not pattern.match(address) for address in addresses):
                 raise ValueError(
-                    f'Found GPU addresses {addresses} which are not all in the correct format for CUDA_VISIBLE_DEVICES, '
-                    'which requires integers with no zero padding.')
+                    f'Found GPU addresses {addresses} which are not all in the correct format '
+                    'for CUDA_VISIBLE_DEVICES, which requires integers with no zero padding.'
+                )
             return addresses
-        else:
-            raise ValueError(
-                f'The provided GPU resource name `{gpu_resource_name}` was not found in the context resources. '
-                f'Contact your cluster administrator to make sure that the '
-                f'spark.task.resource.{gpu_resource_name}, '
-                f'spark.worker.resource.{gpu_resource_name}, '
-                f'spark.executor.resource.{gpu_resource_name}, and '
-                f'spark.driver.resource.{gpu_resource_name} confs are set and that the '
-                f'GPU resource name `{gpu_resource_name}` matches those confs correctly.'
-            )
+        raise ValueError(
+            f'The provided GPU resource name `{gpu_resource_name}` was not found in the '
+            f'context resources. Contact your cluster administrator to make sure that the '
+            f'spark.task.resource.{gpu_resource_name}, '
+            f'spark.worker.resource.{gpu_resource_name}, '
+            f'spark.executor.resource.{gpu_resource_name}, and '
+            f'spark.driver.resource.{gpu_resource_name} confs are set and that the '
+            f'GPU resource name `{gpu_resource_name}` matches those confs correctly.'
+        )
 
     # Runs the training function
     @staticmethod
     def _run_tensorflow_program(train_fn, use_custom_strategy, **kwargs):
-        if use_custom_strategy:
-            return train_fn(**kwargs)
-        else:
+        if not use_custom_strategy:
             import tensorflow as tf
             from tensorflow.python.eager import context
             # Reset the tenosrflow eager context to clear leftover state from previous runs
+            # Disable protected member access rule
+            # pylint: disable=protected-access
             context._reset_context()
             strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
             with strategy.scope():
                 return train_fn(**kwargs)
+        return train_fn(**kwargs)
 
     def _get_spark_task_program(self, train_fn, **kwargs):
-        num_slots = self.num_slots
-        use_custom_strategy = self.use_custom_strategy
-        gpu_resource_name = self.gpu_resource_name
-        num_tasks = self.num_tasks
-        is_gpu = self.is_gpu
+        num_slots = self._num_slots
+        use_custom_strategy = self._use_custom_strategy
+        gpu_resource_name = self._gpu_resource_name
+        num_tasks = self._num_tasks
+        use_gpu = self._use_gpu
         get_gpus_owned = MirroredStrategyRunner._get_gpus_owned
         run_tensorflow_program = MirroredStrategyRunner._run_tensorflow_program
 
         # Spark task program
         def wrapped_train_fn(_):
-            import json, logging, os, socket
+            import json
+            import logging
+            import os
+            import socket
             from contextlib import closing
             from pyspark import BarrierTaskContext
 
@@ -272,21 +303,18 @@ class MirroredStrategyRunner:
                 ]
                 logging.info(f'Using GPU addresses: {gpu_addresses}')
                 os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(gpu_addresses)
-                return num_slots, my_num_gpus
 
             context = BarrierTaskContext.get()
-            if is_gpu:
-                num_slots_used_for_training, my_num_gpus = set_gpus(context)
+            if use_gpu:
+                set_gpus(context)
             else:
-                num_slots_used_for_training = num_slots
                 os.environ['CUDA_VISIBLE_DEVICES'] = ''
             set_tf_config(context)
             result = run_tensorflow_program(train_fn, use_custom_strategy,
                                             **kwargs)
             if context.partitionId() == 0:
                 return [result]
-            else:
-                return [None]
+            return [None]
 
         return wrapped_train_fn
 
@@ -303,12 +331,11 @@ class MirroredStrategyRunner:
         lowercase_val = val.lower()
         if lowercase_val == 'true':
             return True
-        elif lowercase_val == 'false':
+        if lowercase_val == 'false':
             return False
-        else:
-            raise Exception(
-                "_getConfBoolean expected a boolean conf value but found value of type {} "
-                "with value: {}".format(type(val), val))
+        raise Exception(
+            "_getConfBoolean expected a boolean conf value but found value of type {} "
+            "with value: {}".format(type(val), val))
 
     # Protects users that want to use encryption against passing around unencrypted data
     def _check_encryption(self):
@@ -318,7 +345,7 @@ class MirroredStrategyRunner:
             self.sc, 'tensorflow.spark.distributor.ignoreSsl', 'false')
         if is_ssl_enabled:
             if ignore_ssl:
-                self.logger.warning('''
+                self._logger.warning('''
                     This cluster has TLS encryption enabled; however, {name} does not
                     support data encryption in transit. The Spark configuration 
                     'tensorflow.ignoreSsl' has been set to 'true' to override this 

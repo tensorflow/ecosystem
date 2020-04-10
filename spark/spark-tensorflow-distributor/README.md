@@ -27,6 +27,18 @@ docker-compose build --build-arg PYTHON_INSTALL_VERSION=3.7
 ./tests/integration/run.sh
 ```
 
+For linting, run the following.
+
+```bash
+./tests/lint.sh
+```
+
+To use the autoformatter, run the following.
+
+```bash
+yapf --recursive --in-place spark_tensorflow_distributor
+```
+
 ## Examples
 
 Run following example code in `pyspark` shell:

@@ -18,5 +18,8 @@ tensorflow>=2.1.0
 # the tests.  With this here, you can run the tests with `py.test` from the base directory.
 pytest
 
-# This is used to flake test the codebase
-flake8
+# This is used for autoformatting and testing formatting
+yapf
+
+# Linting
+pylint
