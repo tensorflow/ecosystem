@@ -1,3 +1,12 @@
+"""
+This script sets the contents of spark-defaults.conf and
+gpuDiscoveryScriptStub.sh for the purpose of integration
+testing. It does so based on the arg inputs, spark-base.conf
+which is static, and spark-custom.conf which is dynamically
+changed by tests.
+"""
+
+
 import argparse
 
 

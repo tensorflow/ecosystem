@@ -31,7 +31,7 @@ jobs:
         cd spark/spark-tensorflow-distributor/
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    - name: Lint with flake8
+    - name: Lint
       run: |
         cd spark/spark-tensorflow-distributor/
         chmod +x ./tests/lint.sh
