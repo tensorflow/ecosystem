@@ -18,6 +18,9 @@ If you do not have PySpark installed, you can install it directly:
 pip install pyspark>=3.0.*
 ```
 
+Note also that in order to use many features of this package, you must set up Spark custom
+resource scheduling for GPUs on your cluster. See the Spark docs for this.
+
 ## Running Tests
 
 For integration tests, first build the master and worker images and then run the test script.
