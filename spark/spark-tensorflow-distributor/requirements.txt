@@ -1,0 +1,25 @@
+# Library dependencies for the python code.  You need to install these with
+# `pip install -r requirements.txt` before you can run this.
+
+#### ESSENTIAL RUNTIME DEPENDENCIES AND TEST DEPENDENCIES FOR MAIN FUNCTIONALITY ####
+
+## Tensorflow Requirements ##
+# Tensorflow is required to run this code but depends on specific configurations. Install from:
+# https://www.tensorflow.org/get_started/os_setup#overview
+
+# NOTE: If you want to use the GPU version, you will also need Nvidia's CUDA toolkit and cuDNN:
+# https://developer.nvidia.com/cuda-downloads
+# https://developer.nvidia.com/cudnn
+# Note that if you want to use the GPU version, you have to `pip uninstall tensorflow`
+# and `pip install tensorflow-gpu`, since both cannot coexist. 
+tensorflow>=2.1.0
+
+# We'll use pytest to run our tests; this isn't really necessary to run the code, but it is to run
+# the tests.  With this here, you can run the tests with `py.test` from the base directory.
+pytest
+
+# This is used for autoformatting and testing formatting
+yapf
+
+# Linting
+pylint
