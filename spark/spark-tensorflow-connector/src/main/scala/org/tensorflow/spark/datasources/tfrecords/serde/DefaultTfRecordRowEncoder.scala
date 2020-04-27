@@ -111,12 +111,15 @@ object DefaultTfRecordRowEncoder extends TfRecordRowEncoder {
   private def encodeFeature(row: Row, structField: StructField, index: Int): Feature = {
     val feature = structField.dataType match {
       case IntegerType => Int64ListFeatureEncoder.encode(Seq(row.getInt(index).toLong))
+      case BooleanType =>   Int64ListFeatureEncoder.encode(Seq(if (row.getBoolean(index)) 1.toLong else 0.toLong))
       case LongType => Int64ListFeatureEncoder.encode(Seq(row.getLong(index)))
       case FloatType => FloatListFeatureEncoder.encode(Seq(row.getFloat(index)))
       case DoubleType => FloatListFeatureEncoder.encode(Seq(row.getDouble(index).toFloat))
       case DecimalType() => FloatListFeatureEncoder.encode(Seq(row.getAs[Decimal](index).toFloat))
       case StringType => BytesListFeatureEncoder.encode(Seq(row.getString(index).getBytes))
       case BinaryType => BytesListFeatureEncoder.encode(Seq(row.getAs[Array[Byte]](index)))
+      case ArrayType(BooleanType, _) =>
+        Int64ListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toBooleanArray().map(if (_) 1.toLong else 0.toLong))
       case ArrayType(IntegerType, _)  =>
         Int64ListFeatureEncoder.encode(ArrayData.toArrayData(row.get(index)).toIntArray().map(_.toLong))
       case ArrayType(LongType, _) =>
