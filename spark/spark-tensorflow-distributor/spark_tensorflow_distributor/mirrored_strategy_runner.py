@@ -157,8 +157,9 @@ class MirroredStrategyRunner:
                                 'please contact your cluster administrator.'
                                 f'The conf `{key}` was not found '
                                 'in the Spark configuration.')
-            task_gpu_amount = len(MirroredStrategyRunner._get_gpus_owned(
-                self.sc.resources, self._gpu_resource_name))
+            task_gpu_amount = len(
+                MirroredStrategyRunner._get_gpus_owned(self.sc.resources,
+                                                       self._gpu_resource_name))
             if task_gpu_amount < 1:
                 raise ValueError(f'The Spark conf `{key}` has a value '
                                  f'of {task_gpu_amount} but it '

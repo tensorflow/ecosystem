@@ -49,9 +49,11 @@ jobs:
         curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-`uname -s`-`uname -m` > docker-compose
         chmod +x docker-compose
         sudo mv docker-compose /usr/local/bin
-    - name: Run Integration Tests
-      run: |
-        cd spark/spark-tensorflow-distributor/
-        docker-compose pull
-        chmod +x ./tests/integration/run.sh
-        ./tests/integration/run.sh --num-workers 2
+
+    # Disable integration tests for now becuase GitHub workflows exhausts compute and loses executors
+    # - name: Run Integration Tests
+    #   run: |
+    #     cd spark/spark-tensorflow-distributor/
+    #     docker-compose pull
+    #     chmod +x ./tests/integration/run.sh
+    #     ./tests/integration/run.sh --num-workers 2
