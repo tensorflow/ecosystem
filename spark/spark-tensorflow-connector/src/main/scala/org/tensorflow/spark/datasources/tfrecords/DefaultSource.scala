@@ -167,7 +167,7 @@ class DefaultSource extends DataSourceRegister
   }
 }
 
-object DefaultSource {
+object DefaultSource extends scala.Serializable {
   // The function run on each worker.
   // Writes the partition to a file and returns the number of records output.
   private def writePartitionLocal(

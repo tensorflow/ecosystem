@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.tensorflow</groupId>
-    <artifactId>spark-tensorflow-connector_2.11</artifactId>
+    <artifactId>spark-tensorflow-connector_2.12</artifactId>
     <packaging>jar</packaging>
     <version>1.10.0</version>
     <name>spark-tensorflow-connector</name>
@@ -27,13 +27,14 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scala.maven.version>3.2.2</scala.maven.version>
-        <scala.binary.version>2.11</scala.binary.version>
-        <scalatest.maven.version>1.0</scalatest.maven.version>
-        <scala.test.version>2.2.6</scala.test.version>
-        <maven.compiler.version>3.0</maven.compiler.version>
+        <scala.maven.version>4.2.0</scala.maven.version>
+        <scala.version>2.12.10</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
+        <scalatest.maven.version>2.0.0</scalatest.maven.version>
+        <scala.test.version>3.0.8</scala.test.version>
+        <maven.compiler.version>3.8.0</maven.compiler.version>
         <java.version>1.8</java.version>
-        <spark.version>2.3.1</spark.version>
+        <spark.version>3.0.0-preview2</spark.version>
         <yarn.api.version>2.7.3</yarn.api.version>
         <junit.version>4.11</junit.version>
     </properties>
@@ -86,7 +87,7 @@
                     <configuration>
                         <recompileMode>incremental</recompileMode>
                         <useZincServer>true</useZincServer>
-                        <scalaVersion>${scala.binary.version}</scalaVersion>
+                        <scalaVersion>${scala.version}</scalaVersion>
                         <checkMultipleScalaVersions>false</checkMultipleScalaVersions>
                     </configuration>
                 </plugin>
