@@ -1,0 +1,3 @@
+[style]
+# YAPF uses the google style
+based_on_style = google

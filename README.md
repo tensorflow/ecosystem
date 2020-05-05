@@ -21,7 +21,8 @@ request.
   Marathon, deployed on top of Mesos.
 - [hadoop](hadoop) - TFRecord file InputFormat/OutputFormat for Hadoop MapReduce
   and Spark.
-- [spark](spark) - Spark TensorFlow Connector
+- [spark-tensorflow-connector](spark/spark-tensorflow-connector) - Spark TensorFlow Connector
+- [spark-tensorflow-distributor](spark/spark-tensorflow-distributor) - Python package that helps users do distributed training with TensorFlow on their Spark clusters.
 
 ## Distributed TensorFlow
 

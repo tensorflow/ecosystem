@@ -167,7 +167,7 @@ class DefaultSource extends DataSourceRegister
   }
 }
 
-object DefaultSource {
+object DefaultSource extends scala.Serializable {
   // The function run on each worker.
   // Writes the partition to a file and returns the number of records output.
   private def writePartitionLocal(
@@ -189,7 +189,7 @@ object DefaultSource {
     // Make the directory if it does not exist
     dir.mkdirs()
     // The path to the partition file.
-    val filePath = localPath + s"/part-" + String.format("%05d", new java.lang.Integer(index))
+    val filePath = localPath + s"/part-" + String.format("%05d", java.lang.Integer.valueOf(index))
     val fos = new DataOutputStream(new FileOutputStream(filePath))
     var count = 0
     try {

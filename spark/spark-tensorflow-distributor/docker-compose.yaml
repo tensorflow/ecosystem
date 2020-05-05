@@ -1,0 +1,25 @@
+version: '3'
+services:
+  master:
+    image: sarthfrey/spark-tensorflow-distributor:3.7_master
+    build: .
+    tty: true
+    hostname: master
+    environment:
+      - MASTER=spark://master:7077
+    ports:
+    - "4040:4040" # driver UI
+    - "8080:8080" # master UI
+    volumes:
+    - .:/mnt/spark-tensorflow-distributor
+    - /var/run/docker.sock:/var/run/docker.sock
+  worker:
+    image: sarthfrey/spark-tensorflow-distributor:3.7_worker
+    build: .
+    tty: true
+    ports:
+    - "8081-8090:8081" # worker UI
+    links:
+    - master
+    volumes:
+    - .:/mnt/spark-tensorflow-distributor
