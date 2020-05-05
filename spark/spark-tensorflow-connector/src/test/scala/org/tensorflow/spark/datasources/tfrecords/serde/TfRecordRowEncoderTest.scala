@@ -31,6 +31,7 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
     "Encode given Row as TensorFlow Example" in {
       val schemaStructType = StructType(Array(
         StructField("IntegerLabel", IntegerType),
+        StructField("BooleanLabel", BooleanType),
         StructField("LongLabel", LongType),
         StructField("FloatLabel", FloatType),
         StructField("DoubleLabel", DoubleType),
@@ -42,7 +43,8 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
         StructField("DenseVectorLabel", VectorType),
         StructField("SparseVectorLabel", VectorType),
         StructField("BinaryLabel", BinaryType),
-        StructField("BinaryArrayLabel", ArrayType(BinaryType))
+        StructField("BinaryArrayLabel", ArrayType(BinaryType)),
+        StructField("BooleanArrayLabel", ArrayType(BooleanType))
       ))
       val doubleArray = Array(1.1, 111.1, 11111.1)
       val decimalArray = Array(Decimal(4.0), Decimal(8.0))
@@ -50,9 +52,10 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
       val denseVector = Vectors.dense(Array(5.6, 7.0))
       val byteArray = Array[Byte](0xde.toByte, 0xad.toByte, 0xbe.toByte, 0xef.toByte)
       val byteArray1 = Array[Byte](-128, 23, 127)
+      val booleanArray = Array(false, true)
 
-      val row = Array[Any](1, 23L, 10.0F, 14.0, Decimal(6.5), doubleArray, decimalArray,
-        "r1", Seq("r2", "r3"), denseVector, sparseVector, byteArray, Seq(byteArray, byteArray1))
+      val row = Array[Any](1, true, 23L, 10.0F, 14.0, Decimal(6.5), doubleArray, decimalArray,
+        "r1", Seq("r2", "r3"), denseVector, sparseVector, byteArray, Seq(byteArray, byteArray1), booleanArray)
       val rowWithSchema = new GenericRowWithSchema(row, schemaStructType)
 
       //Encode Sql Row to TensorFlow example
@@ -64,6 +67,9 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
 
       assert(featureMap("IntegerLabel").getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER)
       assert(featureMap("IntegerLabel").getInt64List.getValue(0).toInt == 1)
+
+      assert(featureMap("BooleanLabel").getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER)
+      assert(featureMap("BooleanLabel").getInt64List.getValue(0).toInt == 1)
 
       assert(featureMap("LongLabel").getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER)
       assert(featureMap("LongLabel").getInt64List.getValue(0).toInt == 23)
@@ -101,6 +107,9 @@ class TfRecordRowEncoderTest extends WordSpec with Matchers {
       assert(featureMap("BinaryArrayLabel").getKindCase.getNumber == Feature.BYTES_LIST_FIELD_NUMBER)
       val binaryArrayValue = featureMap("BinaryArrayLabel").getBytesList.getValueList.asScala.map((byteArray) => byteArray.asScala.toArray.map(_.toByte))
       assert(binaryArrayValue.toArray.deep == Array(byteArray, byteArray1).deep)
+
+      assert(featureMap("BooleanArrayLabel").getKindCase.getNumber == Feature.INT64_LIST_FIELD_NUMBER)
+      assert(featureMap("BooleanArrayLabel").getInt64List.getValueList.asScala.toSeq.map(_.toLong) === booleanArray.map(if (_) 1 else 0))
     }
 
     "Encode given Row as TensorFlow SequenceExample" in {
