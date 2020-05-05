@@ -1,0 +1,59 @@
+# This workflow will run tests when changes are made to the Spark TensorFlow Distributor project
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Spark TensorFlow Distributor
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+    - 'spark/spark-tensorflow-distributor/**'
+  pull_request:
+    branches: [ master ]
+    paths:
+    - 'spark/spark-tensorflow-distributor/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-${{ matrix.ubuntu-version }}
+    strategy:
+      matrix:
+        python-version: [3.7]
+        ubuntu-version: [18.04]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Pip Dependencies
+      run: |
+        cd spark/spark-tensorflow-distributor/
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Lint
+      run: |
+        cd spark/spark-tensorflow-distributor/
+        chmod +x ./tests/lint.sh
+        ./tests/lint.sh
+
+    # Disable unit tests for now until we have unit tests to run!
+    # - name: Run Unit Tests
+    #   run: |
+    #     cd spark/spark-tensorflow-distributor/
+    #     python -m pytest tests/unit
+
+    - name: Install docker-compose
+      run: |
+        sudo rm /usr/local/bin/docker-compose
+        curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-`uname -s`-`uname -m` > docker-compose
+        chmod +x docker-compose
+        sudo mv docker-compose /usr/local/bin
+
+    # Disable integration tests for now becuase GitHub workflows exhausts compute and loses executors
+    # - name: Run Integration Tests
+    #   run: |
+    #     cd spark/spark-tensorflow-distributor/
+    #     docker-compose pull
+    #     chmod +x ./tests/integration/run.sh
+    #     ./tests/integration/run.sh --num-workers 2
