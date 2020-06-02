@@ -325,8 +325,11 @@ class MirroredStrategyRunner:
             # Sets the CUDA_VISIBLE_DEVICES env var so only
             # the appropriate GPUS are used
             def set_gpus(context):
-                gpus_owned = get_gpus_owned(context.resources(),
-                                            gpu_resource_name)
+                if 'CUDA_VISIBLE_DEVICES' in os.environ:
+                    gpus_owned = [int(x) for x in os.environ['CUDA_VISIBLE_DEVICES']]
+                else:
+                    gpus_owned = get_gpus_owned(context.resources(),
+                                                gpu_resource_name)
                 my_num_gpus = (num_slots //
                                num_tasks) + (context.partitionId() <
                                              (num_slots % num_tasks))
