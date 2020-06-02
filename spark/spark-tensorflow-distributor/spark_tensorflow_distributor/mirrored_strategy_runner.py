@@ -326,7 +326,9 @@ class MirroredStrategyRunner:
             # the appropriate GPUS are used
             def set_gpus(context):
                 if 'CUDA_VISIBLE_DEVICES' in os.environ:
-                    gpus_owned = [int(x) for x in os.environ['CUDA_VISIBLE_DEVICES']]
+                    gpus_owned = [
+                        int(x) for x in os.environ['CUDA_VISIBLE_DEVICES']
+                    ]
                 else:
                     gpus_owned = get_gpus_owned(context.resources(),
                                                 gpu_resource_name)
