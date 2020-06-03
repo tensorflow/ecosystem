@@ -102,6 +102,8 @@ def test_cpu_training_with_gpus(num_workers, num_gpus_per_worker):
     assert gpus_used_by_each_task == [0, 0]
 
 
+@pytest.mark.parametrize('num_workers', [2], indirect=True)
+@pytest.mark.parametrize('num_gpus_per_worker', [4], indirect=True)
 def test_get_gpus_owned_in_spark_task():
     spark = SparkSession.builder.getOrCreate()
     sc = spark.sparkContext
