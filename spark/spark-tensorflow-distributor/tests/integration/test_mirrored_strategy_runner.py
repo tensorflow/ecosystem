@@ -120,7 +120,7 @@ def test_get_gpus_owned_in_spark_task():
         from pyspark import BarrierTaskContext
         context = BarrierTaskContext.get()
         result = MirroredStrategyRunner._get_gpus_owned_in_spark_task(context, 'gpu')
-        yield result == context.resources['gpu'].addresses
+        yield result == context.resources()['gpu'].addresses
 
     assert True == sc.parallelize(range(1), 1).barrier().mapPartitions(f2).collect()[0]
 
