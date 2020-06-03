@@ -265,6 +265,17 @@ class MirroredStrategyRunner:
             f'GPU resource name `{gpu_resource_name}` matches '
             'those confs correctly.')
 
+    @staticmethod
+    def _get_gpus_owned_in_spark_task(task_context, gpu_resource_name):
+        if 'CUDA_VISIBLE_DEVICES' in os.environ:
+            gpus_owned = [
+                int(x) for x in os.environ['CUDA_VISIBLE_DEVICES'].split(',')
+            ]
+        else:
+            gpus_owned = MirroredStrategyRunner._get_gpus_owned(
+                task_context.resources(), gpu_resource_name)
+        return gpus_owned
+
     # Runs the training function
     @staticmethod
     def _run_tensorflow_program(train_fn, use_custom_strategy, **kwargs):
@@ -287,7 +298,6 @@ class MirroredStrategyRunner:
         gpu_resource_name = self._gpu_resource_name
         num_tasks = self._num_tasks
         use_gpu = self._use_gpu
-        get_gpus_owned = MirroredStrategyRunner._get_gpus_owned
         run_tensorflow_program = MirroredStrategyRunner._run_tensorflow_program
 
         # Spark task program
@@ -325,13 +335,9 @@ class MirroredStrategyRunner:
             # Sets the CUDA_VISIBLE_DEVICES env var so only
             # the appropriate GPUS are used
             def set_gpus(context):
-                if 'CUDA_VISIBLE_DEVICES' in os.environ:
-                    gpus_owned = [
-                        int(x) for x in os.environ['CUDA_VISIBLE_DEVICES']
-                    ]
-                else:
-                    gpus_owned = get_gpus_owned(context.resources(),
-                                                gpu_resource_name)
+                gpus_owned = MirroredStrategyRunner._get_gpus_owned_in_spark_task(
+                    context, gpu_resource_name)
+
                 my_num_gpus = (num_slots //
                                num_tasks) + (context.partitionId() <
                                              (num_slots % num_tasks))

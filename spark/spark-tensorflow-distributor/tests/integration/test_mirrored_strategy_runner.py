@@ -1,6 +1,6 @@
 import os
 import pytest
-
+from pyspark.sql import SparkSession
 
 from spark_tensorflow_distributor import MirroredStrategyRunner
 
@@ -100,3 +100,25 @@ def test_cpu_training_with_gpus(num_workers, num_gpus_per_worker):
     assert runner.get_num_tasks() == 2
     gpus_used_by_each_task = runner.run(train_fn)
     assert gpus_used_by_each_task == [0, 0]
+
+
+def test_get_gpus_owned_in_spark_task():
+    spark = SparkSession.builder.getOrCreate()
+    sc = spark.sparkContext
+
+    def f1(_):
+        from pyspark import BarrierTaskContext
+        os.environ['CUDA_VISIBLE_DEVICES'] = '1,3,4'
+        context = BarrierTaskContext.get()
+        result = MirroredStrategyRunner._get_gpus_owned_in_spark_task(context, 'gpu')
+        yield result == ['1', '3', '4']
+    assert True == sc.parallelize(range(1), 1).barrier().mapPartitions(f1).collect()[0]
+
+    def f2(_):
+        from pyspark import BarrierTaskContext
+        context = BarrierTaskContext.get()
+        result = MirroredStrategyRunner._get_gpus_owned_in_spark_task(context, 'gpu')
+        yield result == context.resources['gpu'].addresses
+
+    assert True == sc.parallelize(range(1), 1).barrier().mapPartitions(f2).collect()[0]
+
