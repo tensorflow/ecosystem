@@ -269,9 +269,7 @@ class MirroredStrategyRunner:
     def _get_gpus_owned_in_spark_task(task_context, gpu_resource_name):
         if 'CUDA_VISIBLE_DEVICES' in os.environ and \
                 os.environ['CUDA_VISIBLE_DEVICES'].strip() != '':
-            gpus_owned = [
-                x for x in os.environ['CUDA_VISIBLE_DEVICES'].split(',')
-            ]
+            gpus_owned = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
         else:
             gpus_owned = MirroredStrategyRunner._get_gpus_owned(
                 task_context.resources(), gpu_resource_name)
