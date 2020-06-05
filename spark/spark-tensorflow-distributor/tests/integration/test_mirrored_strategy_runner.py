@@ -110,10 +110,16 @@ def test_get_gpus_owned_in_spark_task():
 
     def f1(_):
         from pyspark import BarrierTaskContext
-        os.environ['CUDA_VISIBLE_DEVICES'] = '1,3,4'
-        context = BarrierTaskContext.get()
-        result = MirroredStrategyRunner._get_gpus_owned_in_spark_task(context, 'gpu')
-        yield result == ['1', '3', '4']
+        try:
+            os.environ['CUDA_VISIBLE_DEVICES'] = '1,3,4'
+            context = BarrierTaskContext.get()
+            result = MirroredStrategyRunner._get_gpus_owned_in_spark_task(context, 'gpu')
+            yield result == ['1', '3', '4']
+        finally:
+            # Recover original CUDA_VISIBLE_DEVICES env status
+            # so that it won't affect next tests.
+            del os.environ['CUDA_VISIBLE_DEVICES']
+
     assert True == sc.parallelize(range(1), 1).barrier().mapPartitions(f1).collect()[0]
 
     def f2(_):
