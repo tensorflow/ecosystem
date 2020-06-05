@@ -267,8 +267,7 @@ class MirroredStrategyRunner:
 
     @staticmethod
     def _get_gpus_owned_in_spark_task(task_context, gpu_resource_name):
-        if 'CUDA_VISIBLE_DEVICES' in os.environ and \
-                os.environ['CUDA_VISIBLE_DEVICES'].strip() != '':
+        if 'CUDA_VISIBLE_DEVICES' in os.environ:
             gpus_owned = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
         else:
             gpus_owned = MirroredStrategyRunner._get_gpus_owned(
@@ -347,16 +346,33 @@ class MirroredStrategyRunner:
                 os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(gpu_addresses)
 
             context = BarrierTaskContext.get()
-            if use_gpu:
-                set_gpus(context)
-            else:
-                os.environ['CUDA_VISIBLE_DEVICES'] = ''
-            set_tf_config(context)
-            result = run_tensorflow_program(train_fn, use_custom_strategy,
-                                            **kwargs)
-            if context.partitionId() == 0:
-                return [result]
-            return [None]
+
+            old_cuda_visible_devices = os.environ.get('CUDA_VISIBLE_DEVICES',
+                                                      '')
+            cuda_state_was_set = 'CUDA_VISIBLE_DEVICES' in os.environ
+            try:
+                if use_gpu:
+                    set_gpus(context)
+                else:
+                    os.environ['CUDA_VISIBLE_DEVICES'] = ''
+                set_tf_config(context)
+                result = run_tensorflow_program(train_fn, use_custom_strategy,
+                                                **kwargs)
+                if context.partitionId() == 0:
+                    return [result]
+                return [None]
+            finally:
+                # We need to recover original CUDA_VISIBLE_DEVICES env status.
+                # Because spark will reuse python worker to launch spark task,
+                # If we do not recover original cuda devices environment status,
+                # when launching spark task next time, it will always get an
+                # CUDA_VISIBLE_DEVICES env which was set in last spark task,
+                # and leads to error.
+                if cuda_state_was_set:
+                    os.environ[
+                        'CUDA_VISIBLE_DEVICES'] = old_cuda_visible_devices
+                else:
+                    del os.environ['CUDA_VISIBLE_DEVICES']
 
         return wrapped_train_fn
 
