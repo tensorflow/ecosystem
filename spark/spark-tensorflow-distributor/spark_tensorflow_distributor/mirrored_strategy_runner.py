@@ -183,6 +183,10 @@ class MirroredStrategyRunner:
             distributed mode, or the direct return value of train_fn in
             local mode.
         """
+        worker_reuse_cfg = self.sc.getConf().get('spark.python.worker.reuse', 'true')
+        if worker_reuse_cfg.lower() not in ['true', '1']:
+            raise RuntimeError('Require spark cluster set spark.python.worker.reuse '
+                               'to be true.')
         spark_task_program = self._get_spark_task_program(train_fn, **kwargs)
 
         # Run in local mode
@@ -267,12 +271,15 @@ class MirroredStrategyRunner:
 
     @staticmethod
     def _get_gpus_owned_in_spark_task(task_context, gpu_resource_name):
+        gpus_or_gpu_indices_owned = MirroredStrategyRunner._get_gpus_owned(
+            task_context.resources(), gpu_resource_name)
         if 'CUDA_VISIBLE_DEVICES' in os.environ:
-            gpus_owned = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
+            gpu_list = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
+            gpu_owned = [gpu_list[int(gpus_or_gpu_indices_owned[i])]
+                         for i in len(gpu_list)]
+            return gpu_owned
         else:
-            gpus_owned = MirroredStrategyRunner._get_gpus_owned(
-                task_context.resources(), gpu_resource_name)
-        return gpus_owned
+            return gpus_or_gpu_indices_owned
 
     # Runs the training function
     @staticmethod
@@ -346,33 +353,16 @@ class MirroredStrategyRunner:
                 os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(gpu_addresses)
 
             context = BarrierTaskContext.get()
-
-            old_cuda_visible_devices = os.environ.get('CUDA_VISIBLE_DEVICES',
-                                                      '')
-            cuda_state_was_set = 'CUDA_VISIBLE_DEVICES' in os.environ
-            try:
-                if use_gpu:
-                    set_gpus(context)
-                else:
-                    os.environ['CUDA_VISIBLE_DEVICES'] = ''
-                set_tf_config(context)
-                result = run_tensorflow_program(train_fn, use_custom_strategy,
-                                                **kwargs)
-                if context.partitionId() == 0:
-                    return [result]
-                return [None]
-            finally:
-                # We need to recover original CUDA_VISIBLE_DEVICES env status.
-                # Because spark will reuse python worker to launch spark task,
-                # If we do not recover original cuda devices environment status,
-                # when launching spark task next time, it will always get an
-                # CUDA_VISIBLE_DEVICES env which was set in last spark task,
-                # and leads to error.
-                if cuda_state_was_set:
-                    os.environ[
-                        'CUDA_VISIBLE_DEVICES'] = old_cuda_visible_devices
-                else:
-                    del os.environ['CUDA_VISIBLE_DEVICES']
+            if use_gpu:
+                set_gpus(context)
+            else:
+                os.environ['CUDA_VISIBLE_DEVICES'] = ''
+            set_tf_config(context)
+            result = run_tensorflow_program(train_fn, use_custom_strategy,
+                                            **kwargs)
+            if context.partitionId() == 0:
+                return [result]
+            return [None]
 
         return wrapped_train_fn
 
