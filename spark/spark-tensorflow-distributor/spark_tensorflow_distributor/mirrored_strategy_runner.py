@@ -276,9 +276,9 @@ class MirroredStrategyRunner:
         gpus_or_gpu_indices_owned = MirroredStrategyRunner._get_gpus_owned(
             task_context.resources(), gpu_resource_name)
         if 'CUDA_VISIBLE_DEVICES' in os.environ:
+            gpu_indices = list(map(int, gpus_or_gpu_indices_owned))
             gpu_list = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
-            gpu_owned = [gpu_list[int(gpus_or_gpu_indices_owned[i])]
-                         for i in range(len(gpu_list))]
+            gpu_owned = [gpu_list[i] for i in gpu_indices]
             return gpu_owned
         else:
             return gpus_or_gpu_indices_owned
