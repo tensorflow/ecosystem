@@ -280,8 +280,7 @@ class MirroredStrategyRunner:
             gpu_list = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
             gpu_owned = [gpu_list[i] for i in gpu_indices]
             return gpu_owned
-        else:
-            return gpus_or_gpu_indices_owned
+        return gpus_or_gpu_indices_owned
 
     # Runs the training function
     @staticmethod

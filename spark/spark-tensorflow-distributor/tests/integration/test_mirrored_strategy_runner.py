@@ -102,7 +102,8 @@ def test_cpu_training_with_gpus(num_workers, num_gpus_per_worker):
     gpus_used_by_each_task = runner.run(train_fn)
     assert gpus_used_by_each_task == [0, 0]
 
-
+@pytest.mark.parametrize('num_workers', [2], indirect=True)
+@pytest.mark.parametrize('num_gpus_per_worker', [4], indirect=True)
 def test_get_gpus_owned_in_spark_task(num_workers, num_gpus_per_worker):
     mock_task_context = MagicMock()
     mock_gpu_resources = MagicMock()
