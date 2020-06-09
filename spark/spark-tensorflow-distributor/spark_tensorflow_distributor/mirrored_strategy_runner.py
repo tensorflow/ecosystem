@@ -185,10 +185,10 @@ class MirroredStrategyRunner:
         """
         worker_reuse_cfg = self.sc.getConf().get('spark.python.worker.reuse',
                                                  'true')
-        if worker_reuse_cfg.lower() not in ['true', '1']:
+        if worker_reuse_cfg.lower() in ['true', '1']:
             raise RuntimeError(
                 'Require spark cluster set spark.python.worker.reuse '
-                'to be true.')
+                'to be false.')
         spark_task_program = self._get_spark_task_program(train_fn, **kwargs)
 
         # Run in local mode
