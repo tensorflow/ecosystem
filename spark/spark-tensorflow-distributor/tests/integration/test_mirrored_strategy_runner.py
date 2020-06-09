@@ -3,7 +3,7 @@ import pytest
 from pyspark.sql import SparkSession
 
 from spark_tensorflow_distributor import MirroredStrategyRunner
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch, PropertyMock
 
 
 @pytest.mark.parametrize('num_workers', [2], indirect=True)
@@ -101,3 +101,20 @@ def test_cpu_training_with_gpus(num_workers, num_gpus_per_worker):
     assert runner.get_num_tasks() == 2
     gpus_used_by_each_task = runner.run(train_fn)
     assert gpus_used_by_each_task == [0, 0]
+
+
+def test_get_gpus_owned_in_spark_task(num_workers, num_gpus_per_worker):
+    mock_task_context = MagicMock()
+    mock_gpu_resources = MagicMock()
+    type(mock_gpu_resources).addresses = PropertyMock(return_value=['1', '3', '4'])
+    mock_task_context.resources = MagicMock(
+        return_value={'gpu': mock_gpu_resources})
+
+    result1 = MirroredStrategyRunner \
+        ._get_gpus_owned_in_spark_task(mock_task_context, 'gpu')
+    assert result1 == ['1', '3', '4']
+
+    with patch.dict(os.environ, {'CUDA_VISIBLE_DEVICES': '5,6,7,8,9,10'}):
+        result2 = MirroredStrategyRunner \
+            ._get_gpus_owned_in_spark_task(mock_task_context, 'gpu')
+        assert result2 == ['6', '8', '9']
