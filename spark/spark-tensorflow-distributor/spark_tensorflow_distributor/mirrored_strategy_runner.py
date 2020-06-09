@@ -183,10 +183,12 @@ class MirroredStrategyRunner:
             distributed mode, or the direct return value of train_fn in
             local mode.
         """
-        worker_reuse_cfg = self.sc.getConf().get('spark.python.worker.reuse', 'true')
+        worker_reuse_cfg = self.sc.getConf().get('spark.python.worker.reuse',
+                                                 'true')
         if worker_reuse_cfg.lower() not in ['true', '1']:
-            raise RuntimeError('Require spark cluster set spark.python.worker.reuse '
-                               'to be true.')
+            raise RuntimeError(
+                'Require spark cluster set spark.python.worker.reuse '
+                'to be true.')
         spark_task_program = self._get_spark_task_program(train_fn, **kwargs)
 
         # Run in local mode
@@ -276,7 +278,7 @@ class MirroredStrategyRunner:
         if 'CUDA_VISIBLE_DEVICES' in os.environ:
             gpu_list = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
             gpu_owned = [gpu_list[int(gpus_or_gpu_indices_owned[i])]
-                         for i in len(gpu_list)]
+                         for i in range(len(gpu_list))]
             return gpu_owned
         else:
             return gpus_or_gpu_indices_owned
