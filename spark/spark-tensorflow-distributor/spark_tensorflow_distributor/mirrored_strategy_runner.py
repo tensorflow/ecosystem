@@ -183,8 +183,8 @@ class MirroredStrategyRunner:
             distributed mode, or the direct return value of train_fn in
             local mode.
         """
-        reuse_pyspark_worker = MirroredStrategyRunner\
-            ._get_conf_boolean('spark.python.worker.reuse', 'true')
+        reuse_pyspark_worker = MirroredStrategyRunner._get_conf_boolean(
+            self.sc, 'spark.python.worker.reuse', 'true')
         if reuse_pyspark_worker:
             raise RuntimeError(
                 'Require spark cluster set spark.python.worker.reuse '
