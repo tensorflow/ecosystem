@@ -1,0 +1,4 @@
+FROM tensorflow/tensorflow:nightly
+
+COPY tf_std_data_server.py /
+ENTRYPOINT ["python", "-u", "/tf_std_data_server.py"]

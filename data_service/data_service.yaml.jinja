@@ -1,0 +1,50 @@
+{%- set image = "gcr.io/<project_id>/tf_std_data_server:latest" -%}
+{%- set port = 5050 -%}
+{% set ip_mapping = {
+} %}
+
+kind: ReplicaSet
+apiVersion: extensions/v1beta1
+metadata:
+  name: data-service-master
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: data-service-master
+    spec:
+      containers:
+      - name: tensorflow
+        image: {{ image }}
+        ports:
+        - containerPort: {{ port }}
+        args:
+        - "--port={{ port }}"
+        - "--is_master=true"
+---
+
+{% for worker_name, worker_ip in ip_mapping.items() %}
+kind: ReplicaSet
+apiVersion: extensions/v1beta1
+metadata:
+  name: {{ worker_name }}
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: {{ worker_name }}
+    spec:
+      containers:
+      - name: tensorflow
+        image: {{ image }}
+        ports:
+        - containerPort: {{ port }}
+        args:
+        - "--port={{ port }}"
+        - "--is_master=false"
+        - "--master_address=data-service-master:{{ port }}"
+        - "--worker_address={{ worker_ip }}:{{ port }}"
+---
+{% endfor %}

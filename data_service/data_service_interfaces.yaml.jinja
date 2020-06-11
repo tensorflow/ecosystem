@@ -1,0 +1,35 @@
+{%- set workers = 8 -%}
+{%- set port = 5050 -%}
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: data-service-master
+  annotations:
+    cloud.google.com/load-balancer-type: "Internal"
+spec:
+  type: LoadBalancer
+  selector:
+    name: data-service-master
+  ports:
+  - port: {{ port }}
+    targetPort: {{ port }}
+    protocol: TCP
+---
+{% for i in range(workers) %}
+kind: Service
+apiVersion: v1
+metadata:
+  name: data-service-worker-{{ i }}
+  annotations:
+    cloud.google.com/load-balancer-type: "Internal"
+spec:
+  type: LoadBalancer
+  selector:
+    name: data-service-worker-{{ i }}
+  ports:
+  - port: {{ port }}
+    targetPort: {{ port }}
+    protocol: TCP
+---
+{% endfor %}
