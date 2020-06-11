@@ -183,12 +183,6 @@ class MirroredStrategyRunner:
             distributed mode, or the direct return value of train_fn in
             local mode.
         """
-        reuse_pyspark_worker = MirroredStrategyRunner._get_conf_boolean(
-            self.sc, 'spark.python.worker.reuse', 'true')
-        if reuse_pyspark_worker:
-            raise RuntimeError(
-                'Require spark cluster set spark.python.worker.reuse '
-                'to be false.')
         spark_task_program = self._get_spark_task_program(train_fn, **kwargs)
 
         # Run in local mode
@@ -272,9 +266,9 @@ class MirroredStrategyRunner:
             'those confs correctly.')
 
     @staticmethod
-    def _get_gpus_owned_in_spark_task(task_context, gpu_resource_name):
+    def _get_gpus_owned_in_spark_task(task_resources, gpu_resource_name):
         gpus_or_gpu_indices_owned = MirroredStrategyRunner._get_gpus_owned(
-            task_context.resources(), gpu_resource_name)
+            task_resources, gpu_resource_name)
         if 'CUDA_VISIBLE_DEVICES' in os.environ:
             gpu_indices = list(map(int, gpus_or_gpu_indices_owned))
             gpu_list = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
@@ -342,7 +336,8 @@ class MirroredStrategyRunner:
             # the appropriate GPUS are used
             def set_gpus(context):
                 gpus_owned = MirroredStrategyRunner \
-                    ._get_gpus_owned_in_spark_task(context, gpu_resource_name)
+                    ._get_gpus_owned_in_spark_task(
+                    context.resources(), gpu_resource_name)
 
                 my_num_gpus = (num_slots //
                                num_tasks) + (context.partitionId() <

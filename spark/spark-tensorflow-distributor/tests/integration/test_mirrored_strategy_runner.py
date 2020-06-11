@@ -102,20 +102,37 @@ def test_cpu_training_with_gpus(num_workers, num_gpus_per_worker):
     gpus_used_by_each_task = runner.run(train_fn)
     assert gpus_used_by_each_task == [0, 0]
 
-@pytest.mark.parametrize('num_workers', [2], indirect=True)
+@pytest.mark.parametrize('num_workers', [1], indirect=True)
 @pytest.mark.parametrize('num_gpus_per_worker', [4], indirect=True)
-def test_get_gpus_owned_in_spark_task(num_workers, num_gpus_per_worker):
-    mock_task_context = MagicMock()
+@pytest.mark.parametrize(
+    'extra_spark_configs',
+    [{'spark.python.worker.reuse': 'false',
+      'spark.executorEnv.CUDA_VISIBLE_DEVICES': '10,11,12,13'}],
+    indirect=True,
+)
+def test_cuda_devices_env_support(num_workers, num_gpus_per_worker):
     mock_gpu_resources = MagicMock()
     type(mock_gpu_resources).addresses = PropertyMock(return_value=['1', '3', '4'])
-    mock_task_context.resources = MagicMock(
-        return_value={'gpu': mock_gpu_resources})
+    mock_task_resources = {'gpu': mock_gpu_resources}
 
     result1 = MirroredStrategyRunner \
-        ._get_gpus_owned_in_spark_task(mock_task_context, 'gpu')
+        ._get_gpus_owned_in_spark_task(mock_task_resources, 'gpu')
     assert result1 == ['1', '3', '4']
 
     with patch.dict(os.environ, {'CUDA_VISIBLE_DEVICES': '5,6,7,8,9,10'}):
         result2 = MirroredStrategyRunner \
-            ._get_gpus_owned_in_spark_task(mock_task_context, 'gpu')
+            ._get_gpus_owned_in_spark_task(mock_task_resources, 'gpu')
         assert result2 == ['6', '8', '9']
+
+    def train_fn():
+        import os
+        return os.environ['CUDA_VISIBLE_DEVICES']
+
+    for num_slots in [2, 3, 4]:
+        runner = MirroredStrategyRunner(num_slots=num_slots)
+        task_cuda_env = runner.run(train_fn)
+        gpu_set = {int(i) for i in task_cuda_env.split(',')}
+        assert len(gpu_set) == num_slots
+        for gpu_id in gpu_set:
+            assert gpu_id in [10, 11, 12, 13]
+
