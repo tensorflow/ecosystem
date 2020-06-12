@@ -236,7 +236,7 @@ class MirroredStrategyRunner:
         return result
 
     @staticmethod
-    def _get_gpus_owned(resources, gpu_resource_name):
+    def _get_gpus_owned(resources, gpu_resource_name, owned_by_spark_task=False):
         """
         Gets the number of GPUs that Spark scheduled to the calling task.
 
@@ -251,6 +251,11 @@ class MirroredStrategyRunner:
                                  'are not all in the correct format '
                                  'for CUDA_VISIBLE_DEVICES, which requires '
                                  'integers with no zero padding.')
+            if owned_by_spark_task and 'CUDA_VISIBLE_DEVICES' in os.environ:
+                gpu_indices = list(map(int, addresses))
+                gpu_list = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
+                gpu_owned = [gpu_list[i] for i in gpu_indices]
+                return gpu_owned
             return addresses
         raise ValueError(
             f'The provided GPU resource name `{gpu_resource_name}` '
@@ -264,17 +269,6 @@ class MirroredStrategyRunner:
             'set and that the '
             f'GPU resource name `{gpu_resource_name}` matches '
             'those confs correctly.')
-
-    @staticmethod
-    def _get_gpus_owned_in_spark_task(task_resources, gpu_resource_name):
-        gpus_or_gpu_indices_owned = MirroredStrategyRunner._get_gpus_owned(
-            task_resources, gpu_resource_name)
-        if 'CUDA_VISIBLE_DEVICES' in os.environ:
-            gpu_indices = list(map(int, gpus_or_gpu_indices_owned))
-            gpu_list = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
-            gpu_owned = [gpu_list[i] for i in gpu_indices]
-            return gpu_owned
-        return gpus_or_gpu_indices_owned
 
     # Runs the training function
     @staticmethod
@@ -335,9 +329,9 @@ class MirroredStrategyRunner:
             # Sets the CUDA_VISIBLE_DEVICES env var so only
             # the appropriate GPUS are used
             def set_gpus(context):
-                gpus_owned = MirroredStrategyRunner \
-                    ._get_gpus_owned_in_spark_task(
-                    context.resources(), gpu_resource_name)
+                gpus_owned = MirroredStrategyRunner._get_gpus_owned(
+                    context.resources(), gpu_resource_name,
+                    owned_by_spark_task=True)
 
                 my_num_gpus = (num_slots //
                                num_tasks) + (context.partitionId() <
