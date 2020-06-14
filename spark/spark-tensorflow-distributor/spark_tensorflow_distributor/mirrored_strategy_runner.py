@@ -236,8 +236,7 @@ class MirroredStrategyRunner:
         return result
 
     @staticmethod
-    def _get_gpus_owned(resources,
-                        gpu_resource_name):
+    def _get_gpus_owned(resources, gpu_resource_name):
         """
         Gets the number of GPUs that Spark scheduled to the calling task.
 
