@@ -237,8 +237,7 @@ class MirroredStrategyRunner:
 
     @staticmethod
     def _get_gpus_owned(resources,
-                        gpu_resource_name,
-                        owned_by_spark_task=False):
+                        gpu_resource_name):
         """
         Gets the number of GPUs that Spark scheduled to the calling task.
 
@@ -253,7 +252,7 @@ class MirroredStrategyRunner:
                                  'are not all in the correct format '
                                  'for CUDA_VISIBLE_DEVICES, which requires '
                                  'integers with no zero padding.')
-            if owned_by_spark_task and 'CUDA_VISIBLE_DEVICES' in os.environ:
+            if 'CUDA_VISIBLE_DEVICES' in os.environ:
                 gpu_indices = list(map(int, addresses))
                 gpu_list = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
                 gpu_owned = [gpu_list[i] for i in gpu_indices]
@@ -332,9 +331,7 @@ class MirroredStrategyRunner:
             # the appropriate GPUS are used
             def set_gpus(context):
                 gpus_owned = MirroredStrategyRunner._get_gpus_owned(
-                    context.resources(),
-                    gpu_resource_name,
-                    owned_by_spark_task=True)
+                    context.resources(), gpu_resource_name)
 
                 my_num_gpus = (num_slots //
                                num_tasks) + (context.partitionId() <
