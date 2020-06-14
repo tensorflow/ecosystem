@@ -49,7 +49,7 @@ def test_zero_num_slots(num_workers, num_gpus_per_worker):
 @pytest.mark.parametrize('num_workers', [2], indirect=True)
 @pytest.mark.parametrize('num_gpus_per_worker', [4], indirect=True)
 @pytest.mark.parametrize('num_slots', [1, 2, 3])
-@pytest.mark.parametrize('old_cuda_state', [None, '', '0', '0,3,5'])
+@pytest.mark.parametrize('old_cuda_state', [None, '0,1,2,3'])
 def test_local_run(num_workers, num_gpus_per_worker, num_slots, old_cuda_state):
     def train_fn():
         import os
