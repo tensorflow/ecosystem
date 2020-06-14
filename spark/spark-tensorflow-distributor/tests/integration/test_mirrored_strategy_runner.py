@@ -65,7 +65,10 @@ def test_local_run(num_workers, num_gpus_per_worker, num_slots, old_cuda_state):
         gpu_set = {int(i) for i in task_cuda_env.split(',')}
         assert len(gpu_set) == num_slots
         for gpu_id in gpu_set:
-            assert gpu_id in [10, 11, 12, 13]
+            if old_cuda_state is not None:
+                assert gpu_id in [10, 11, 12, 13]
+            else:
+                assert gpu_id in [0, 1, 2, 3]
         new_cuda_state = os.environ.get('CUDA_VISIBLE_DEVICES')
         assert old_cuda_state == new_cuda_state
 
