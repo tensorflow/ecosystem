@@ -3,7 +3,7 @@ import pytest
 from pyspark.sql import SparkSession
 
 from spark_tensorflow_distributor import MirroredStrategyRunner
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest import mock
 
 
 @pytest.mark.parametrize('num_workers', [2], indirect=True)
@@ -49,19 +49,25 @@ def test_zero_num_slots(num_workers, num_gpus_per_worker):
 @pytest.mark.parametrize('num_workers', [2], indirect=True)
 @pytest.mark.parametrize('num_gpus_per_worker', [4], indirect=True)
 @pytest.mark.parametrize('num_slots', [1, 2, 3])
-@pytest.mark.parametrize('old_cuda_state', [None, '0,1,2,3'])
+@pytest.mark.parametrize('old_cuda_state', [None, '10,11,12,13'])
 def test_local_run(num_workers, num_gpus_per_worker, num_slots, old_cuda_state):
     def train_fn():
         import os
-        return len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
+        return os.environ['CUDA_VISIBLE_DEVICES']
 
     if old_cuda_state is not None:
-        os.environ['CUDA_VISIBLE_DEVICES'] = old_cuda_state
-    result = MirroredStrategyRunner(num_slots=num_slots, local_mode=True, gpu_resource_name='gpu').run(train_fn)
-    gpus_on_the_driver = [str(e) for e in range(num_slots)]
-    assert result == num_slots
-    new_cuda_state = os.environ.get('CUDA_VISIBLE_DEVICES')
-    assert old_cuda_state == new_cuda_state
+        mock_env = {'CUDA_VISIBLE_DEVICES': old_cuda_state}
+    else:
+        mock_env = {}
+
+    with mock.patch.dict(os.environ, mock_env, clear=True):
+        task_cuda_env = MirroredStrategyRunner(num_slots=num_slots, local_mode=True, gpu_resource_name='gpu').run(train_fn)
+        gpu_set = {int(i) for i in task_cuda_env.split(',')}
+        assert len(gpu_set) == num_slots
+        for gpu_id in gpu_set:
+            assert gpu_id in [10, 11, 12, 13]
+        new_cuda_state = os.environ.get('CUDA_VISIBLE_DEVICES')
+        assert old_cuda_state == new_cuda_state
 
 @pytest.mark.parametrize('num_workers', [2], indirect=True)
 @pytest.mark.parametrize('num_gpus_per_worker', [4], indirect=True)
