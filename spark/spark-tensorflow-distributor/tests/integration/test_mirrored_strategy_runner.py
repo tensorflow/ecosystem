@@ -13,7 +13,6 @@ from unittest import mock
     'extra_spark_configs',
     [{'spark.task.resource.gpu.amount': '1'},
      {'spark.task.resource.gpu.amount': '2'},
-     #{'spark.task.resource.gpu.amount': '3'},
      {'spark.task.resource.gpu.amount': '4'}],
     indirect=True,
 )
