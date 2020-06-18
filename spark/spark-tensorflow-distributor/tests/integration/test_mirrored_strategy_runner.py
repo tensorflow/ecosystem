@@ -1,3 +1,4 @@
+import math
 import os
 import pytest
 from pyspark.sql import SparkSession
@@ -8,6 +9,14 @@ from unittest import mock
 
 @pytest.mark.parametrize('num_workers', [2], indirect=True)
 @pytest.mark.parametrize('num_gpus_per_worker', [4], indirect=True)
+@pytest.mark.parametrize(
+    'extra_spark_configs',
+    [{'spark.task.resource.gpu.amount': '1'},
+     {'spark.task.resource.gpu.amount': '2'},
+     #{'spark.task.resource.gpu.amount': '3'},
+     {'spark.task.resource.gpu.amount': '4'}],
+    indirect=True,
+)
 def test_equal_gpu_allocation(num_workers, num_gpus_per_worker):
     def train_fn():
         import os
@@ -20,25 +29,16 @@ def test_equal_gpu_allocation(num_workers, num_gpus_per_worker):
             num_gpus = 0
         return [int(e) for e in context.allGather(str(num_gpus))]
 
-    runner = MirroredStrategyRunner(num_slots=2)
-    assert runner.get_num_tasks() == 1
-    gpus_used_by_each_task = runner.run(train_fn)
-    assert gpus_used_by_each_task == [2]
-
-    runner = MirroredStrategyRunner(num_slots=4)
-    assert runner.get_num_tasks() == 1
-    gpus_used_by_each_task = runner.run(train_fn)
-    assert gpus_used_by_each_task == [4]
-
-    runner = MirroredStrategyRunner(num_slots=6)
-    assert runner.get_num_tasks() == 2
-    gpus_used_by_each_task = runner.run(train_fn)
-    assert gpus_used_by_each_task == [3, 3]
-
-    runner = MirroredStrategyRunner(num_slots=8)
-    assert runner.get_num_tasks() == 2
-    gpus_used_by_each_task = runner.run(train_fn)
-    assert gpus_used_by_each_task == [4, 4]
+    for num_slots in [2, 4, 6, 8]:
+        runner = MirroredStrategyRunner(num_slots=num_slots)
+        task_gpu_amount = int(runner.sc.getConf().get('spark.task.resource.gpu.amount'))
+        expected_num_task = math.ceil(num_slots / task_gpu_amount)
+        assert runner.get_num_tasks() == expected_num_task
+        gpus_used_by_each_task = runner.run(train_fn)
+        assert gpus_used_by_each_task == [
+            (num_slots // expected_num_task) + (i < (num_slots % expected_num_task))
+            for i in range(expected_num_task)
+        ]
 
 @pytest.mark.parametrize('num_workers', [2], indirect=True)
 @pytest.mark.parametrize('num_gpus_per_worker', [4], indirect=True)
