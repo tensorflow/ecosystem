@@ -11,9 +11,9 @@ from unittest import mock
 @pytest.mark.parametrize('num_gpus_per_worker', [4], indirect=True)
 @pytest.mark.parametrize(
     'extra_spark_configs',
-    [{'spark.task.resource.gpu.amount': '1'},
-     {'spark.task.resource.gpu.amount': '2'},
-     {'spark.task.resource.gpu.amount': '4'}],
+    [{'spark.task.resource.gpu.amount': '1', 'spark.cores.max': 8, 'spark.executor.cores': 4},
+     {'spark.task.resource.gpu.amount': '2', 'spark.cores.max': 4, 'spark.executor.cores': 2},
+     {'spark.task.resource.gpu.amount': '4', 'spark.cores.max': 2, 'spark.executor.cores': 1}],
     indirect=True,
 )
 def test_equal_gpu_allocation(num_workers, num_gpus_per_worker):
