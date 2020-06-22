@@ -105,3 +105,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# IDE
+.idea/
+
+# Generated files
+tests/integration/spark_conf/spark-defaults.conf
+tests/integration/spark_conf/spark-custom.conf
