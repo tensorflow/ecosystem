@@ -31,12 +31,7 @@ with open('tests/integration/spark_conf/spark-base.conf', 'r') as f:
         l = lines[i].strip()
         if l:
             k, v = l.split(None, 1)
-            if 'resource.gpu.amount' in k:
-                conf[k] = str(num_gpus_per_worker)
-            elif k == 'spark.cores.max':
-                conf[k] = str(num_workers)
-            else:
-                conf[k] = v
+            conf[k] = v
 
 with open('tests/integration/spark_conf/spark-custom.conf', 'r') as f:
     lines = f.readlines()

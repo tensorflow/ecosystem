@@ -157,9 +157,7 @@ class MirroredStrategyRunner:
                                 'please contact your cluster administrator.'
                                 f'The conf `{key}` was not found '
                                 'in the Spark configuration.')
-            task_gpu_amount = len(
-                MirroredStrategyRunner._get_gpus_owned(self.sc.resources,
-                                                       self._gpu_resource_name))
+            task_gpu_amount = int(self.sc.getConf().get(key))
             if task_gpu_amount < 1:
                 raise ValueError(f'The Spark conf `{key}` has a value '
                                  f'of {task_gpu_amount} but it '
@@ -251,6 +249,11 @@ class MirroredStrategyRunner:
                                  'are not all in the correct format '
                                  'for CUDA_VISIBLE_DEVICES, which requires '
                                  'integers with no zero padding.')
+            if 'CUDA_VISIBLE_DEVICES' in os.environ:
+                gpu_indices = list(map(int, addresses))
+                gpu_list = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
+                gpu_owned = [gpu_list[i] for i in gpu_indices]
+                return gpu_owned
             return addresses
         raise ValueError(
             f'The provided GPU resource name `{gpu_resource_name}` '
@@ -287,7 +290,6 @@ class MirroredStrategyRunner:
         gpu_resource_name = self._gpu_resource_name
         num_tasks = self._num_tasks
         use_gpu = self._use_gpu
-        get_gpus_owned = MirroredStrategyRunner._get_gpus_owned
         run_tensorflow_program = MirroredStrategyRunner._run_tensorflow_program
 
         # Spark task program
@@ -325,8 +327,9 @@ class MirroredStrategyRunner:
             # Sets the CUDA_VISIBLE_DEVICES env var so only
             # the appropriate GPUS are used
             def set_gpus(context):
-                gpus_owned = get_gpus_owned(context.resources(),
-                                            gpu_resource_name)
+                gpus_owned = MirroredStrategyRunner._get_gpus_owned(
+                    context.resources(), gpu_resource_name)
+
                 my_num_gpus = (num_slots //
                                num_tasks) + (context.partitionId() <
                                              (num_slots % num_tasks))

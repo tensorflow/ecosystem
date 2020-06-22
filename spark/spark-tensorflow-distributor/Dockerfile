@@ -52,4 +52,6 @@ RUN apt-get install -y curl && \
 VOLUME /mnt/spark-tensorflow-distributor
 WORKDIR /mnt/spark-tensorflow-distributor
 
+ENV PYTHONPATH=/mnt/spark-tensorflow-distributor
+
 ENTRYPOINT /bin/bash
