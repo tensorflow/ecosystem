@@ -52,12 +52,14 @@ from spark_tensorflow_distributor import MirroredStrategyRunner
 # Adapted from https://www.tensorflow.org/tutorials/distribute/multi_worker_with_keras
 def train():
     import tensorflow as tf
+    import uuid
+
     BUFFER_SIZE = 10000
     BATCH_SIZE = 64
 
     def make_datasets():
         (mnist_images, mnist_labels), _ = \
-            tf.keras.datasets.mnist.load_data(path='mnist.npz')
+            tf.keras.datasets.mnist.load_data(path=str(uuid.uuid4())+'mnist.npz')
 
         dataset = tf.data.Dataset.from_tensor_slices((
             tf.cast(mnist_images[..., tf.newaxis] / 255.0, tf.float32),
