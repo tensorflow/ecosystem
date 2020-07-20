@@ -6,13 +6,13 @@
 kind: ReplicaSet
 apiVersion: extensions/v1beta1
 metadata:
-  name: data-service-master
+  name: data-service-dispatcher
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        name: data-service-master
+        name: data-service-dispatcher
     spec:
       containers:
       - name: tensorflow
@@ -21,7 +21,7 @@ spec:
         - containerPort: {{ port }}
         args:
         - "--port={{ port }}"
-        - "--is_master=true"
+        - "--is_dispatcher=true"
 ---
 
 {% for worker_name, worker_ip in ip_mapping.items() %}
@@ -43,8 +43,8 @@ spec:
         - containerPort: {{ port }}
         args:
         - "--port={{ port }}"
-        - "--is_master=false"
-        - "--master_address=data-service-master:{{ port }}"
+        - "--is_dispatcher=false"
+        - "--dispatcher_address=data-service-dispatcher:{{ port }}"
         - "--worker_address={{ worker_ip }}:{{ port }}"
 ---
 {% endfor %}

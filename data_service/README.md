@@ -90,7 +90,7 @@ python3 ../render_template.py data_service.yaml.jinja | kubectl apply -f -
 The service is now ready to use. To find the service address, run
 
 ```
-kubectl get services data-service-master
+kubectl get services data-service-dispatcher
 ```
 
 and examine the `EXTERNAL-IP` and `PORT(S)` columns. To access the cluster,
