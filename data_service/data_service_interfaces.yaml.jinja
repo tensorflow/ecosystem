@@ -4,13 +4,13 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: data-service-master
+  name: data-service-dispatcher
   annotations:
     cloud.google.com/load-balancer-type: "Internal"
 spec:
   type: LoadBalancer
   selector:
-    name: data-service-master
+    name: data-service-dispatcher
   ports:
   - port: {{ port }}
     targetPort: {{ port }}

@@ -22,17 +22,17 @@ import tensorflow as tf
 flags = tf.compat.v1.app.flags
 
 flags.DEFINE_integer("port", 0, "Port to listen on")
-flags.DEFINE_bool("is_master", False, "Whether to start a master (as opposed to a worker server")
-flags.DEFINE_string("master_address", "", "The address of the master server. This is only needed when starting a worker server.")
+flags.DEFINE_bool("is_dispatcher", False, "Whether to start a dispatcher (as opposed to a worker server")
+flags.DEFINE_string("dispatcher_address", "", "The address of the dispatcher. This is only needed when starting a worker server.")
 flags.DEFINE_string("worker_address", "", "The address of the worker server. This is only needed when starting a worker server.")
 
 FLAGS = flags.FLAGS
 
 
 def main(unused_argv):
-  if FLAGS.is_master:
-    print("Starting tf.data service master")
-    server = tf.data.experimental.service.MasterServer(
+  if FLAGS.is_dispatcher:
+    print("Starting tf.data service dispatcher")
+    server = tf.data.experimental.service.DispatchServer(
         port=FLAGS.port,
         protocol="grpc")
   else:
@@ -40,7 +40,7 @@ def main(unused_argv):
     server = tf.data.experimental.service.WorkerServer(
         port=FLAGS.port,
         protocol="grpc",
-        master_address=FLAGS.master_address,
+        dispatcher_address=FLAGS.dispatcher_address,
         worker_address=FLAGS.worker_address)
   server.join()
 
