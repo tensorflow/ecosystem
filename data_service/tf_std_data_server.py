@@ -33,15 +33,17 @@ def main(unused_argv):
   if FLAGS.is_dispatcher:
     print("Starting tf.data service dispatcher")
     server = tf.data.experimental.service.DispatchServer(
-        port=FLAGS.port,
-        protocol="grpc")
+        tf.data.experimental.service.DispatcherConfig(
+            port=FLAGS.port,
+            protocol="grpc"))
   else:
     print("Starting tf.data service worker")
     server = tf.data.experimental.service.WorkerServer(
-        port=FLAGS.port,
-        protocol="grpc",
-        dispatcher_address=FLAGS.dispatcher_address,
-        worker_address=FLAGS.worker_address)
+        tf.data.experimental.service.WorkerConfig(
+            port=FLAGS.port,
+            protocol="grpc",
+            dispatcher_address=FLAGS.dispatcher_address,
+            worker_address=FLAGS.worker_address))
   server.join()
 
 
