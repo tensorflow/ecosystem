@@ -4,11 +4,14 @@
 } %}
 
 kind: ReplicaSet
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 metadata:
   name: data-service-dispatcher
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: data-service-dispatcher
   template:
     metadata:
       labels:
@@ -31,6 +34,9 @@ metadata:
   name: {{ worker_name }}
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: {{ worker_name }}
   template:
     metadata:
       labels:
