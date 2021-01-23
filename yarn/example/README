@@ -1,0 +1,38 @@
+Create TFRecords file:
+
+- Download "convert_to_records.py", a program used to download and convert MNIST dataset to TFRecords (TensorFlow) format
+
+$ curl -k https://raw.githubusercontent.com/tensorflow/tensorflow/r0.11/tensorflow/examples/how_tos/reading_data/convert_to_records.py > convert_to_records.py
+
+- Download dataset and convert
+
+$ python convert_to_records.py
+Successfully downloaded train-images-idx3-ubyte.gz 9912422 bytes.
+Extracting /tmp/data/train-images-idx3-ubyte.gz
+Successfully downloaded train-labels-idx1-ubyte.gz 28881 bytes.
+Extracting /tmp/data/train-labels-idx1-ubyte.gz
+Successfully downloaded t10k-images-idx3-ubyte.gz 1648877 bytes.
+Extracting /tmp/data/t10k-images-idx3-ubyte.gz
+Successfully downloaded t10k-labels-idx1-ubyte.gz 4542 bytes.
+Extracting /tmp/data/t10k-labels-idx1-ubyte.gz
+Writing /tmp/data/train.tfrecords
+Writing /tmp/data/validation.tfrecords
+Writing /tmp/data/test.tfrecords
+
+- Locate files under /tmp/data and copy to a shared location 
+
+$ ls -l /tmp/data/
+total 72252
+-rw-rw-r-- 1 stack stack  1648877 Feb  3 15:17 t10k-images-idx3-ubyte.gz
+-rw-rw-r-- 1 stack stack     4542 Feb  3 15:17 t10k-labels-idx1-ubyte.gz
+-rw-rw-r-- 1 stack stack  8910000 Feb  3 15:19 test.tfrecords
+-rw-rw-r-- 1 stack stack  9912422 Feb  3 15:17 train-images-idx3-ubyte.gz
+-rw-rw-r-- 1 stack stack    28881 Feb  3 15:17 train-labels-idx1-ubyte.gz
+-rw-rw-r-- 1 stack stack 49005000 Feb  3 15:19 train.tfrecords
+-rw-rw-r-- 1 stack stack  4455000 Feb  3 15:19 validation.tfrecords
+
+$ mkdir -p mnist
+$ cp -r /tmp/data $HOME/mnist/
+$ cp mnist.py $HOME/mnist/
+
+- Optionally, upload data to HDFS and use hdfs://... to specify input data location
