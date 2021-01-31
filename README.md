@@ -12,7 +12,7 @@ request.
 - [docker](docker) - Docker configuration for running TensorFlow on
   cluster managers.
 - [kubeflow](https://github.com/kubeflow/kubeflow) - A Kubernetes native platform for ML
-	* A K8s custom resource for running distributed [TensorFlow jobs](https://github.com/kubeflow/kubeflow/blob/master/user_guide.md#submitting-a-tensorflow-training-job) 
+	* A K8s custom resource for running distributed [TensorFlow jobs](https://github.com/kubeflow/kubeflow/blob/master/user_guide.md#submitting-a-tensorflow-training-job)
 	* Jupyter images for different versions of TensorFlow
 	* [TFServing](https://github.com/kubeflow/kubeflow/blob/master/user_guide.md#serve-a-model-using-tensorflow-serving) Docker images and K8s templates
 - [kubernetes](kubernetes) - Templates for running distributed TensorFlow on
@@ -26,12 +26,14 @@ request.
 
 ## Distributed TensorFlow
 
+### Tensorflow 1
+
 See the [Distributed TensorFlow](https://www.tensorflow.org/deploy/distributed)
 documentation for a description of how it works. The examples in this
 repository focus on the most common form of distributed training: between-graph
 replication with asynchronous updates.
 
-### Common Setup for distributed training
+#### Common Setup for distributed training
 
 Every distributed training program has some common setup. First, define flags so
 that the worker knows about other workers and knows what role it plays in
@@ -73,7 +75,8 @@ if FLAGS.job_name == "ps":
 Afterwards, your code varies depending on the form of distributed training you
 intend on doing. The most common form is between-graph replication.
 
-### Between-graph Replication
+#### Between-graph Replication
+
 
 In this mode, each worker separately constructs the exact same graph. Each
 worker then runs the graph in isolation, only sharing gradients with the
@@ -93,6 +96,27 @@ with tf.device(tf.train.replica_device_setter(
   # Construct the TensorFlow graph.
 
 # Run the TensorFlow graph.
+```
+
+### Tensorflow 2
+
+For distributed training, the tensorflow server is implicitly started.
+The main configuration required by the tensorflow libraries is the cluster and local process configuration
+that can be passed as an environment variable.
+Refer to [Distributed TensorFlow Concepts](https://www.tensorflow.org/guide/distributed_training) for concepts.
+Refer to [Distributed TensorFlow Examples](https://www.tensorflow.org/tutorials/distribute/keras) for examples.
+
+#### Sample TF_CONFIG cluster configuration for distributed training
+
+```python
+os.environ["TF_CONFIG"] = json.dumps({
+    "cluster": {
+        "worker": ["host1:port", "host2:port", "host3:port"], # Worker IP/Port locations
+        "ps": ["host4:port", "host5:port"], # Parameter Server IP/Port Locations
+        "chief": ["host6:port"] # Chief worker location
+    },
+   "task": {"type": "worker", "index": 1} # Current Process configuration
+})
 ```
 
 ### Requirements To Run the Examples
