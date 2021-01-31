@@ -1,3 +1,30 @@
+# ==============================================================================
+# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+# This code serves as an example of using Tensorflow 2.0 Keras API to build and train a CNN model on the 
+# MNIST dataset using the tf.distribute.MultiWorkerMirroredStrategy described here 
+# https://www.tensorflow.org/api_docs/python/tf/distribute/experimental/MultiWorkerMirroredStrategy.
+# This code is very similar to the example provided here
+# https://www.tensorflow.org/tutorials/distribute/multi_worker_with_keras
+# Assumptions: 
+#   1) The code assumes that the cluster configuration needed for the TF distribute strategy is available through the 
+#   TF_CONFIG environment variable. See the link provided above for details
+#   2) The model is checkpointed and saved in /pvcmnt by the chief worker process.
+
+
 from __future__ import print_function
 
 import math
@@ -5,20 +32,6 @@ import os
 import tensorflow as tf
 import numpy as np
 import json
-
-"""
-This code serves as an example of using Tensorflow 2.0 Keras API to build and train a CNN model on the 
-MNIST dataset using the tf.distribute.MultiWorkerMirroredStrategy described here 
-https://www.tensorflow.org/api_docs/python/tf/distribute/experimental/MultiWorkerMirroredStrategy.
-This code is very similar to the example provided here
-https://www.tensorflow.org/tutorials/distribute/multi_worker_with_keras
-Assumptions: 
-  1) The code assumes that the cluster configurations needed for the TF distribute strategy is available through the 
-  TF_CONFIG environment variable. See the link provided above for details
-  2) The model is checkpointed and saved in /pvcmnt by the chief worker process. All other worker processes checkpoint 
-  their code in the /tmp directory
-"""
-
 
 # Used to run example using CPU only. Untested on GPU
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
