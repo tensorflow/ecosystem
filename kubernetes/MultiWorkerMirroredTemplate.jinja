@@ -1,14 +1,15 @@
-{%- set name = "tftest" -%}
 {%- set image = "image-name" -%}
 {%- set worker_replicas = 2 -%}
 {%- set script = "keras_mnist.py" -%}
 {%- set model_checkpoint_dir = "/pvcmnt" -%}
-{%- set data_dir = "" -%}
-{%- set pvc_name = "pvc-demo" -%}
+{%- set checkpoint_pvc_name = "pvc-demo" -%}
 {%- set port = 5000 -%}
-{%- set create_pvc = True -%}
+{%- set create_pvc_checkpoint = True -%}
 {%- set create_volume_inspector = True -%}
+{%- set deploy = False -%}
 
+
+{% if deploy %}
 
 {%- macro worker_hosts() -%}
   {%- for i in range(worker_replicas) -%}
@@ -55,7 +56,6 @@ spec:
         - name: TF_CONFIG
           value: '{"cluster": {"worker": [{{ worker_hosts() }}]}, "task": {"type": "worker", "index": {{ i }}}}'
         args:
-        - "--data_dir={{ data_dir }}"
         - "--model_checkpoint_dir={{ model_checkpoint_dir }}"
         restartPolicy: Never
 {% if i == 0 %}
@@ -65,14 +65,16 @@ spec:
       volumes:
       - name: pvc-mount
         persistentVolumeClaim:
-          claimName: {{ pvc_name }}  
+          claimName: {{ checkpoint_pvc_name }}  
 {% endif %}---
 {% endfor %}
-{% if create_pvc %}
+
+{% endif %}
+{% if create_pvc_checkpoint %}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ pvc_name }}
+  name: {{ checkpoint_pvc_name }}
 spec:
   accessModes:
     - ReadWriteOnce
@@ -90,7 +92,7 @@ spec:
   volumes:
     - name: volume-to-inspect
       persistentVolumeClaim:
-       claimName: {{ pvc_name }}
+       claimName: {{ checkpoint_pvc_name }}
   containers:
     - name: debugger
       image: busybox

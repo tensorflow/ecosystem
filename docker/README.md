@@ -4,11 +4,16 @@ This directory contains example Dockerfiles to run TensorFlow on cluster
 managers.
 
 - [Dockerfile](Dockerfile) is the most basic example, which just adds a Python
-  training program on top of the tensorflow/tensorflow Docker image.
+  training program on top of the tensorflow/tensorflow Docker image. All training programs
+  in this directory will be copied into docker image
 - [Dockerfile.hdfs](Dockerfile.hdfs) installs Hadoop libraries and sets the
   appropriate environment variables to enable reading from HDFS.
 - [mnist.py](mnist.py) demonstrates the programmatic setup for distributed
-  TensorFlow training.
+  TensorFlow training using the tensorflow 1.x API.
+- [keras_mnist.py](mnist.py) demonstrates how to train an MNIST classifier using
+  [tf.distribute.MultiWorkerMirroredStrategy and Keras Tensorflow 2.0 API](https://www.tensorflow.org/tutorials/distribute/multi_worker_with_keras).
+- [custom_training_mnist.py](mnist.py) demonstrates how to train a fashion MNIST classifier using
+  [tf.distribute.MultiWorkerMirroredStrategy and Tensorflow 2.0 Custom Training Loop APIs](https://www.tensorflow.org/tutorials/distribute/custom_training).
 
 ## Best Practices
 
@@ -46,3 +51,17 @@ program to convert mnist data to TFRecords.
 
 When running distributed TensorFlow, you should upload the converted data to
 a common location on distributed storage, such as GCS or HDFS.
+
+## Running the keras_mnist.py example
+
+The [keras_mnist.py](keras_mnist.py) example demonstrates how to train an MNIST classifier using
+[tf.distribute.MultiWorkerMirroredStrategy and Keras Tensorflow 2.0 API](https://www.tensorflow.org/tutorials/distribute/multi_worker_with_keras).
+The final model is saved to disk by the chief worker process. The disk is assumed to be mounted onto the running container by the cluster manager.
+It assumes that the cluster configuration is passed in through the `TF_CONFIG` environment variable when deployed in the cluster
+
+## Running the custom_training_mnist.py example
+
+The [custom_training_mnist.py](mnist.py) example demonstrates how to train a fashion MNIST classifier using
+[tf.distribute.MultiWorkerMirroredStrategy and Tensorflow 2.0 Custom Training Loop APIs](https://www.tensorflow.org/tutorials/distribute/custom_training).
+The final model is saved to disk by the chief worker process. The disk is assumed to be mounted onto the running container by the cluster manager.
+It assumes that the cluster configuration is passed in through the `TF_CONFIG` environment variable when deployed in the cluster.

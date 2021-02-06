@@ -26,6 +26,28 @@ request.
 
 ## Distributed TensorFlow
 
+### Tensorflow 2
+
+For distributed training, the tensorflow server is implicitly started.
+The main configuration required by the tensorflow libraries is the cluster and local process configuration
+that can be passed as an environment variable.
+Refer to [Distributed TensorFlow Concepts](https://www.tensorflow.org/guide/distributed_training) for concepts.
+Refer to [Distributed TensorFlow Examples](https://www.tensorflow.org/tutorials/distribute/keras) for examples.
+
+#### Sample TF_CONFIG cluster configuration for distributed training
+
+```python
+os.environ["TF_CONFIG"] = json.dumps({
+    "cluster": {
+        "worker": ["host1:port", "host2:port", "host3:port"], # Worker IP/Port locations
+        "ps": ["host4:port", "host5:port"], # Parameter Server IP/Port Locations
+        "chief": ["host6:port"] # Chief worker location
+    },
+   "task": {"type": "worker", "index": 1} # Current Process configuration
+})
+```
+
+
 ### Tensorflow 1
 
 See the [Distributed TensorFlow](https://www.tensorflow.org/deploy/distributed)
@@ -96,27 +118,6 @@ with tf.device(tf.train.replica_device_setter(
   # Construct the TensorFlow graph.
 
 # Run the TensorFlow graph.
-```
-
-### Tensorflow 2
-
-For distributed training, the tensorflow server is implicitly started.
-The main configuration required by the tensorflow libraries is the cluster and local process configuration
-that can be passed as an environment variable.
-Refer to [Distributed TensorFlow Concepts](https://www.tensorflow.org/guide/distributed_training) for concepts.
-Refer to [Distributed TensorFlow Examples](https://www.tensorflow.org/tutorials/distribute/keras) for examples.
-
-#### Sample TF_CONFIG cluster configuration for distributed training
-
-```python
-os.environ["TF_CONFIG"] = json.dumps({
-    "cluster": {
-        "worker": ["host1:port", "host2:port", "host3:port"], # Worker IP/Port locations
-        "ps": ["host4:port", "host5:port"], # Parameter Server IP/Port Locations
-        "chief": ["host6:port"] # Chief worker location
-    },
-   "task": {"type": "worker", "index": 1} # Current Process configuration
-})
 ```
 
 ### Requirements To Run the Examples
