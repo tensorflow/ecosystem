@@ -11,10 +11,10 @@ its [Kubernetes Engine](https://cloud.google.com/kubernetes-engine/).
 
 This directory contains the following files:
 
--   template.yaml.jinja: jinja template used for generating Kubernetes manifests
--   render_template.py: script for rendering the jinja template
--   resnet_cifar_ps_strategy.py: script for running any type of parameter server training task based on `TF_CONFIG` environment variable
+-   kubernetes/template.yaml.jinja: jinja template used for generating Kubernetes manifests
+-   kubernetes/render_template.py: script for rendering the jinja template
 -   Dockerfile.resnet_cifar_ps_strategy: a docker file to build the model image
+-   resnet_cifar_ps_strategy.py: script for running any type of parameter server training task based on `TF_CONFIG` environment variable
 
 ## Prerequisites
 
@@ -123,7 +123,7 @@ This directory contains the following files:
     *   `ps_replicas`: number of parameter server pods.
     *   `num_gpus_per_worker`: number of GPUs (this does not apply for this example since parameter server distribution strategy does not have GPU support yet) 
     *   `has_coordinator`: flag for creating coordinator job
-    *   `has_chief`: flag for creating chief job
+    *   `has_eval`: flag for creating evaluator job (this is set to False in the default template in order to use inline distributed evaluation. Setting this flag to True enables side-car evaluation.)
     *   `has_tensorboard`: flag for creating tensorboard job
     *   `script`: the script in the docker image to run.
     *   `train_log_dir`: used for logging training accuracy
@@ -136,10 +136,11 @@ This directory contains the following files:
 
 5.  Start the training and evaluation on the cluster.
     
-    You may want to verify the generated kubernetes manifestsby running the following:
+    You may want to verify the generated kubernetes manifests by running the following:
 
     ```bash
-    python render_template.py template.yaml.jinja | kubectl create -f - --dry-run
+    cd kubernetes
+    python render_template.py template.yaml.jinja | kubectl create -f - --dry-run=client
     ```
 
     After making sure that the above command succeeds, you can start the cluster (removing the dry-run flag):

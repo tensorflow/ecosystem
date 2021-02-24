@@ -48,7 +48,7 @@ FLAGS = flags.FLAGS
 TRAIN_EPOCHS = 182
 STEPS_PER_EPOCH = 781
 BATCH_SIZE = 64
-
+EVAL_BATCH_SIZE = 8
 
 def create_in_process_cluster(num_workers, num_ps):
   """Creates and starts local servers and returns the cluster_spec dict."""
@@ -123,6 +123,8 @@ def train_resnet_cifar(cluster_resolver):
 
     train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
         name="train_accuracy")
+    eval_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
+        name="eval_accuracy")
 
     @tf.function
     def worker_train_fn(iterator):
@@ -142,9 +144,24 @@ def train_resnet_cifar(cluster_resolver):
         optimizer.apply_gradients(
             zip(gradients, model.trainable_variables))
         train_accuracy.update_state(labels, predictions)
+        return loss
 
       inputs = next(iterator)
-      strategy.run(replica_fn, args=(inputs,))
+      losses = strategy.run(replica_fn, args=(inputs,))
+      return strategy.reduce(tf.distribute.ReduceOp.SUM, losses, axis=None)
+
+
+    @tf.function
+    def worker_eval_fn(iterator):
+
+      def eval_fn(inputs):
+        """Evaluation function"""
+        batch_data, labels = inputs
+        predictions = model(batch_data, training=False)
+        eval_accuracy.update_state(labels, predictions)
+
+      inputs = next(iterator)
+      strategy.run(eval_fn, args=(inputs,))
 
     checkpoint_manager = tf.train.CheckpointManager(
         tf.train.Checkpoint(model=model, optimizer=optimizer),
@@ -156,14 +173,34 @@ def train_resnet_cifar(cluster_resolver):
           checkpoint_manager.latest_checkpoint
           ).assert_existing_objects_matched()
 
-    dataset_fn = lambda: cifar_preprocessing.input_fn(
+    train_dataset_fn = lambda _: cifar_preprocessing.input_fn(
         is_training=True,
         data_dir=FLAGS.data_dir,
         batch_size=BATCH_SIZE,
         parse_record_fn=cifar_preprocessing.parse_record,
         dtype=tf.float32,
         drop_remainder=True)
-    per_worker_dataset = coordinator.create_per_worker_dataset(dataset_fn)
+    eval_dataset_fn = lambda _: cifar_preprocessing.input_fn(
+        is_training=False,
+        data_dir=FLAGS.data_dir,
+        batch_size=EVAL_BATCH_SIZE,
+        parse_record_fn=cifar_preprocessing.parse_record,
+        dtype=tf.float32)
+
+    # The following wrappers will allow efficient prefetching to GPUs
+    # when GPUs are supported by ParameterServerStrategy
+    @tf.function
+    def per_worker_train_dataset_fn():
+      return strategy.distribute_datasets_from_function(train_dataset_fn)
+
+    @tf.function
+    def per_worker_eval_dataset_fn():
+      return strategy.distribute_datasets_from_function(eval_dataset_fn)
+
+    per_worker_train_dataset = coordinator.create_per_worker_dataset(
+      per_worker_train_dataset_fn)
+    per_worker_eval_dataset = coordinator.create_per_worker_dataset(
+      per_worker_eval_dataset_fn)
 
   global_steps = int(optimizer.iterations.numpy())
   logging.info("Training starts with global_steps = %d", global_steps)
@@ -173,15 +210,25 @@ def train_resnet_cifar(cluster_resolver):
 
   for epoch in range(global_steps // STEPS_PER_EPOCH,
                      TRAIN_EPOCHS):
-    iterator = iter(per_worker_dataset)
+    per_worker_train_iterator = iter(per_worker_train_dataset)
+    per_worker_eval_iterator = iter(per_worker_eval_dataset)
     for _ in range(STEPS_PER_EPOCH):
-      coordinator.schedule(worker_train_fn, args=(iterator,))
+      coordinator.schedule(worker_train_fn, args=(per_worker_train_iterator,))
     coordinator.join()
     logging.info("Finished joining at epoch %d. Training accuracy: %f.",
                   epoch, train_accuracy.result())
+
+    for _ in range(STEPS_PER_EPOCH):
+      coordinator.schedule(worker_eval_fn, args=(per_worker_eval_iterator,))
+    coordinator.join()
+    logging.info("Finished joining at epoch %d. Evaluation accuracy: %f.",
+                  epoch, eval_accuracy.result())
+
     with train_summary_writer.as_default():
-      tf.summary.scalar('accuracy', train_accuracy.result(), step=epoch)
+      tf.summary.scalar('train_accuracy', train_accuracy.result(), step=epoch)
+      tf.summary.scalar('eval_accuracy', eval_accuracy.result(), step=epoch)
     train_accuracy.reset_states()
+    eval_accuracy.reset_states()
     checkpoint_manager.save()
 
 
@@ -200,6 +247,8 @@ def evaluate_resnet_cifar():
       data_dir=FLAGS.data_dir,
       batch_size=BATCH_SIZE,
       parse_record_fn=cifar_preprocessing.parse_record)
+
+
   checkpoint = tf.train.Checkpoint(model=eval_model)
 
   for latest_checkpoint in tf.train.checkpoints_iterator(

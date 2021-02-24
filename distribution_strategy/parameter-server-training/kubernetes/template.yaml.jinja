@@ -4,7 +4,7 @@
 {%- set ps_replicas = 2 -%}
 {%- set num_gpus_per_worker = 0 -%}
 {%- set has_coordinator = True -%}
-{%- set has_eval = True -%}
+{%- set has_eval = False -%}
 {%- set has_tensorboard = True -%}
 {%- set script = "/resnet_cifar_ps_strategy.py" -%}
 {%- set train_log_dir = "gs://cifar10-train-log/" -%}
