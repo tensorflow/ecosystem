@@ -41,7 +41,7 @@ here are instructions to [create GKE clusters](https://cloud.google.com/kubernet
      cp kubernetes/MultiWorkerMirroredTemplate.yaml.jinja myjob.template.jinja
   ```
 
-4. Edit the `myjob.template.jinja` file to edit job parameters.
+3. Edit the `myjob.template.jinja` file to edit job parameters.
    1. `script` - which training program needs to be run. This should be either
       `keras_mnist.py` or `custom_training_mnist.py` or `your_own_training_example.py`
 
@@ -51,9 +51,9 @@ here are instructions to [create GKE clusters](https://cloud.google.com/kubernet
 
    4. `port` - the port used by tensorflow worker processes to communicate with each other
 
-   5. `model_checkpoint_dir` - directory where the model is checkpointed and saved from the chief worker process.
+   5. `checkpoint_pvc_name` - name of the persistent-volume-claim that will contain the checkpointed model.
 
-   6. `checkpoint_pvc_name` - name of the persistent-volume-claim which should be mounted at `model_checkpoint_dir`. This volume will contain the checkpointed model.
+   6. `model_checkpoint_dir` - mount location for inspecting the trained model in the volume inspector pod. Meant to be set if Volume inspector pod is mounted.
 
    7. `image` - name of the docker image created in step 2 that needs to be loaded onto the cluster
 
@@ -63,25 +63,25 @@ here are instructions to [create GKE clusters](https://cloud.google.com/kubernet
 
    10. `create_volume_inspector` - Create a pod to inspect the contents of the volume after the training job is complete. If this is `True`, `deploy` cannot be `True` since the checkpoint volume can be mounted as read-write by a single node. Inspection cannot happen when training is happenning.
 
-5. Run the job:
+4. Run the job:
    1. Create a namespace to run your training jobs
    
       ```sh
       kubectl create namespace <namespace>
       ```
 
-   2. [Optional] First set `deploy` to `False`, `create_pvc_checkpoint` to `True` and set the name of           `checkpoint_pvc_name` appropriately. Then run
+   2. [Optional: If Persistent volume does not already exist on cluster] First set `deploy` to `False`, `create_pvc_checkpoint` to `True` and set the name of `checkpoint_pvc_name` appropriately in the .jinja file. Then run
 
       ```sh
-      python ../../render_template.py myjob.template.jinja | kubectl create -n <namespace> -f -
+      python ../../render_template.py myjob.template.jinja | kubectl apply -n <namespace> -f -
       ```
 
-      This will create a persistent volume claim where you can checkpoint your image.
+      This will create a persistent volume claim where you can checkpoint your image. In GKE, this claim will auto-create a GCE persistent disk resource to back up the claim.
 
-   3. Set `deploy` to `True` with all parameters specified in step 4 and then run
+   3. Set `deploy` to `True`, `create_pvc_checkpoint` to `False`, with all parameters specified in step 4 and then run
 
       ```sh
-      python ../../render_template.py myjob.template.jinja | kubectl create -n <namespace> -f -
+      python ../../render_template.py myjob.template.jinja | kubectl apply -n <namespace> -f -
       ```
 
       This will create the Kubernetes jobs on the clusters. Each Job has a single service-endpoint and a single pod that runs the training image. You can track the running jobs in the cluster by running
@@ -101,17 +101,17 @@ here are instructions to [create GKE clusters](https://cloud.google.com/kubernet
 
    4. Once the jobs are finished (based on the logs/output of kubectl get jobs),
       the trained model can be inspected by a volume inspector pod. Set `deploy` to `False`
-      and `create_volume_inspector` to True. Then run
+      and `create_volume_inspector` to True. Also set `model_checkpoint_dir` to indicate location where trained model will be mounted. Then run
 
       ```sh
-      python ../../render_template.py myjob.template.jinja | kubectl create -n <namespace> -f -
+      python ../../render_template.py myjob.template.jinja | kubectl apply -n <namespace> -f -
       ```
 
-      Then, access the pod through ssh
+      This will create the volume inspector pod. Then, access the pod through ssh
 
       ```sh
       kubectl get pods -n <namespace>
-      kubectl -n <namspace> exec --stdin --tty <volume-inspector-pod> -- /bin/bash
+      kubectl -n <namspace> exec --stdin --tty <volume-inspector-pod> -- /bin/sh
       ```
 
       The contents of the trained model are available for inspection at `model_checkpoint_dir`.

@@ -102,7 +102,7 @@ def main():
   callbacks = [tf.keras.callbacks.experimental.BackupAndRestore(backup_dir=write_filepath(strategy))]
   with strategy.scope():
       multi_worker_model = build_and_compile_cnn_model()
-  multi_worker_model.fit(multi_worker_dataset, epochs=3, steps_per_epoch=70,
+  multi_worker_model.fit(multi_worker_dataset, epochs=10, steps_per_epoch=70,
                           callbacks=callbacks)
   multi_worker_model.save(filepath=write_filepath(strategy))
 

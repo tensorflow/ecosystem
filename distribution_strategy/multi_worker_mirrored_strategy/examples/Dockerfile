@@ -10,4 +10,4 @@ WORKDIR /app
 
 COPY . /app/
 
-ENTRYPOINT ["python", "/keras_mnist.py"]
+ENTRYPOINT ["python", "keras_mnist.py"]

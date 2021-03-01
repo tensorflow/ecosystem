@@ -1,3 +1,4 @@
+{%- set name = "tf-learning" -%}
 {%- set image = "image-name" -%}
 {%- set worker_replicas = 2 -%}
 {%- set script = "keras_mnist.py" -%}
@@ -44,6 +45,7 @@ spec:
         job: worker
         task: "{{ i }}"
     spec:
+      restartPolicy: Never
       containers:
       - name: tensorflow
         image: {{ image }}
@@ -55,12 +57,9 @@ spec:
         env:
         - name: TF_CONFIG
           value: '{"cluster": {"worker": [{{ worker_hosts() }}]}, "task": {"type": "worker", "index": {{ i }}}}'
-        args:
-        - "--model_checkpoint_dir={{ model_checkpoint_dir }}"
-        restartPolicy: Never
 {% if i == 0 %}
         volumeMounts:
-        - mountPath: "{{ model_checkpoint_dir }}"
+        - mountPath: /pvcmnt
           name: pvc-mount
       volumes:
       - name: pvc-mount
@@ -103,7 +102,6 @@ spec:
       resources:
         limits:
           memory: 512Mi
-          cpu: "1"
 ---
 {% endif %}
 
