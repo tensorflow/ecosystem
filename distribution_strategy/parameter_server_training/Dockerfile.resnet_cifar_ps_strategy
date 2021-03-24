@@ -1,0 +1,22 @@
+FROM tensorflow/tensorflow:nightly
+
+RUN apt-get install -y python3 && \
+    apt install python3-pip
+
+RUN pip3 install absl-py && \
+    pip3 install portpicker
+
+# Install git
+RUN apt-get update && \
+    apt-get install -y git && \
+    apt-get install -y vim
+
+RUN git clone --single-branch --branch benchmark https://github.com/tensorflow/models.git && \
+    mv models tensorflow_models && \
+    git clone https://github.com/tensorflow/model-optimization.git && \
+    mv model-optimization tensorflow_model_optimization
+
+COPY resnet_cifar_ps_strategy.py /
+
+ENV PYTHONPATH "${PYTHONPATH}:/:/tensorflow_models"
+CMD ["python", "/resnet_cifar_ps_strategy.py"]
