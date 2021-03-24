@@ -1,21 +1,15 @@
 # Parameter Server Training Using Distribution Strategies
 
-This directory provides an example of running parameter server training with
-Distribution Strategies.
+This directory provides an example of running parameter server training with Distribution Strategies.
 
-Please first read the
-[documentation](https://www.tensorflow.org/tutorials/distribute/parameter_server_training)
-of Distribution Strategy for parameter server training. We also assume that readers
-of this page  are familiar with [Google Cloud](https://cloud.google.com/) and
-its [Kubernetes Engine](https://cloud.google.com/kubernetes-engine/).
+Please first read the [documentation](https://www.tensorflow.org/tutorials/distribute/parameter_server_training) of Distribution Strategy for parameter server training. We also assume that readers of this page  are familiar with [Google Cloud](https://cloud.google.com/) and its [Kubernetes Engine](https://cloud.google.com/kubernetes-engine/).
 
 This directory contains the following files:
 
 -   kubernetes/template.yaml.jinja: jinja template used for generating Kubernetes manifests
 -   kubernetes/render_template.py: script for rendering the jinja template
 -   Dockerfile.resnet_cifar_ps_strategy: a docker file to build the model image
--   resnet_cifar_ps_strategy.py: script for running any type of parameter server training task based on `TF_CONFIG` environment variable
-
+-   resnet_cifar_ps_strategy.py: a ResNet example using CIFAR-10 dataset for parameter server training
 ## Prerequisites
 
 1.  First you need to have a Google Cloud project. Either create a new project or use an existing one. 

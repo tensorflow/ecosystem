@@ -18,12 +18,12 @@
 """
 import os
 from datetime import datetime
+import multiprocessing
 from absl import app
 from absl import flags
 from absl import logging
 import portpicker
 import tensorflow as tf
-from tensorflow.python.distribute import parameter_server_strategy_v2
 from tensorflow_models.official.benchmark.models import cifar_preprocessing
 from tensorflow_models.official.benchmark.models import resnet_cifar_model
 from tensorflow_models.official.vision.image_classification.resnet import common as img_class_common
@@ -49,6 +49,7 @@ TRAIN_EPOCHS = 182
 STEPS_PER_EPOCH = 781
 BATCH_SIZE = 64
 EVAL_BATCH_SIZE = 8
+EVAL_STEPS_PER_EPOCH = 88
 
 def create_in_process_cluster(num_workers, num_ps):
   """Creates and starts local servers and returns the cluster_spec dict."""
@@ -62,11 +63,17 @@ def create_in_process_cluster(num_workers, num_ps):
 
   cluster_spec = tf.train.ClusterSpec(cluster_dict)
 
+  # Workers need some inter_ops threads to work properly
+  worker_config = tf.compat.v1.ConfigProto()
+  if multiprocessing.cpu_count() < num_workers + 1:
+    worker_config.inter_op_parallelism_threads = num_workers + 1
+
   for i in range(num_workers):
     tf.distribute.Server(
         cluster_spec,
         job_name="worker",
         protocol="grpc",
+        config=worker_config,
         task_index=i,
         start=True)
 
@@ -101,7 +108,7 @@ def train_resnet_cifar(cluster_resolver):
         set up distributed training
   """
 
-  strategy = parameter_server_strategy_v2.ParameterServerStrategyV2(
+  strategy = tf.distribute.experimental.ParameterServerStrategy(
       cluster_resolver)
   coordinator = (
         tf.distribute.experimental.coordinator.ClusterCoordinator(strategy))
@@ -218,7 +225,8 @@ def train_resnet_cifar(cluster_resolver):
     logging.info("Finished joining at epoch %d. Training accuracy: %f.",
                   epoch, train_accuracy.result())
 
-    for _ in range(STEPS_PER_EPOCH):
+    # Since we are running inline evaluation below, a side-car evaluator job is not necessary.
+    for _ in range(EVAL_STEPS_PER_EPOCH):
       coordinator.schedule(worker_eval_fn, args=(per_worker_eval_iterator,))
     coordinator.join()
     logging.info("Finished joining at epoch %d. Evaluation accuracy: %f.",
