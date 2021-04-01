@@ -1,5 +1,5 @@
 # ==============================================================================
-# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
+# Copyright 2021 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # limitations under the License.
 # ==============================================================================
 
-# This code serves as an example of using Tensorflow 2.0 to build and train a CNN model on the 
+# This code serves as an example of using Tensorflow 2.x to build and train a CNN model on the
 # Fashion MNIST dataset using the tf.distribute.MultiWorkerMirroredStrategy described here 
 # https://www.tensorflow.org/api_docs/python/tf/distribute/experimental/MultiWorkerMirroredStrategy 
 # using a custom training loop. This code is very similar to the example provided here
@@ -33,8 +33,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 MAIN_MODEL_PATH = '/pvcmnt'
 
 EPOCHS = 10
-BATCH_SIZE_PER_REPLICA = 64
-GLOBAL_BATCH_SIZE = BATCH_SIZE_PER_REPLICA
+GLOBAL_BATCH_SIZE = 128
 
 def _is_chief(task_type, task_id):
   # If `task_type` is None, this may be operating as single worker, which works
@@ -92,7 +91,6 @@ def get_dist_data_set(strategy, batch_size):
 def main():
     global GLOBAL_BATCH_SIZE
     strategy = tf.distribute.MultiWorkerMirroredStrategy()
-    GLOBAL_BATCH_SIZE = BATCH_SIZE_PER_REPLICA * strategy.num_replicas_in_sync
     train_dist_dataset, test_dist_dataset = get_dist_data_set(strategy, GLOBAL_BATCH_SIZE)
     checkpoint_pfx = write_filepath(strategy)
     with strategy.scope():

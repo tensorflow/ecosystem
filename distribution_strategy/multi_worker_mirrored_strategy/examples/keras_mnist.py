@@ -1,5 +1,5 @@
 # ==============================================================================
-# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
+# Copyright 2021 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # limitations under the License.
 # ==============================================================================
 
-# This code serves as an example of using Tensorflow 2.0 Keras API to build and train a CNN model on the 
+# This code serves as an example of using Tensorflow 2.x Keras API to build and train a CNN model on the 
 # MNIST dataset using the tf.distribute.MultiWorkerMirroredStrategy described here 
 # https://www.tensorflow.org/api_docs/python/tf/distribute/experimental/MultiWorkerMirroredStrategy.
 # This code is very similar to the example provided here
@@ -38,6 +38,8 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 # Model save directory
 MAIN_MODEL_PATH = '/pvcmnt'
+
+GLOBAL_BATCH_SIZE = 128
 
 def _is_chief(task_type, task_id):
   # If `task_type` is None, this may be operating as single worker, which works
@@ -88,13 +90,11 @@ def build_and_compile_cnn_model():
   return model
 
 def main():
-  per_worker_batch_size = 64
   tf_config = json.loads(os.environ['TF_CONFIG'])
   num_workers = len(tf_config['cluster']['worker'])
   strategy = tf.distribute.MultiWorkerMirroredStrategy()
   
-  global_batch_size = per_worker_batch_size * num_workers
-  multi_worker_dataset = mnist_dataset(global_batch_size)
+  multi_worker_dataset = mnist_dataset(GLOBAL_BATCH_SIZE)
   
   # missing needs to be fixed
   # multi_worker_dataset = strategy.distribute_datasets_from_function(mnist_dataset(global_batch_size))  

@@ -1,7 +1,7 @@
 
 # MultiWorkerMirrored Training Strategy with examples
 
-The steps below are meant to train models using [MultiWorkerMirrored Strategy](https://www.tensorflow.org/api_docs/python/tf/distribute/experimental/MultiWorkerMirroredStrategy) using the tensorflow 2.0 API on the Kubernetes platform.
+The steps below are meant to train models using [MultiWorkerMirrored Strategy](https://www.tensorflow.org/api_docs/python/tf/distribute/experimental/MultiWorkerMirroredStrategy) using the tensorflow 2.x API on the Kubernetes platform.
 
 Reference programs such as [keras_mnist.py](examples/keras_mnist.py) and
 [custom_training_mnist.py](examples/custom_training_mnist.py) are available in the examples directory.
