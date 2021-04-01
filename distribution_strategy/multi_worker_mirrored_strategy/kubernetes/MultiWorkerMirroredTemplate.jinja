@@ -1,0 +1,111 @@
+{%- set name = "tf-learning" -%}
+{%- set image = "image-name" -%}
+{%- set worker_replicas = 2 -%}
+{%- set script = "keras_mnist.py" -%}
+{%- set model_checkpoint_dir = "/pvcmnt" -%}
+{%- set checkpoint_pvc_name = "pvc-demo" -%}
+{%- set port = 5000 -%}
+{%- set create_pvc_checkpoint = True -%}
+{%- set create_volume_inspector = True -%}
+{%- set deploy = False -%}
+
+
+{% if deploy %}
+
+{%- macro worker_hosts() -%}
+  {%- for i in range(worker_replicas) -%}
+    {%- if not loop.first -%},{%- endif -%}
+    "{{ name }}-worker-{{ i }}:{{ port }}"
+  {%- endfor -%}
+{%- endmacro -%}
+
+{%- for i in range(worker_replicas) -%}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ name }}-worker-{{ i }}
+spec:
+  selector:
+    name: {{ name }}
+    job: worker
+    task: "{{ i }}"
+  ports:
+  - port: {{ port }}
+---
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: {{ name }}-worker-{{ i }}
+spec:
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        name: {{ name }}
+        job: worker
+        task: "{{ i }}"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: tensorflow
+        image: {{ image }}
+        ports:
+        - containerPort: {{ port }}
+        command:
+        - "python"
+        - "{{ script }}"
+        env:
+        - name: TF_CONFIG
+          value: '{"cluster": {"worker": [{{ worker_hosts() }}]}, "task": {"type": "worker", "index": {{ i }}}}'
+{% if i == 0 %}
+        volumeMounts:
+        - mountPath: /pvcmnt
+          name: pvc-mount
+      volumes:
+      - name: pvc-mount
+        persistentVolumeClaim:
+          claimName: {{ checkpoint_pvc_name }}  
+{% endif %}---
+{% endfor %}
+
+{% endif %}
+{% if create_pvc_checkpoint %}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ checkpoint_pvc_name }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10G
+---
+{% endif %}
+{% if create_volume_inspector %}
+kind: Pod
+apiVersion: v1
+metadata:
+  name: volume-inspector
+spec:
+  volumes:
+    - name: volume-to-inspect
+      persistentVolumeClaim:
+       claimName: {{ checkpoint_pvc_name }}
+  containers:
+    - name: debugger
+      image: busybox
+      command: ['sleep', '3600']
+      volumeMounts:
+        - mountPath: {{ model_checkpoint_dir }}
+          name: volume-to-inspect
+      resources:
+        limits:
+          memory: 512Mi
+---
+{% endif %}
+
+
+
+
+

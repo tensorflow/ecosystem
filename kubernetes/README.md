@@ -1,9 +1,11 @@
 # Running Distributed TensorFlow on Kubernetes
 
 This directory contains a template for running distributed TensorFlow on
-Kubernetes.
+Kubernetes. For newer examples, refer to the [distribution strategy](../distribution_strategy)
 
-## Prerequisites
+## Steps to train [mnist.py](../docker/mnist.py)
+
+### Prerequisites
 
 1. You must be running Kubernetes 1.3 or above. If you are running an earlier
    version, the DNS addon must be enabled. See the
@@ -12,7 +14,7 @@ Kubernetes.
 
 2. [Jinja templates](http://jinja.pocoo.org/) must be installed.
 
-## Steps to Run the job
+### Steps to Run the job
 
 1. Follow the instructions for creating the training program in the parent
    [README](../README.md).
@@ -43,7 +45,7 @@ write to Google Cloud Storage. See the Google Cloud Storage section below.
   python render_template.py myjob.template.jinja | kubectl delete -f -
   ```
 
-## Google Cloud Storage
+### Google Cloud Storage
 
 To support reading and writing to Google Cloud Storage, you need to set up
 a [Kubernetes secret](http://kubernetes.io/docs/user-guide/secrets/) with the
