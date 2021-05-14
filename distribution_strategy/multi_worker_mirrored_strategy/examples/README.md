@@ -3,11 +3,13 @@
 This directory contains examples of MultiWorkerMirrored Training along with the docker file to build them
 
 - [Dockerfile](Dockerfile) contains all dependenices required to build a container image using docker with the training examples
+- [Dockerfile.gpu](Dockerfile.gpu) contains all dependenices required to build a container image using docker with gpu and the tensorflow model garden
 - [keras_mnist.py](mnist.py) demonstrates how to train an MNIST classifier using
   [tf.distribute.MultiWorkerMirroredStrategy and Keras Tensorflow 2.0 API](https://www.tensorflow.org/tutorials/distribute/multi_worker_with_keras).
 - [custom_training_mnist.py](mnist.py) demonstrates how to train a fashion MNIST classifier using
   [tf.distribute.MultiWorkerMirroredStrategy and Tensorflow 2.0 Custom Training Loop APIs](https://www.tensorflow.org/tutorials/distribute/custom_training).
-
+- [keras_resnet_cifar.py](keras_resnet_cifar.py) demonstrates how to train the resnet56 model on the Cifar-10 dataset using
+  [tf.distribute.MultiWorkerMirroredStrategy and Keras Tensorflow 2.0 API](https://www.tensorflow.org/tutorials/distribute/multi_worker_with_keras).
 ## Best Practices
 
 - Always pin the TensorFlow version with the Docker image tag. This ensures that
@@ -50,4 +52,11 @@ It assumes that the cluster configuration is passed in through the `TF_CONFIG` e
 The [custom_training_mnist.py](mnist.py) example demonstrates how to train a fashion MNIST classifier using
 [tf.distribute.MultiWorkerMirroredStrategy and Tensorflow 2.0 Custom Training Loop APIs](https://www.tensorflow.org/tutorials/distribute/custom_training).
 The final model is saved to disk by the chief worker process. The disk is assumed to be mounted onto the running container by the cluster manager.
+It assumes that the cluster configuration is passed in through the `TF_CONFIG` environment variable when deployed in the cluster.
+
+## Running the keras_resnet_cifar.py example
+
+The [keras_resnet_cifar.py](keras_resnet_cifar.py) example demonstrates how to train a Resnet56 model on the cifar-10 dataset using
+[tf.distribute.MultiWorkerMirroredStrategy and Keras Tensorflow 2.0 API](https://www.tensorflow.org/tutorials/distribute/multi_worker_with_keras).
+The final model is saved to the GCP storage bucket.
 It assumes that the cluster configuration is passed in through the `TF_CONFIG` environment variable when deployed in the cluster.
