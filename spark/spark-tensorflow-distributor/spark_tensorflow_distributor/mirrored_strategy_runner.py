@@ -89,10 +89,10 @@ class MirroredStrategyRunner:
                 a discovery script that is formatted according to the
                 Spark configuration docs. Make sure
                 `spark.driver.resource.{gpu_resource_name}.discoveryScript` and
-                `spark.driver.resource.{gpu_resource_name}.discoveryScript` are
-                also set in the Spark conf. In particular, the GPU addresses
-                should be zero indexed. For example, the output of the
-                discovery script for 3 GPUs with gpu_resource_name='gpu'
+                `spark.executor.resource.{gpu_resource_name}.discoveryScript`
+                are also set in the Spark conf. In particular, the GPU
+                addresses should be zero indexed. For example, the output of
+                the discovery script for 3 GPUs with gpu_resource_name='gpu'
                 would be `{"name": "gpu", "addresses":["0","1","2"]}`.
                 See an example discovery script: `github.com/apache/spark/blob/
                 master/examples/src/main/scripts/getGpusResources.sh`.
