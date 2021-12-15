@@ -5,8 +5,6 @@ managers.
 
 - [Dockerfile](Dockerfile) is the most basic example, which just adds a Python
   training program on top of the tensorflow/tensorflow Docker image.
-- [Dockerfile.hdfs](Dockerfile.hdfs) installs Hadoop libraries and sets the
-  appropriate environment variables to enable reading from HDFS.
 - [mnist.py](mnist.py) demonstrates the programmatic setup for distributed
   TensorFlow training.
 
@@ -45,4 +43,4 @@ You can run the [convert_to_records.py](https://github.com/tensorflow/tensorflow
 program to convert mnist data to TFRecords.
 
 When running distributed TensorFlow, you should upload the converted data to
-a common location on distributed storage, such as GCS or HDFS.
+a common location on distributed storage, such as GCS.
