@@ -1,0 +1,142 @@
+{%- set name = "" -%}
+{%- set image = "" -%}
+{%- set worker_replicas = 2 -%}
+{%- set script = "" -%}
+{%- set gcp_credential_secret = "" %}
+{%- set log_dir = "" %}
+{%- set data_dir = "" %}
+{%- set model_dir = "" %}
+{%- set batch_size = 256 %}
+{%- set num_train_epoch = 100 %}
+{%- set port = 5000 -%}
+{%- set run_tensorboard = true %}
+
+
+{%- macro worker_hosts() -%}
+  {%- for i in range(worker_replicas) -%}
+    {%- if not loop.first -%},{%- endif -%}
+    "{{ name }}-worker-{{ i }}:{{ port }}"
+  {%- endfor -%}
+{%- endmacro -%}
+
+{%- for i in range(worker_replicas) -%}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ name }}-worker-{{ i }}
+spec:
+  selector:
+    name: {{ name }}
+    job: worker
+    task: "{{ i }}"
+  ports:
+  - port: {{ port }}
+---
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: {{ name }}-worker-{{ i }}
+spec:
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        name: {{ name }}
+        job: worker
+        task: "{{ i }}"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: tensorflow
+        image: {{ image }}
+        ports:
+        - containerPort: {{ port }}
+        command:
+        - "python"
+        - "{{ script }}"
+        env:
+        - name: TF_CONFIG
+          value: '{"cluster": {"worker": [{{ worker_hosts() }}]}, "task": {"type": "worker", "index": {{ i }}}}'
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/var/secrets/google/key.json"
+        - name: DATA_DIR
+          value: "{{ data_dir }}"
+        - name: MODEL_DIR
+          value: "{{ model_dir }}"
+        - name: NUM_TRAIN_EPOCH
+          value: "{{ num_train_epoch }}"
+        - name: BATCH_SIZE
+          value: "{{ batch_size }}"
+        ports:
+        - containerPort: {{ port }}
+        resources:
+          limits: 
+           nvidia.com/gpu: 1
+        volumeMounts:
+        - name: credential
+          mountPath: /var/secrets/google
+      volumes:
+      - name: credential
+        secret:
+          secretName: {{ gcp_credential_secret }}          
+---
+{% endfor %}
+
+{% if run_tensorboard %}
+kind: Service
+apiVersion: v1
+metadata:
+  name: resnet-tensorboard-0
+spec:
+  type: LoadBalancer
+  selector:
+    name: resnet
+    job: tensorboard
+    task: "0"
+  ports:
+  - port: {{ port }}
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: resnet-tensorboard-0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: resnet
+      job: tensorboard
+      task: "0"
+  template:
+    metadata:
+      labels:
+        name: resnet
+        job: tensorboard
+        task: "0"
+    spec:
+      containers:
+      - name: tensorflow
+        image: tensorflow/tensorflow
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/var/secrets/google/key.json"
+        ports:
+        - containerPort: {{ port }}
+        command:
+        - "tensorboard"
+        args:
+        - '--logdir= {{ log_dir }}'
+        - "--port={{ port }}"
+        - "--host=0.0.0.0"
+        volumeMounts:
+        - name: credential
+          mountPath: /var/secrets/google
+      volumes:
+      - name: credential
+        secret:
+          secretName: {{ gcp_credential_secret }}
+---
+{% endif %}
+
+
+

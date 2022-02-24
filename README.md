@@ -16,7 +16,7 @@ request.
 	* Jupyter images for different versions of TensorFlow
 	* [TFServing](https://github.com/kubeflow/kubeflow/blob/master/user_guide.md#serve-a-model-using-tensorflow-serving) Docker images and K8s templates
 - [kubernetes](kubernetes) - Templates for running distributed TensorFlow on
-  Kubernetes.
+  Kubernetes. For the most upto-date examples, please also refer to the [distribution strategy](distribution_strategy) folder.
 - [marathon](marathon) - Templates for running distributed TensorFlow using
   Marathon, deployed on top of Mesos.
 - [hadoop](hadoop) - TFRecord file InputFormat/OutputFormat for Hadoop MapReduce
