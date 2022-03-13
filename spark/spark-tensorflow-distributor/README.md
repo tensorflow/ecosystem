@@ -12,6 +12,8 @@ pip install spark-tensorflow-distributor
 ```
 
 The installation does not install PySpark because for most users, PySpark is already installed.
+In addition, `tensorflow` not installed so that users may choose between regular and CPU-only
+installation via `pip install tensorflow` and `pip install tensorflow-cpu`.
 If you do not have PySpark installed, you can install it directly:
 
 ```bash

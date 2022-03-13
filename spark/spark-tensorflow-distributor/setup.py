@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
   name="spark_tensorflow_distributor",
-  version="0.0.3",
+  version="1.0.0",
   author="sarthfrey",
   author_email="sarth.frey@gmail.com",
   description="This package helps users do distributed training with TensorFlow on their Spark clusters.",
@@ -23,9 +23,6 @@ setuptools.setup(
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Version Control :: Git",
-  ],
-  install_requires=[
-    "tensorflow>=2.1.0",
   ],
   python_requires='>=3.6',
 )
