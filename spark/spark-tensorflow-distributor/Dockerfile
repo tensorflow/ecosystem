@@ -15,10 +15,7 @@ RUN apt-get update && \
     update-alternatives --install /usr/local/bin/python python /usr/bin/python${PYTHON_INSTALL_VERSION} 1
 
 # Install Spark and update env variables
-# Modify this when the next Spark 3 release includes the allGather barrier mode API
-RUN pip install \
-    https://ml-team-public-read.s3-us-west-2.amazonaws.com/pyspark-3.1.0.dev0-60dd1a690fed62b1d6442cdc8cf3f89ef4304d5a.tar.gz \
-    --force-reinstall --upgrade
+RUN pip install pyspark==3.0.0 
 
 # Set SPARK_HOME so that tests can easily find the scripts in $SPARK_HOME/sbin
 ENV SPARK_HOME /usr/local/lib/python${PYTHON_INSTALL_VERSION}/dist-packages/pyspark
